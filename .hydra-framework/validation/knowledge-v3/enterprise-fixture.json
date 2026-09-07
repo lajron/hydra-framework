@@ -1,0 +1,170 @@
+{
+  "schema": "hydra-framework.knowledge-v3-enterprise-fixture.v1",
+  "description": "Deterministic multi-space enterprise topology used for Knowledge v3 routing, depth, authoring, graph, and distribution gates.",
+  "spaces": {
+    "product": {
+      "scope": "repo-local",
+      "areas": {
+        "commerce": ["checkout-api", "orders-api", "checkout-web", "pricing", "contracts", "payments"],
+        "titan": ["liveops-api", "game-client", "economy", "matchmaking", "inventory", "player-telemetry"],
+        "nimbus": ["web-app", "content-api", "subscriptions", "recommendations", "profiles", "notifications"],
+        "accounts": ["account-api", "profile-web", "preferences", "consent", "entitlements", "deletion"],
+        "catalog": ["catalog-api", "admin-web", "search", "taxonomy", "localization", "media"],
+        "fulfillment": ["fulfillment-api", "warehouse", "delivery", "returns", "tracking", "partners"]
+      }
+    },
+    "platform": {
+      "scope": "common-seed",
+      "areas": {
+        "identity": ["authentication", "authorization", "session", "token-exchange", "service-accounts", "key-rotation"],
+        "data": ["ef-migrations", "outbox", "event-store", "warehouse", "retention", "backups"],
+        "build": ["solution-layout", "package-feeds", "ci-templates", "release-artifacts", "feature-flags", "rollback"],
+        "messaging": ["event-bus", "schemas", "dead-letter", "ordering", "replay", "consumers"],
+        "observability": ["logging", "metrics", "tracing", "dashboards", "alerts", "sampling"],
+        "runtime": ["containers", "kubernetes", "configuration", "secrets", "networking", "autoscaling"]
+      }
+    },
+    "qa": {
+      "scope": "common-seed",
+      "areas": {
+        "shared-harness": ["test-data", "device-matrix", "flake-triage", "sandbox-accounts", "contract-tests", "load-tools"],
+        "titan": ["liveops", "client", "economy", "matchmaking", "compatibility", "release"],
+        "nimbus": ["web", "content", "subscriptions", "accessibility", "browsers", "release"],
+        "release-testing": ["entry-criteria", "sign-off", "regression", "smoke", "rollback-verification", "evidence"],
+        "performance": ["budgets", "load", "soak", "capacity", "profiling", "baselines"],
+        "automation": ["framework", "selectors", "fixtures", "parallelism", "reporting", "quarantine"]
+      }
+    },
+    "operations": {
+      "scope": "repo-local",
+      "areas": {
+        "incident": ["response", "payment-degradation", "customer-impact", "communications", "handoff", "postmortem"],
+        "deployment": ["production", "canary", "database", "frontend", "rollback", "freeze"],
+        "reliability": ["slo", "error-budget", "capacity", "dependency-health", "resilience", "chaos"],
+        "support": ["triage", "escalation", "customer-data", "diagnostics", "known-issues", "feedback"],
+        "continuity": ["disaster-recovery", "restore", "regional-failover", "backup-validation", "exercises", "ownership"],
+        "change": ["approval", "risk", "schedule", "communication", "audit", "emergency"]
+      }
+    },
+    "security": {
+      "scope": "common-seed",
+      "areas": {
+        "application": ["threat-model", "secure-coding", "dependencies", "input-validation", "review", "testing"],
+        "identity": ["mfa", "privileged-access", "service-identity", "tokens", "keys", "offboarding"],
+        "infrastructure": ["network", "workload", "secrets", "hardening", "scanning", "patching"],
+        "disclosure": ["customer-notification", "regulator", "coordination", "evidence", "timeline", "templates"],
+        "compliance": ["pci", "privacy", "retention", "audit", "controls", "exceptions"],
+        "threat": ["detection", "response", "intelligence", "hunting", "malware", "forensics"]
+      }
+    },
+    "framework": {
+      "scope": "base-seed",
+      "areas": {
+        "knowledge": ["routing", "context-packets", "freshness", "bindings", "views", "migration"],
+        "adapters": ["export", "claude", "codex", "cursor", "provenance", "reclamation"],
+        "lifecycle": ["tasks", "checkpoints", "handoff", "completion", "readiness", "ownership"],
+        "validation": ["reference-check", "object-model", "architecture", "selftest", "diagnostics", "contracts"],
+        "installation": ["init", "adopt", "lineage", "seed-copy", "reconciliation", "distribution"],
+        "telemetry": ["events", "evidence", "gates", "privacy", "retention", "absorption"]
+      }
+    }
+  },
+  "indexed_hints": {
+    "product/commerce/checkout-api": ["idempotency", "payment capture", "input validation", "checkout controller"],
+    "product/commerce/checkout-web": ["openapi client", "checkout browser", "web compatibility"],
+    "product/commerce/contracts": ["openapi contract", "api compatibility"],
+    "product/nimbus/subscriptions": ["subscription feature", "billing plan"],
+    "product/nimbus/notifications": ["notification publish", "message preference"],
+    "product/accounts/deletion": ["account deletion", "right to erase"],
+    "product/accounts/consent": ["consent audit", "privacy consent"],
+    "platform/identity/key-rotation": ["rotate signing keys", "token key rotation", "oauth keys"],
+    "platform/data/ef-migrations": ["ef migration", "database schema migration"],
+    "platform/data/backups": ["warehouse backup", "database backup restore"],
+    "platform/build/feature-flags": ["feature flag publish", "release toggle"],
+    "platform/messaging/dead-letter": ["dead letter", "failed event"],
+    "platform/messaging/replay": ["event replay", "reprocess message"],
+    "platform/messaging/ordering": ["message ordering", "event order"],
+    "platform/observability/sampling": ["trace sampling", "telemetry sampling"],
+    "platform/observability/alerts": ["alert signal", "alert routing"],
+    "platform/runtime/autoscaling": ["autoscaling capacity", "horizontal scaling"],
+    "platform/runtime/kubernetes": ["kubernetes workload", "k8s deploy"],
+    "platform/runtime/containers": ["container capacity", "container runtime"],
+    "qa/shared-harness/flake-triage": ["flaky test triage", "test flake"],
+    "qa/titan/matchmaking": ["titan matchmaking integration test"],
+    "qa/nimbus/accessibility": ["accessible browser", "accessibility testing"],
+    "qa/release-testing/sign-off": ["release sign off", "release approval evidence"],
+    "qa/release-testing/rollback-verification": ["verify rollback", "post rollback test"],
+    "qa/automation/quarantine": ["quarantine flakes", "quarantined test"],
+    "qa/automation/parallelism": ["parallel automation", "test workers"],
+    "qa/automation/selectors": ["browser selector", "web selector"],
+    "operations/incident/payment-degradation": ["production payment degradation", "payment incident"],
+    "operations/incident/customer-impact": ["customer impact", "impact assessment"],
+    "operations/deployment/database": ["database deployment", "schema release"],
+    "operations/continuity/restore": ["disaster restore", "restore procedure"],
+    "operations/continuity/regional-failover": ["regional failover", "region recovery"],
+    "security/application/input-validation": ["security input validation", "untrusted input"],
+    "security/compliance/pci": ["payment pci", "cardholder controls"],
+    "security/compliance/privacy": ["privacy audit", "data protection"],
+    "security/compliance/exceptions": ["audit exception", "control exception"],
+    "security/identity/service-identity": ["service account identity", "workload identity"],
+    "security/identity/privileged-access": ["privileged access audit", "administrator access"],
+    "security/identity/offboarding": ["access offboarding", "revoke access"],
+    "framework/knowledge/routing": ["hydra knowledge routing", "route prompt"],
+    "framework/knowledge/context-packets": ["context packet", "compile context"],
+    "framework/validation/diagnostics": ["validation diagnostics", "finding output"],
+    "framework/installation/reconciliation": ["reconcile repository", "diff base"],
+    "framework/installation/distribution": ["common seed distribution", "scope copy"],
+    "framework/installation/adopt": ["repository adoption", "adopt hydra"]
+  },
+  "workloads": [
+    {"task": "add an idempotency migration to checkout api payment capture", "expected": ["product/commerce/checkout-api"], "paths": ["src/services/Checkout.Api/Migrations/20260907_Idempotency.cs"]},
+    {"task": "fix checkout web openapi contract compatibility", "expected": ["product/commerce/checkout-web", "product/commerce/contracts"], "paths": ["apps/checkout-web/src/api/client.ts"]},
+    {"task": "rotate oauth service account token signing keys", "expected": ["platform/identity/key-rotation", "security/identity/service-identity"], "paths": ["platform/identity/keys/rotation.yaml"]},
+    {"task": "triage titan matchmaking flaky integration test", "expected": ["qa/titan/matchmaking", "qa/shared-harness/flake-triage"], "paths": ["tests/titan/matchmaking/flaky_test.py"]},
+    {"task": "prepare nimbus accessible browser release sign off", "expected": ["qa/nimbus/accessibility", "qa/release-testing/sign-off"], "paths": ["apps/nimbus/e2e/accessibility.spec.ts"]},
+    {"task": "respond to production payment degradation customer impact", "expected": ["operations/incident/payment-degradation", "operations/incident/customer-impact"], "paths": ["runbooks/payments/degradation.md"]},
+    {"task": "verify database rollback after ef migration deployment", "expected": ["platform/data/ef-migrations", "operations/deployment/database", "qa/release-testing/rollback-verification"], "paths": ["src/services/Orders.Api/Migrations/20260907_Orders.cs"]},
+    {"task": "investigate event bus dead letter replay ordering", "expected": ["platform/messaging/dead-letter", "platform/messaging/replay", "platform/messaging/ordering"], "paths": ["platform/messaging/replay/worker.cs"]},
+    {"task": "security review checkout input validation for pci", "expected": ["security/application/input-validation", "security/compliance/pci", "product/commerce/checkout-api"], "paths": ["src/services/Checkout.Api/Controllers/Payment.cs"]},
+    {"task": "restore regional warehouse backup during disaster recovery", "expected": ["operations/continuity/restore", "operations/continuity/regional-failover", "platform/data/backups"], "paths": ["ops/dr/restore-warehouse.sh"]},
+    {"task": "update hydra knowledge routing and context packet diagnostics", "expected": ["framework/knowledge/routing", "framework/knowledge/context-packets", "framework/validation/diagnostics"], "paths": [".hydra-framework/engine/src/hydra_engine/knowledge/routing.py"]},
+    {"task": "reconcile common seed distribution after repository adoption", "expected": ["framework/installation/reconciliation", "framework/installation/distribution", "framework/installation/adopt"], "paths": [".hydra-framework/manifest.yaml"]},
+    {"task": "reduce observability trace sampling without losing alerts", "expected": ["platform/observability/sampling", "platform/observability/alerts"], "paths": ["platform/observability/sampling.yaml"]},
+    {"task": "quarantine parallel browser automation selector flakes", "expected": ["qa/automation/quarantine", "qa/automation/parallelism", "qa/automation/selectors"], "paths": ["tests/web/selectors.ts"]},
+    {"task": "audit privileged access offboarding exceptions", "expected": ["security/identity/privileged-access", "security/identity/offboarding", "security/compliance/exceptions"], "paths": ["security/access/offboarding.yaml"]},
+    {"task": "tune kubernetes autoscaling for container capacity", "expected": ["platform/runtime/autoscaling", "platform/runtime/kubernetes", "platform/runtime/containers"], "paths": ["deploy/k8s/autoscaling.yaml"]},
+    {"task": "publish nimbus subscription notification feature flag", "expected": ["product/nimbus/subscriptions", "product/nimbus/notifications", "platform/build/feature-flags"], "paths": ["apps/nimbus/src/subscriptions/notifications.ts"]},
+    {"task": "run privacy account deletion consent audit", "expected": ["product/accounts/deletion", "product/accounts/consent", "security/compliance/privacy"], "paths": ["src/services/Account.Api/Deletion.cs"]},
+    {"task": "fix the service timeout", "expected": ["product/commerce/checkout-api"], "paths": ["src/services/Checkout.Api/TimeoutPolicy.cs"]},
+    {"task": "update the integration test", "expected": ["qa/titan/matchmaking"], "paths": ["tests/titan/matchmaking/session_test.py"]},
+    {"task": "change the deployment yaml", "expected": ["platform/runtime/kubernetes"], "paths": ["deploy/k8s/checkout/deployment.yaml"]}
+  ],
+  "required_edges": {
+    "product/commerce/checkout-api": ["platform/data/ef-migrations", "security/compliance/pci"],
+    "product/commerce/checkout-web": ["product/commerce/contracts"],
+    "qa/titan/matchmaking": ["qa/shared-harness/flake-triage"],
+    "operations/deployment/database": ["platform/data/ef-migrations", "qa/release-testing/rollback-verification"],
+    "operations/continuity/restore": ["platform/data/backups"],
+    "framework/installation/reconciliation": ["framework/installation/distribution"],
+    "product/accounts/deletion": ["product/accounts/consent", "security/compliance/privacy"]
+  },
+  "bindings": {
+    "src/services/Checkout.Api/": "product/commerce/checkout-api",
+    "apps/checkout-web/": "product/commerce/checkout-web",
+    "platform/identity/keys/": "platform/identity/key-rotation",
+    "tests/titan/matchmaking/": "qa/titan/matchmaking",
+    "apps/nimbus/e2e/": "qa/nimbus/accessibility",
+    "runbooks/payments/": "operations/incident/payment-degradation",
+    "src/services/Orders.Api/Migrations/": "operations/deployment/database",
+    "platform/messaging/replay/": "platform/messaging/replay",
+    "ops/dr/": "operations/continuity/restore",
+    ".hydra-framework/engine/src/hydra_engine/knowledge/": "framework/knowledge/routing",
+    ".hydra-framework/manifest.yaml": "framework/installation/adopt",
+    "platform/observability/": "platform/observability/sampling",
+    "tests/web/": "qa/automation/selectors",
+    "security/access/": "security/identity/offboarding",
+    "deploy/k8s/": "platform/runtime/kubernetes",
+    "apps/nimbus/src/subscriptions/": "product/nimbus/subscriptions",
+    "src/services/Account.Api/": "product/accounts/deletion"
+  }
+}
