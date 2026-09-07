@@ -30,8 +30,7 @@ runtime. Use reviewed Git commits as rollback boundaries.
 
 ## Approved Plan
 
-Obtain a final independent review over the completed v3 system, then complete
-the task.
+Confirm with the owner, then complete the task. Nothing is in flight.
 
 ## Completed Work
 
@@ -58,7 +57,7 @@ the task.
 
 ## Current Stage
 
-Phase 5: migration applied and polish tail closed; final independent review outstanding.
+Phase 5: migration applied, polish tail closed, independent review resolved.
 
 ## Changed Files
 
@@ -74,8 +73,8 @@ the third-digest rejection and the fourth-digest approval.
 
 ## Remaining Work
 
-Final independent review over the completed system. Every other tail item is
-closed:
+Owner confirmation, then completion. The independent review is done and its
+eight findings are fixed with regression tests. Every tail item is closed:
 
 - Binding CLI: `bindings list` and `bindings verify [--accept]` ship, with
   acceptance refusing to launder a failed assertion.

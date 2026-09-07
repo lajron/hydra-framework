@@ -33,7 +33,7 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 
 ## Current Stage
 
-Phase 5: live repository migrated to v3, polish tail closed, awaiting final independent review.
+Phase 5: independent review completed; its eight findings are fixed and covered by tests.
 
 ## Readiness
 
@@ -48,8 +48,8 @@ Status: ready
 
 ## Step State
 
-- Active step: final independent review over the completed v3 system.
-- Next step: none; the task closes when that review is recorded.
+- Active step: none; the review is recorded and resolved.
+- Next step: confirm with the owner before completing the task and pushing.
 - Completed steps: read required contracts and authoritative code; created and validated the primary task; captured a 173-test v2 baseline; added and ran the 216-leaf enterprise fixture; selected global indexed routing and measured depth/scope policy; froze `core/knowledge-architecture.md`; implemented tested contract primitives for recursive nodes/inheritance, strict global graph closure and supersession, namespaced asserted bindings/freshness, reference-only view composition/conflict detection, shared distribution policy, and the registry-independent KnowledgeStore boundary; integrated recursive discovery, global validation/closure, inherited routes, two-phase path rerouting hooks, route-level `expand_when`, v3 context-packet fields, prompt pointers, search/adoption/hook consumers, and fail-closed node parsing into the active engine; removed the flat routing-collision runtime and flat package discovery; converted affected unit tests to v3 fixtures; restored the full 1,246-test unit suite to green.
 - Superseded or skipped steps: none.
 - Also completed: scoped migration reference rewriting away from engine sources, contract goldens, and the derived registry; made the plan digest reproducible across checkouts; anchored template path rewriting; confined identity/title rewriting to the object sidecar; recorded real move sources in the manifest; redirected the superseded v2 concept doc to the frozen v3 contract; removed v2 authoring guidance from `repo/README.md` and the framework glossary.
@@ -126,6 +126,19 @@ Status: ready
 - Enterprise fixture rerun: `validation/knowledge-v3/engine_gates.py` materializes the 216-leaf fixture as a real v3 tree and drives the shipped runtime. The tree validates with zero findings and every binding reaches `verified`. Option D still beats v2 on the shipped engine at recall 0.5952 versus 0.4921 and precision 0.6905 versus 0.5397, but by less than the prototype's recorded 0.6746 and 0.8333, and with no index hints the shipped router falls to 0.4762 and 0.5714. The index contribution, not node keywords, carries the gain. Path rerouting matches the prototype exactly.
 - The rerun also found `knowledge_node_for_path` resolving every node root per search result; resolving once per routing call cut fixture routing from 152 ms to 39 ms at p50 with identical selections. The residual 25 ms is the per-call whole-tree reparse that the `KnowledgeStore` boundary exists to address.
 - Final clean-clone verification at `8143d26`: `validate` ok, `ref check` ok on 56 objects, `validate-wiki` ok, `export-adapters --check` up to date across 76 generated files, `selftest` green at 1,430 tests, `knowledge migrate-v2` reports `already-v3`, and the engine gates reproduce.
+
+- Independent review over `24c4775..HEAD` found eight real defects, none caught by the suite or by `validate`. All are fixed, each with a regression test.
+- Review finding 1: `_converted_expansions` referenced an undefined `package`, so a valid unit-level `expand_when` crashed the dry-run with `NameError`. Only the malformed case had coverage, and this repository had no valid unit-level `expand_when`, so the contract's named conversion deliverable had never executed.
+- Review finding 2: `bindings verify --accept` decided reviewability by searching error prose for "fingerprint", so a binding asserting on a field named `fingerprint` was accepted while its assertion failed. `verify_binding` now returns an `awaiting_review` flag and the command reads that instead of free text.
+- Review finding 3: `record_accepted_fingerprint` anchored on the first `<key>:` line at any indent, so a nested `contains:` or `identity:` key captured the anchor and left the fragment unparseable; it also assumed two-space nesting and silently damaged any other layout. It now resolves a direct child of the top-level `bindings` map, takes the field indent from the file, and preserves CRLF.
+- Review finding 4: the reference-rewrite walk covered the whole working tree while `require_clean` ignores untracked files, so the digest depended on untracked content and apply could overwrite files the recorded Git boundary cannot restore. The walk now uses `git ls-files`.
+- Review finding 5: the per-node gate matched finding paths by bare prefix, so `spaces/checkout` inherited `spaces/checkout-api` findings, and tree-level findings belonging to no node were dropped entirely.
+- Review finding 6: the template rewrite chain left the shipped v3 template emitting a v2 `hydra://knowledge-package/` bare-string relation and a path stitched into the middle of another path. The identity rewrite now precedes the typed-relation anchor, and the concept-doc rule is anchored.
+- Review finding 7: the prose rules half-renamed template sentences and matched inside words such as "data packages". They are removed rather than left partial, and the templates are corrected by hand.
+- Review finding 8: `emit_yaml` dropped a sequence item's first key when it held a mapping, silently and under a digest that certified the loss. Nested mappings and lists now round-trip.
+- The review found nothing real in `knowledge_node_for_path`/`node_roots_by_path`: it confirmed identical selections across all 21 workloads and equivalent behavior for symlinks, absolute, relative, and out-of-repo paths.
+- `engine_gates.py` now emits a byte-identical report between runs, keeps machine-dependent latency behind `--timings`, and emits `retrieval_without_index_hints` so the README's load-bearing claim is re-runnable. The README states plainly that its comparison columns are not like-for-like, because the prototypes score their own corpora while the engine column is fed an oracle hint ranking.
+- Post-review verification in a clean clone at `0161195`: `validate` ok, `ref check` ok on 56 objects, `validate-wiki` ok, adapters up to date across 76 files, `knowledge migrate-v2` reports `already-v3`, the node gate passes, and the suite is 1,287 unit and 1,439 selftest with zero failures.
 
 ## Blockers
 
