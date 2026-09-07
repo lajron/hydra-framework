@@ -92,6 +92,6 @@ guidance. Start with [what Hydra is](project-wiki/hydra-framework/hydra-framewor
 if you want the full picture.
 
 Hydra is a `0.1.0` foundation seed. See the
-[build status](.hydra-framework/repo/knowledge/knowledge-packages/hydra-framework/units/build-status.md)
+[build status](.hydra-framework/repo/knowledge/spaces/hydra-framework/units/build-status.md)
 and [public positioning brief](project-wiki/hydra-framework/reference/public-positioning.md)
 for its current state and evidence boundaries.

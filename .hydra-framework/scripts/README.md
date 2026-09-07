@@ -361,7 +361,7 @@ or an explicit package path:
 ```bash
 python3 .hydra-framework/scripts/hydra.py validate-package-docs
 python3 .hydra-framework/scripts/hydra.py validate-package-docs --package <package-slug>
-python3 .hydra-framework/scripts/hydra.py validate-package-docs --path .hydra-framework/repo/knowledge/knowledge-packages/<package-slug>
+python3 .hydra-framework/scripts/hydra.py validate-package-docs --path .hydra-framework/repo/knowledge/spaces/<space-slug>
 python3 .hydra-framework/scripts/hydra.py validate-package-docs --package <package-slug> --render
 ```
 

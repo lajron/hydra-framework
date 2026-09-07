@@ -1,0 +1,41 @@
+schema: "hydra-framework.knowledge-node.v1"
+node: "<space-slug>"
+hydra_id: "hydra://knowledge-space/<space-slug>"
+uid: "<fresh uuid4>"
+schema_version: 3
+kind: "knowledge-space"
+title: "<Space Name>"
+status: "active"
+scope: "<base-seed|common-seed|repo-local>"
+owners:
+  team: "<owner>"
+relations: []
+provenance:
+  sources: []
+role: "accountability-root"
+routable: true
+state: "./state.md"
+overview: "./overview.md"
+keywords:
+  - "<keyword>"
+  - "<phrase>"
+  - "<domain term>"
+defaults: {}
+routes:
+  example_route:
+    use_when:
+      - "<task shape or question this route answers>"
+    priority_units:
+      - "hydra://knowledge-unit/<space-slug>/<unit-slug>"
+    requires:
+      - "hydra://knowledge-unit/<space-slug>/<must-read-unit-slug>"
+    expand_when:
+      - when_paths:
+          - "@<namespace>/<binding>/**"
+        read:
+          - "hydra://knowledge-unit/<space-slug>/<conditionally-relevant-unit-slug>"
+        why: "<why this verified binding implies that unit>"
+    avoid_by_default:
+      - "<large generated or private area>"
+    verify:
+      - "<command that checks work under this route>"

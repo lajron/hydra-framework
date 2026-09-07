@@ -1,0 +1,5 @@
+schema: "hydra-framework.knowledge-spaces.v1"
+default_depth: 3
+max_depth: 4
+spaces:
+  - "hydra-framework"

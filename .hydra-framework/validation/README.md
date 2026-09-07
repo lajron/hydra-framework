@@ -59,7 +59,7 @@ The default package gate is intentionally cheap and deterministic:
 - DOT diagrams render only when explicitly requested
 
 Repositories can layer stricter package-local checks through
-`knowledge-packages/<package-slug>/scripts/check.sh`.
+`spaces/<space-slug>/scripts/check.sh`.
 
 
 ## Optional Token Guardrails

@@ -1,185 +1,185 @@
 schema: hydra-framework.object-sidecar.v1
 title: Hydra Object Sidecars
 objects:
-  package-template-readme:
-    hydra_id: hydra://knowledge-template/package/readme
+  space-template-readme:
+    hydra_id: hydra://knowledge-template/space/readme
     uid: 954f110f-31cd-4024-a9cd-68c2ba544fc3
     schema_version: 3
     aliases:
-      - hydra://knowledge-template/package/index
+      - hydra://knowledge-template/space/index
     kind: knowledge-template
-    title: Knowledge Package Template Index
+    title: Knowledge Space Template Index
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/README.md
+    path: .hydra-framework/repo/knowledge/templates/space/README.md
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-overview:
-    hydra_id: hydra://knowledge-template/package/overview
+  space-template-overview:
+    hydra_id: hydra://knowledge-template/space/overview
     uid: fc80270e-c601-4f68-a3ed-f3d9e386b9db
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package Overview Template
+    title: Knowledge Space Overview Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/overview.md
+    path: .hydra-framework/repo/knowledge/templates/space/overview.md
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-state:
-    hydra_id: hydra://knowledge-template/package/state
+  space-template-state:
+    hydra_id: hydra://knowledge-template/space/state
     uid: 6b07c738-8f8f-4573-a2fb-74fea04e3ebc
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package State Template
+    title: Knowledge Space State Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/state.md
+    path: .hydra-framework/repo/knowledge/templates/space/state.md
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-glossary:
-    hydra_id: hydra://knowledge-template/package/glossary
+  space-template-glossary:
+    hydra_id: hydra://knowledge-template/space/glossary
     uid: 9294188c-b0f7-4d1b-a2d1-dbfe7695f851
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package Glossary Template
+    title: Knowledge Space Glossary Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/glossary.md
+    path: .hydra-framework/repo/knowledge/templates/space/glossary.md
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-sources:
-    hydra_id: hydra://knowledge-template/package/sources
+  space-template-sources:
+    hydra_id: hydra://knowledge-template/space/sources
     uid: cd61034a-a504-49f2-9bdd-2e2c05601457
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package Sources Template
+    title: Knowledge Space Sources Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/sources.md
+    path: .hydra-framework/repo/knowledge/templates/space/sources.md
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-units-example:
-    hydra_id: hydra://knowledge-template/package/units-example
+  space-template-units-example:
+    hydra_id: hydra://knowledge-template/space/units-example
     uid: cde96ca9-d600-4256-903c-a065c98caf55
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package Units Example Template
+    title: Knowledge Space Units Example Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/units/example.md
+    path: .hydra-framework/repo/knowledge/templates/space/units/example.md
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-definition-of-done:
-    hydra_id: hydra://knowledge-template/package/definition-of-done
+  space-template-definition-of-done:
+    hydra_id: hydra://knowledge-template/space/definition-of-done
     uid: da8c5a95-5537-4d34-b766-afa5f045236f
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package Definition Of Done Template
+    title: Knowledge Space Definition Of Done Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/definition-of-done.md
+    path: .hydra-framework/repo/knowledge/templates/space/definition-of-done.md
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-problems:
-    hydra_id: hydra://knowledge-template/package/problems
+  space-template-problems:
+    hydra_id: hydra://knowledge-template/space/problems
     uid: 2ad87a96-2725-49e3-aec2-fd90d1ac93c5
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package Problems Template
+    title: Knowledge Space Problems Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/problems.md
+    path: .hydra-framework/repo/knowledge/templates/space/problems.md
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-questions:
-    hydra_id: hydra://knowledge-template/package/questions
+  space-template-questions:
+    hydra_id: hydra://knowledge-template/space/questions
     uid: 7f8cb5ca-26d1-49a3-9d7f-1b7673800e75
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package Questions Template
+    title: Knowledge Space Questions Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/questions.md
+    path: .hydra-framework/repo/knowledge/templates/space/questions.md
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-routing:
-    hydra_id: hydra://knowledge-template/package/routing
+  space-template-routing:
+    hydra_id: hydra://knowledge-template/space/routing
     uid: 7db2bdec-1023-4127-b601-ca1fc7149ce4
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package Routing Template
+    title: Knowledge Space Routing Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/routing.yaml
+    path: .hydra-framework/repo/knowledge/templates/space/space.yaml.template
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-architecture-graph:
-    hydra_id: hydra://knowledge-template/package/architecture-graph
+  space-template-architecture-graph:
+    hydra_id: hydra://knowledge-template/space/architecture-graph
     uid: 879c98a6-fdc6-4a9c-b263-d82a16a5430d
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package Architecture Graph Template
+    title: Knowledge Space Architecture Graph Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/architecture/00-graph.md
+    path: .hydra-framework/repo/knowledge/templates/space/architecture/00-graph.md
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-architecture-example:
-    hydra_id: hydra://knowledge-template/package/architecture-example
+  space-template-architecture-example:
+    hydra_id: hydra://knowledge-template/space/architecture-example
     uid: 5447f8f8-f5b2-4315-8b4d-d0c4f9f6be93
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package Architecture Example Template
+    title: Knowledge Space Architecture Example Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/architecture/01-example.md
+    path: .hydra-framework/repo/knowledge/templates/space/architecture/01-example.md
     owners:
       team: hydra
     provenance:
       sources: []
     relations: []
-  package-template-check-script:
-    hydra_id: hydra://knowledge-template/package/check-script
+  space-template-check-script:
+    hydra_id: hydra://knowledge-template/space/check-script
     uid: 16832a4c-aa19-4262-a282-f6c8fe9655be
     schema_version: 3
     kind: knowledge-template
-    title: Knowledge Package Check Script Template
+    title: Knowledge Space Check Script Template
     status: active
     scope: base-seed
-    path: .hydra-framework/repo/knowledge/knowledge-packages/templates/scripts/check.sh
+    path: .hydra-framework/repo/knowledge/templates/space/scripts/check.sh
     owners:
       team: hydra
     provenance:

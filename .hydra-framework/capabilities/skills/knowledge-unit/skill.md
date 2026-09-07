@@ -126,6 +126,6 @@ change. A new or edited unit that fails either is not done.
 ## Related
 
 - `.hydra-framework/capabilities/workflows/material-migration.md`
-- `.hydra-framework/repo/knowledge/knowledge-packages.md`
+- `.hydra-framework/core/knowledge-architecture.md`
 - `.hydra-framework/repo/knowledge/certainty-model.md`
 - `.hydra-framework/capabilities/skills/repository-inspection/skill.md`

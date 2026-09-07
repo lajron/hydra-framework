@@ -29,7 +29,7 @@ Packages are still canonical repository knowledge, not wiki pages. They live
 under `.hydra-framework/repo/knowledge/knowledge-packages/`, and the engine
 discovers package roots there when a directory contains markers such as
 `overview.md`, `routing.yaml`, `units/`, or `architecture/`. Templates under
-`knowledge-packages/templates/` are defaults for new packages, not a required
+`knowledge/templates/space/` are defaults for new packages, not a required
 file count.
 
 ## Current File Shape
@@ -51,7 +51,7 @@ optional support files, and flat units:
 The active `hydra-framework` package has this file layout:
 
 ```text
-.hydra-framework/repo/knowledge/knowledge-packages/hydra-framework/
+.hydra-framework/repo/knowledge/spaces/hydra-framework/
 ├── architecture/
 │   ├── 00-graph.md
 │   └── 01-example.md
@@ -126,7 +126,7 @@ package-local link changes:
 
 ```bash
 python3 .hydra-framework/scripts/hydra.py validate-package-docs --package hydra-framework
-python3 .hydra-framework/scripts/hydra.py validate-package-docs --path .hydra-framework/repo/knowledge/knowledge-packages/hydra-framework
+python3 .hydra-framework/scripts/hydra.py validate-package-docs --path .hydra-framework/repo/knowledge/spaces/hydra-framework
 ```
 
 The gate can also render DOT diagrams when a package owns them:
