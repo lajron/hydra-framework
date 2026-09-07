@@ -18,12 +18,19 @@ provenance:
 # Problems
 
 Status: active
-Updated: 2026-07-30
+Updated: 2026-09-07
 
 Concrete unresolved concerns for Hydra's own machinery. Each needs evidence, not
 opinion. Resolve or close with a reason; do not let entries rot.
 
 ## Open
+
+### P4: Routing re-reads the whole knowledge tree on every call
+
+- Evidence: `validation/knowledge-v3/engine_gates.py` over the checked-in 216-leaf fixture. `discover_knowledge_nodes` costs about 25 ms for the 258-node materialized tree, and `route_nodes` calls it per invocation, so routing cost scales with tree size rather than with the number of selected nodes.
+- Impact: negligible in a repository with one space, and a per-prompt cost in a repository with hundreds of nodes, where every `route-prompt` and `compile-context` call pays a full parse of canonical files.
+- Resolution: unresolved. The `KnowledgeStore` interface in `core/knowledge-architecture.md` exists for this: canonical files stay the source of truth while a derived, rebuildable index serves discovery. Implementing that cache is a separate workstream from Knowledge v3 itself, and a stale index must still be unable to authorize an invalid reference or a stale binding. Do not add a cache that selected content is not re-read against.
+- Certainty: confirmed
 
 ### P1: Codex capability classes resolve to no model
 

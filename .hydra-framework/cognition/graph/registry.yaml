@@ -452,7 +452,7 @@ objects:
   hydra://knowledge-slice/hydra-framework/problems:
     uid: 3b5cdad3-e87f-4af2-b8c6-c5353c7a6d6e
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/problems.md
-    digest: sha256:009c174793cd2466d0e10c6f2d71e3ee6244300a3c310c0f15190cd55fb5e46b
+    digest: sha256:8b77181717d89c9fe1aeccc714dbb2e6e044bda27e4408681ef94e52b7bd969e
     family: Knowledge
     kind: knowledge-slice
     status: active
