@@ -1,10 +1,5 @@
-"""Knowledge-package Markdown/routing/unit validation and optional Graphviz
+"""Knowledge-node Markdown/unit validation and optional Graphviz
 diagram rendering.
-
-`resolver_paths: ObjectLocations` is a bare forward-reference type hint, not a
-real import -- `validate_routing_file` (this module's only reason to need the
-type at all) already established that convention for the same parameter, and
-this module never constructs or introspects an `ObjectLocations` itself.
 
 Unit `reads:` validation uses `documents.tokens.cited_source_path_missing` for
 the same brace-set/glob/trailing-slash heuristic object provenance and flat
@@ -24,7 +19,6 @@ from hydra_engine.finding import Finding
 from hydra_engine.identity.hydra_ids import HYDRA_ID_RE
 from hydra_engine.knowledge.candidates import APPROX_CHARS_PER_TOKEN, approx_tokens
 from hydra_engine.knowledge.packages import ContextCompilerPaths
-from hydra_engine.knowledge.routing import validate_routing_file
 from hydra_engine.knowledge.units import (
     UNIT_KINDS,
     discover_unit_paths,
@@ -45,7 +39,8 @@ SOURCE_DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 # it scans every Markdown file under a package root regardless of registered
 # `kind` (`knowledge-package`'s own `overview.md`, `knowledge-slice` envelopes
 # like `state.md`/`problems.md`, and `knowledge-unit` files under `units/`
-# alike), so a kind-specific name would misstate its scope.
+# alike), so a kind-specific name would misstate its scope.  The exported
+# constant retains its historical spelling as a CLI-policy compatibility key.
 PACKAGE_FILE_FAIL_TOKENS = 8000
 
 
@@ -304,7 +299,6 @@ def validate_package_root(
         return [Finding(path=str(root), code="package-root", detail=f"package path is not a directory: {root}")]
     findings: list[Finding] = []
     findings.extend(validate_markdown_links(root, paths.root))
-    findings.extend(validate_routing_file(root / "routing.yaml", paths, resolver_paths, command_ids))
     findings.extend(validate_units_dir(root, paths, resolver_paths))
     findings.extend(validate_package_file_sizes(root, paths, file_fail_tokens, chars_per_token))
     if render:

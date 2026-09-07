@@ -18,16 +18,22 @@ from hydra_engine.documents.tokens import is_relative_to
 from hydra_engine.knowledge.candidates import APPROX_CHARS_PER_TOKEN, stale_unit_source_report
 from hydra_engine.knowledge import search_index
 from hydra_engine.knowledge.package_checks import PACKAGE_FILE_FAIL_TOKENS, validate_package_root
-from hydra_engine.knowledge.packages import ContextCompilerPaths, discover_knowledge_packages
+from hydra_engine.knowledge.nodes import discover_knowledge_nodes
+from hydra_engine.knowledge.packages import ContextCompilerPaths
 from hydra_engine.knowledge.surfaces import measure_context_surfaces
 
 
 def package_roots_from_args(args, paths: ContextCompilerPaths) -> list[Path]:
     if getattr(args, "path", None):
         return [Path(args.path).resolve()]
-    if getattr(args, "package", None):
-        return [paths.knowledge_packages_root() / args.package]
-    return discover_knowledge_packages(paths)
+    selector = getattr(args, "node", None) or getattr(args, "package", None)
+    if not (paths.hydra / "repo/knowledge/spaces.yaml").is_file():
+        return []
+    nodes = discover_knowledge_nodes(paths)
+    if selector:
+        matches = [node.path.parent for node in nodes if node.logical_id == selector or node.logical_id.rsplit("/", 1)[-1] == selector]
+        return matches
+    return [node.path.parent for node in nodes]
 
 
 def print_context_surface_report(rows: list[dict[str, int | str]], totals: dict[str, int]) -> None:
@@ -69,13 +75,13 @@ def command_validate_package_docs(
 ) -> CommandResult:
     roots = package_roots_from_args(args, paths)
     if not roots:
-        print("Hydra package docs: no knowledge packages found")
+        print("Hydra Knowledge v3 docs: no knowledge nodes found")
         return CommandResult(0)
 
     errors: list = []
     for root in roots:
         shown = root.relative_to(paths.root) if is_relative_to(root, paths.root) else root
-        print(f"Hydra package docs: {shown}")
+        print(f"Hydra Knowledge v3 docs: {shown}")
         errors.extend(validate_package_root(
             root,
             paths,
@@ -87,11 +93,11 @@ def command_validate_package_docs(
         ))
 
     if errors:
-        print("Hydra package docs: failed")
+        print("Hydra Knowledge v3 docs: failed")
         for error in errors:
             print(f"- {error}")
         return CommandResult(1)
-    print("Hydra package docs: ok")
+    print("Hydra Knowledge v3 docs: ok")
     return CommandResult(0)
 
 
@@ -222,7 +228,7 @@ def command_knowledge_stale(_args, paths: ContextCompilerPaths) -> CommandResult
         return CommandResult(0)
     for row in rows:
         sources = ", ".join(str(source) for source in row["stale_sources"])
-        print(f"- {row['hydra_id']} ({row['package']}, {row['path']}): {sources} committed after checked_on")
+        print(f"- {row['hydra_id']} ({row['node']}, {row['path']}): {sources} committed after checked_on")
     return CommandResult(0)
 
 
@@ -237,9 +243,10 @@ def register(subparsers) -> None:
     measure.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     measure.set_defaults(func=_dispatch_measure_context)
 
-    package_docs = subparsers.add_parser("validate-package-docs", help="Validate knowledge-package Markdown links, routing, and units")
-    package_docs.add_argument("--package", help="Knowledge package slug under repo/knowledge/knowledge-packages")
-    package_docs.add_argument("--path", help="Explicit package directory path")
+    package_docs = subparsers.add_parser("validate-package-docs", help="Validate Knowledge v3 node Markdown links and units")
+    package_docs.add_argument("--node", help="Knowledge node id or unambiguous leaf slug")
+    package_docs.add_argument("--package", help="Deprecated alias for --node")
+    package_docs.add_argument("--path", help="Explicit node directory path")
     package_docs.add_argument("--render", action="store_true", help="Render package diagrams/*.dot to images")
     package_docs.set_defaults(func=_dispatch_validate_package_docs)
 

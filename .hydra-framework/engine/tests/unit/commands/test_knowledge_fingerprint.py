@@ -18,6 +18,7 @@ from hydra_engine.commands import knowledge_fingerprint  # noqa: E402
 from hydra_engine.documents.digests import normalized_digest  # noqa: E402
 from hydra_engine.documents.frontmatter_blocks import markdown_frontmatter  # noqa: E402
 from hydra_engine.knowledge.packages import ContextCompilerPaths  # noqa: E402
+from v3_fixtures import paths_for, write_node, write_unit  # noqa: E402
 
 
 def _paths() -> ContextCompilerPaths:
@@ -28,18 +29,9 @@ def _paths() -> ContextCompilerPaths:
 def _seed_unit(paths: ContextCompilerPaths) -> tuple[Path, Path]:
     source = paths.root / "source.py"
     source.write_text("x = 1\n", encoding="utf-8")
-    unit_path = paths.hydra / "repo/knowledge/knowledge-packages/example/units/demo.md"
-    unit_path.parent.mkdir(parents=True)
-    unit_path.write_text(
-        "---\nhydra_id: hydra://knowledge-unit/example/demo\n"
-        "uid: 11111111-1111-4111-8111-111111111111\n"
-        "schema_version: 3\nkind: knowledge-unit\nunit_kind: answer\n"
-        "title: Demo\nstatus: active\nscope: repo\nowners:\n  team: fixture\n"
-        "relations: []\nprovenance:\n  sources:\n    - source.py\n"
-        "checked_on: 2026-08-29\nquestion: \"What does this answer?\"\n"
-        "---\n# Demo\n",
-        encoding="utf-8",
-    )
+    paths_for(paths.root, ("example",))
+    write_node(paths, "example")
+    unit_path = write_unit(paths, "example", "demo", sources=("source.py",), checked_on="2026-08-29")
     return source, unit_path
 
 

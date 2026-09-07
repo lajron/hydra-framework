@@ -21,7 +21,8 @@ import time
 from hydra_engine.cli.rendering import render_route_prompt
 from hydra_engine.commands.context import prompt_payload_from_stdin_or_arg
 from hydra_engine.knowledge import search_index
-from hydra_engine.knowledge.routing import route_prompt_package_pointers
+from hydra_engine.knowledge.bindings import bindings_root, load_bindings
+from hydra_engine.knowledge.routing import route_prompt_node_pointers
 from hydra_engine.knowledge.routing_diagnostics import route_prompt_match_diagnostics
 from hydra_engine.ports import fs
 from hydra_engine.work.board import state_pointer_lines
@@ -37,7 +38,7 @@ def command_route_prompt(args, ctx) -> int:
         return 0
     started = time.perf_counter()
     as_json = bool(getattr(args, "json", False))
-    max_routed_packages = ctx.threshold_value("hydra_engine.knowledge.routing.MAX_ROUTED_PACKAGES")
+    max_routed_nodes = ctx.threshold_value("hydra_engine.knowledge.routing.MAX_ROUTED_NODES")
     exact_references = search_index.exact_matches(
         prompt,
         search_index.collect_search_documents(
@@ -46,36 +47,24 @@ def command_route_prompt(args, ctx) -> int:
             command_ids=ctx.command_ids,
         ),
     )
-    matches, warnings = route_prompt_package_pointers(
+    results, _features, _source = search_index.search(
+        prompt,
+        paths=ctx.context_compiler_paths(),
+        resolver_paths=ctx.resolver_paths(),
+        local=ctx.local,
+        command_ids=ctx.command_ids,
+        limit=20,
+    )
+    binding_manifest = bindings_root(ctx.context_compiler_paths()) / "manifest.yaml"
+    bindings = load_bindings(ctx.context_compiler_paths()) if binding_manifest.is_file() else {}
+    matches, warnings = route_prompt_node_pointers(
         prompt,
         ctx.context_compiler_paths(),
-        ctx.resolver_paths(),
-        max_routed_packages=max_routed_packages,
+        search_results=tuple(results),
+        max_routed_nodes=max_routed_nodes,
+        bindings=bindings,
     )
-    match_reason = "routing keyword" if matches else "none"
-    fallback_package_slugs: tuple[str, ...] = ()
-    if not matches:
-        results, _features, _source = search_index.search(
-            prompt,
-            paths=ctx.context_compiler_paths(),
-            resolver_paths=ctx.resolver_paths(),
-            local=ctx.local,
-            command_ids=ctx.command_ids,
-            limit=5,
-        )
-        votes = search_index.package_votes(results)
-        if votes:
-            fallback_package_slugs = (votes[0][0],)
-            matches, fallback_warnings = route_prompt_package_pointers(
-                prompt,
-                ctx.context_compiler_paths(),
-                ctx.resolver_paths(),
-                fallback_package_slugs,
-                max_routed_packages=max_routed_packages,
-            )
-            warnings.extend(fallback_warnings)
-            if matches:
-                match_reason = "search vote fallback"
+    match_reason = "global index" if matches else "none"
     reflections_dir = ctx.hydra / "evolution" / "reflections"
     telemetry_packages_dir = ctx.hydra / "repo" / "telemetry" / "packages"
     state_lines = state_pointer_lines(ctx.work_paths(), ctx.env_owner(), ctx.git_email(), reflections_dir, telemetry_packages_dir)
@@ -97,7 +86,7 @@ def command_route_prompt(args, ctx) -> int:
     )
     if as_json:
         diagnostics = {
-            "matches": _match_diagnostics(prompt, ctx, matches, match_reason, fallback_package_slugs),
+            "matches": _match_diagnostics(prompt, ctx, matches, match_reason),
             "warnings": warnings,
             "exact_references": [
                 {"hydra_id": reference.document.hydra_id, "title": reference.document.title, "path": reference.document.path}
@@ -114,9 +103,11 @@ def command_route_prompt(args, ctx) -> int:
     return 0
 
 
-def _match_diagnostics(prompt: str, ctx, matches, match_reason: str, fallback_package_slugs: tuple[str, ...]) -> list[dict]:
+def _match_diagnostics(prompt: str, ctx, matches, match_reason: str) -> list[dict]:
+    if not matches:
+        return []
     matched_titles = {match.title for match in matches}
-    scored = route_prompt_match_diagnostics(prompt, ctx.context_compiler_paths(), ctx.resolver_paths(), fallback_package_slugs)
+    scored = route_prompt_match_diagnostics(prompt, ctx.context_compiler_paths())
     return [{**entry, "reason": match_reason} for entry in scored if entry["title"] in matched_titles]
 
 
@@ -152,11 +143,11 @@ def _should_emit(local, session_id: str, rendered: str, *, record: bool = True) 
 
 
 def register(subparsers) -> None:
-    route = subparsers.add_parser("route-prompt", help="Emit tiny knowledge-package routing pointers for a prompt")
+    route = subparsers.add_parser("route-prompt", help="Emit tiny Knowledge v3 node pointers for a prompt")
     route.add_argument("--prompt", default="", help="Prompt text; if omitted, stdin is read")
     route.add_argument(
         "--json", action="store_true",
-        help="Print a diagnostic JSON object (matched packages with reason/score, resolved exact "
+        help="Print a diagnostic JSON object (matched nodes with reason/score, resolved exact "
         "references, suppression state, timing) instead of the plain hook output",
     )
     route.set_defaults(func=_dispatch_route_prompt)

@@ -132,29 +132,6 @@ class ValidatePackageRootTests(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("missing.md", errors[0])
 
-    def test_broken_routing_file_is_reported(self):
-        paths, resolver_paths = _locations()
-        package_root = paths.root / "package"
-        package_root.mkdir()
-        (package_root / "routing.yaml").write_text(
-            "schema: hydra-framework.package-routing.v2\npackage: example\ntitle: Example\n",
-            encoding="utf-8",
-        )
-        errors = package_checks.validate_package_root(package_root, paths, resolver_paths)
-        self.assertEqual(len(errors), 1)
-        self.assertIn("missing `keywords`", errors[0])
-
-    def test_v1_routing_schema_is_a_finding_not_silently_accepted(self):
-        paths, resolver_paths = _locations()
-        package_root = paths.root / "package"
-        package_root.mkdir()
-        (package_root / "routing.yaml").write_text(
-            "schema: hydra-framework.package-routing.v1\npackage: example\ntitle: Example\nkeywords: example\n",
-            encoding="utf-8",
-        )
-        errors = package_checks.validate_package_root(package_root, paths, resolver_paths)
-        self.assertTrue(any("schema must be" in str(e) for e in errors))
-
     def test_render_false_does_not_touch_diagrams(self):
         paths, resolver_paths = _locations()
         package_root = paths.root / "package"

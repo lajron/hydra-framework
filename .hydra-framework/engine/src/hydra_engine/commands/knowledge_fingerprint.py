@@ -8,13 +8,16 @@ from hydra_engine.commands import CommandResult
 from hydra_engine.documents.digests import normalized_digest
 from hydra_engine.documents.tokens import display_path, read_text, write_text
 from hydra_engine.knowledge.freshness import resolve_source_path
-from hydra_engine.knowledge.packages import ContextCompilerPaths, discover_knowledge_packages
-from hydra_engine.knowledge.units import discover_unit_paths, read_unit
+from hydra_engine.knowledge.nodes import discover_knowledge_nodes, discover_node_unit_paths
+from hydra_engine.knowledge.packages import ContextCompilerPaths
+from hydra_engine.knowledge.units import read_unit
 
 
 def _find_unit(paths: ContextCompilerPaths, hydra_id: str):
-    for package_root in discover_knowledge_packages(paths):
-        for unit_path in discover_unit_paths(package_root):
+    if not (paths.hydra / "repo/knowledge/spaces.yaml").is_file():
+        return None
+    for node in discover_knowledge_nodes(paths):
+        for unit_path in discover_node_unit_paths(node):
             unit = read_unit(unit_path, paths.root)
             if unit is not None and unit.hydra_id == hydra_id:
                 return unit

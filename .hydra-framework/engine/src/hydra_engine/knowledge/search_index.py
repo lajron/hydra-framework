@@ -13,8 +13,8 @@ from hydra_engine.documents.markdown import strip_markdown_code_fences
 from hydra_engine.documents.tokens import display_path, is_relative_to, read_text
 from hydra_engine.identity.slugs import slugify
 from hydra_engine.knowledge.candidates import APPROX_CHARS_PER_TOKEN, approx_tokens
-from hydra_engine.knowledge.packages import ContextCompilerPaths, knowledge_package_root_for_path
-from hydra_engine.knowledge.routing import read_package_routing
+from hydra_engine.knowledge.nodes import discover_knowledge_nodes, knowledge_node_for_path, resolve_inheritance
+from hydra_engine.knowledge.packages import ContextCompilerPaths
 from hydra_engine.objects.registry import registry_object_entries
 from hydra_engine.telemetry.writer import event_growth_notes as knowledge_events_growth_notes, events_path as telemetry_events_path, knowledge_counts as telemetry_counts, record_knowledge_command_usage as record_command_usage, record_knowledge_route as record_route
 
@@ -333,26 +333,27 @@ def _document_for_registry_entry(paths: ContextCompilerPaths, hydra_id: str, ent
 
 
 def _package_for(file_path: Path, paths: ContextCompilerPaths, hydra_id: str, entry: dict) -> str:
-    if hydra_id.startswith("hydra://knowledge-package/"):
-        return hydra_id.rsplit("/", 1)[-1]
-    for relation in _list(entry.get("relations")):
-        if relation.startswith("hydra://knowledge-package/"):
-            return relation.rsplit("/", 1)[-1]
-    root = knowledge_package_root_for_path(file_path, paths)
-    return root.name if root else ""
+    for prefix in ("hydra://knowledge-space/", "hydra://knowledge-node/"):
+        if hydra_id.startswith(prefix):
+            return hydra_id.removeprefix(prefix)
+    try:
+        nodes = discover_knowledge_nodes(paths)
+    except Exception:
+        return ""
+    node = knowledge_node_for_path(file_path, nodes, paths)
+    return node.logical_id if node else ""
 
 
 def _routing_fields(file_path: Path, paths: ContextCompilerPaths, resolver_paths: ObjectLocations) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
-    package_root = knowledge_package_root_for_path(file_path, paths)
-    if package_root is None:
+    try:
+        nodes = discover_knowledge_nodes(paths)
+    except Exception:
         return (), (), ()
-    data, _warning = read_package_routing(package_root, paths, resolver_paths)
-    routes = _map(data.get("routes"))
-    route_names = tuple(str(name) for name in routes)
-    use_when: list[str] = []
-    for route in routes.values():
-        use_when.extend(_list(_map(route).get("use_when")))
-    return route_names, tuple(use_when), tuple(_list(data.get("keywords")))
+    node = knowledge_node_for_path(file_path, nodes, paths)
+    if node is None:
+        return (), (), ()
+    routes = resolve_inheritance(node, {item.logical_id: item for item in nodes})["routes"]
+    return tuple(routes), tuple(value for route in routes.values() for value in route.use_when), node.keywords
 
 
 def _row_for_document(doc: SearchDocument) -> tuple:

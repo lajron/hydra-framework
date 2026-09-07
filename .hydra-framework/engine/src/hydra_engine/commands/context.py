@@ -56,11 +56,12 @@ def compile_context_packet(
     provider: str = "",
     model: str = "",
     budget: int = DEFAULT_CONTEXT_BUDGET,
-    package_values: list[str] | None = None,
-    domain: str = "",
+    node_values: list[str] | None = None,
+    space: str = "",
     object_refs: list[str] | None = None,
     path_refs: list[str] | None = None,
     route_values: list[str] | None = None,
+    view_values: list[str] | None = None,
     chars_per_token: int = APPROX_CHARS_PER_TOKEN,
     family_cap: int = DEFAULT_FAMILY_CANDIDATE_CAP,
     include_families: list[str] | None = None,
@@ -77,11 +78,12 @@ def compile_context_packet(
         provider=provider,
         model=model,
         budget=budget,
-        package_values=package_values,
-        domain=domain,
+        node_values=node_values,
+        space=space,
         object_refs=object_refs,
         path_refs=path_refs,
         route_values=route_values,
+        view_values=view_values,
         chars_per_token=chars_per_token,
         family_cap=family_cap,
         include_families=include_families,
@@ -98,12 +100,12 @@ def print_context_packet(packet: dict) -> None:
     print(f"Provider/model: {packet['provider']} / {packet['model']}")
     print(f"Budget: {packet['budget_tokens']} approx tokens")
 
-    print("Packages:")
-    if packet["packages"]:
-        for item in packet["packages"]:
-            line = f"- {item['package']} ({item['reason']}): {item['title']}"
-            if item.get("route"):
-                line += f" [route: {item['route']}]"
+    print("Nodes:")
+    if packet.get("nodes"):
+        for item in packet["nodes"]:
+            line = f"- {item['node']} ({item['reason']}): {item['title']}"
+            if item.get("routes"):
+                line += f" [routes: {', '.join(item['routes'])}]"
             print(line)
     else:
         print("- none")
@@ -214,18 +216,22 @@ def command_compile_context(
         provider=args.provider,
         model=args.model,
         budget=args.budget if args.budget is not None else default_budget,
-        package_values=args.package,
-        domain=args.domain,
-        object_refs=args.object,
-        path_refs=args.path,
-        route_values=args.route,
+        node_values=[*getattr(args, "node", []), *getattr(args, "package", [])],
+        space=getattr(args, "space", "") or getattr(args, "domain", ""),
+        object_refs=getattr(args, "object", []),
+        path_refs=getattr(args, "path", []),
+        route_values=getattr(args, "route", []),
+        view_values=getattr(args, "view", []),
         chars_per_token=chars_per_token,
         family_cap=args.family_cap if args.family_cap is not None else default_family_cap,
-        include_families=args.include_family,
-        exclude_families=args.exclude_family,
+        include_families=getattr(args, "include_family", []),
+        exclude_families=getattr(args, "exclude_family", []),
         command_ids=command_ids,
     )
-    route_errors = [warning for warning in packet["warnings"] if warning.startswith("Route ")]
+    route_errors = [
+        warning for warning in packet["warnings"]
+        if warning.startswith(("Route ", "Knowledge graph error:", "Knowledge binding error:", "Knowledge view error:"))
+    ]
     if route_errors:
         for warning in route_errors:
             print(warning, file=sys.stderr)
@@ -239,17 +245,20 @@ def command_compile_context(
 
 def register(subparsers) -> None:
     """Add `compile-context`."""
-    compile_context = subparsers.add_parser("compile-context", help="Build a bounded Hydra knowledge-package context packet")
+    compile_context = subparsers.add_parser("compile-context", help="Build a bounded Knowledge v3 context packet")
     compile_context.add_argument("--task", default="", help="Task text to compile context for")
     compile_context.add_argument("--prompt", default="", help="Alias for --task; if both are omitted, stdin is read")
     compile_context.add_argument("--provider", default="", help="Provider name for the packet metadata")
     compile_context.add_argument("--model", default="", help="Model name for the packet metadata")
     compile_context.add_argument("--budget", type=int, help="Approx-token budget for selected context")
-    compile_context.add_argument("--package", action="append", default=[], help="Knowledge package slug to include")
-    compile_context.add_argument("--domain", default="", help="Domain/package hint used when routing")
+    compile_context.add_argument("--node", action="append", default=[], help="Knowledge node id or unambiguous leaf slug to include")
+    compile_context.add_argument("--space", default="", help="Knowledge space to include")
+    compile_context.add_argument("--package", action="append", default=[], help="Deprecated alias for --node")
+    compile_context.add_argument("--domain", default="", help="Deprecated alias for --space")
     compile_context.add_argument("--object", action="append", default=[], help="Relevant hydra:// object ID or alias to include")
     compile_context.add_argument("--path", action="append", default=[], help="Relevant repository file path to include")
-    compile_context.add_argument("--route", action="append", default=[], help="Package-qualified route to activate, as <package>:<route>")
+    compile_context.add_argument("--route", action="append", default=[], help="Node-qualified route to activate, as <node>:<route>")
+    compile_context.add_argument("--view", action="append", default=[], help="Knowledge view id or slug to compose")
     compile_context.add_argument("--family-cap", type=int, help="Max candidates one non-Knowledge context-provider family may contribute")
     compile_context.add_argument("--include-family", action="append", default=[], help="Restrict context providers to this object family (repeatable); default is every registered family")
     compile_context.add_argument("--exclude-family", action="append", default=[], help="Drop this object family's context provider (repeatable)")

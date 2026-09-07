@@ -93,12 +93,12 @@ def command_adopt(args, paths, providers_paths, context_compiler_paths, manifest
     print(f"- CLAUDE.md: {'present' if report['claude_md_present'] else 'absent'}")
     print(f"- .claude/settings.json: {'present' if report['settings_json_present'] else 'absent'}")
 
-    packages = report["knowledge_packages"]
-    print(f"\nKnowledge packages: {len(packages)}")
-    for package in packages:
-        print(f"- {package.relative_to(paths.root).as_posix()}")
-    if not packages:
-        print("- none. Create one only for an area where AI work already repeats.")
+    nodes = report["knowledge_nodes"]
+    print(f"\nKnowledge nodes: {len(nodes)}")
+    for node in nodes:
+        print(f"- {node.logical_id} ({node.scope})")
+    if not nodes:
+        print("- none. Create one only for a stable accountability boundary where AI work already repeats.")
 
     unmanaged = report["unmanaged_surfaces"]
     print(f"\nUnmanaged provider files: {len(unmanaged)}")

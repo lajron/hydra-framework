@@ -11,7 +11,7 @@ thresholds:
   hydra_engine.knowledge.context_providers.DEFAULT_FAMILY_CANDIDATE_CAP: 8
   hydra_engine.knowledge.context_providers.PROVIDER_SEARCH_RESULT_LIMIT: 200
   hydra_engine.knowledge.package_checks.PACKAGE_FILE_FAIL_TOKENS: 8000
-  hydra_engine.knowledge.routing.MAX_ROUTED_PACKAGES: 3
+  hydra_engine.knowledge.routing.MAX_ROUTED_NODES: 2
   hydra_engine.knowledge.search_index.DEFAULT_BUDGET: 2000
   hydra_engine.knowledge.search_index.DEFAULT_PREVIEW_CHARS: 280
   hydra_engine.knowledge.search_index.DEFAULT_RESULT_LIMIT: 20

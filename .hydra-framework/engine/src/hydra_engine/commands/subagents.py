@@ -8,7 +8,8 @@ import sys
 from hydra_engine.agent_hooks.subagent_context import SUBAGENT_CONTEXT_AGENT_TYPES, SUBAGENT_CONTEXT_TOKEN_BUDGET, build_subagent_context
 from hydra_engine.commands import CommandResult
 from hydra_engine.knowledge.candidates import APPROX_CHARS_PER_TOKEN
-from hydra_engine.knowledge.packages import ContextCompilerPaths, discover_knowledge_packages
+from hydra_engine.knowledge.nodes import discover_knowledge_nodes
+from hydra_engine.knowledge.packages import ContextCompilerPaths
 
 
 def command_hook_subagent_start(
@@ -29,7 +30,7 @@ def command_hook_subagent_start(
     if str(data.get("agent_type") or "") not in SUBAGENT_CONTEXT_AGENT_TYPES:
         return CommandResult(0)
 
-    package_names = [root.name for root in discover_knowledge_packages(paths)]
+    package_names = [node.logical_id for node in discover_knowledge_nodes(paths) if node.routable]
     payload = {
         "hookSpecificOutput": {
             "hookEventName": "SubagentStart",

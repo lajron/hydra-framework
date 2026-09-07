@@ -13,10 +13,14 @@ from pathlib import Path
 _SRC = Path(__file__).resolve().parents[3] / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
+_UNIT = Path(__file__).resolve().parents[1]
+if str(_UNIT) not in sys.path:
+    sys.path.insert(0, str(_UNIT))
 
 from hydra_engine import thresholds  # noqa: E402
 from hydra_engine.cli import route_prompt  # noqa: E402
 from hydra_engine.cli.dispatch import RepoContext  # noqa: E402
+from v3_fixtures import paths_for, write_node, write_unit  # noqa: E402
 
 
 def _ctx() -> RepoContext:
@@ -26,19 +30,8 @@ def _ctx() -> RepoContext:
 
 
 def _seed_package(ctx: RepoContext) -> None:
-    pkg = ctx.hydra / "repo/knowledge/knowledge-packages/example"
-    pkg.mkdir(parents=True)
-    (pkg / "state.md").write_text("# State\n", encoding="utf-8")
-    (pkg / "overview.md").write_text("# Overview\n", encoding="utf-8")
-    (pkg / "routing.yaml").write_text(
-        "schema: hydra-framework.package-routing.v2\n"
-        "package: example\n"
-        "title: Example Package\n"
-        "keywords:\n  - engine refactor\n"
-        "state: .hydra-framework/repo/knowledge/knowledge-packages/example/state.md\n"
-        "note: Keep scope narrow.\n",
-        encoding="utf-8",
-    )
+    paths = paths_for(ctx.root, ("example",))
+    write_node(paths, "example", keywords=("engine", "refactor"))
 
 
 def _write_config(ctx: RepoContext, **overrides: int) -> None:
@@ -61,44 +54,24 @@ def _write_config(ctx: RepoContext, **overrides: int) -> None:
 
 
 def _seed_wrong_schema_package(ctx: RepoContext) -> None:
-    pkg = ctx.hydra / "repo/knowledge/knowledge-packages/wrong"
-    pkg.mkdir(parents=True)
-    (pkg / "routing.yaml").write_text(
-        "schema: wrong.schema.v1\npackage: wrong\ntitle: Wrong Package\nkeywords:\n  - engine refactor\n",
-        encoding="utf-8",
-    )
+    path = ctx.hydra / "repo/knowledge/spaces/example/space.yaml"
+    path.write_text(path.read_text(encoding="utf-8").replace("hydra-framework.knowledge-node.v1", "wrong.schema.v1"), encoding="utf-8")
 
 
 def _seed_package_with_route(ctx: RepoContext) -> None:
-    pkg = ctx.hydra / "repo/knowledge/knowledge-packages/example"
-    units = pkg / "units"
-    units.mkdir(parents=True)
-    (pkg / "state.md").write_text("# State\n", encoding="utf-8")
-    (pkg / "overview.md").write_text("# Overview\n", encoding="utf-8")
-    (units / "adopt.md").write_text(
-        "---\nhydra_id: hydra://knowledge-unit/example/adopt\nuid: 11111111-1111-4111-8111-111111111111\n"
-        "schema_version: 3\nkind: knowledge-unit\nunit_kind: answer\ntitle: Adopt\nstatus: active\nscope: repo\n"
-        "owners:\n  team: fixture\nrelations: []\nprovenance:\n  sources: []\nquestion: How is Hydra adopted?\n"
-        "---\n# Adopt\n",
-        encoding="utf-8",
+    paths = paths_for(ctx.root, ("example",))
+    write_node(
+        paths,
+        "example",
+        keywords=("engine", "refactor"),
+        routes=(
+            "routes:\n  adopt_into_repo:\n    use_when:\n      - engine refactor adoption\n"
+            "    priority_units:\n      - hydra://knowledge-unit/example/adopt\n"
+            "    requires: []\n    avoid_by_default:\n      - generated/**\n"
+            "    verify: []\n    expand_when: []\n"
+        ),
     )
-    (pkg / "routing.yaml").write_text(
-        "schema: hydra-framework.package-routing.v2\n"
-        "package: example\n"
-        "title: Example Package\n"
-        "keywords:\n  - engine refactor\n"
-        "state: .hydra-framework/repo/knowledge/knowledge-packages/example/state.md\n"
-        "note: Keep scope narrow.\n"
-        "routes:\n"
-        "  adopt_into_repo:\n"
-        "    use_when:\n"
-        "      - engine refactor adoption\n"
-        "    priority_units:\n"
-        "      - hydra://knowledge-unit/example/adopt\n"
-        "    avoid_by_default:\n"
-        "      - generated/**\n",
-        encoding="utf-8",
-    )
+    write_unit(paths, "example", "adopt")
 
 
 class CommandRoutePromptTests(unittest.TestCase):
@@ -109,35 +82,23 @@ class CommandRoutePromptTests(unittest.TestCase):
         args = type("Args", (), {"prompt": "Please do an engine refactor"})()
         with contextlib.redirect_stdout(out):
             self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
-        self.assertIn("Hydra package routing (pointers only):", out.getvalue())
-        self.assertIn("Example Package", out.getvalue())
+        self.assertIn("Hydra Knowledge v3 routing (pointers only):", out.getvalue())
+        self.assertIn("Example", out.getvalue())
 
     def test_configured_package_cap_limits_implicit_matches(self):
         ctx = _ctx()
-        _write_config(ctx, **{"hydra_engine.knowledge.routing.MAX_ROUTED_PACKAGES": 1})
-        _seed_package(ctx)
-        other = ctx.hydra / "repo/knowledge/knowledge-packages/other"
-        other.mkdir(parents=True)
-        (other / "state.md").write_text("# State\n", encoding="utf-8")
-        (other / "overview.md").write_text("# Overview\n", encoding="utf-8")
-        (other / "routing.yaml").write_text(
-            "schema: hydra-framework.package-routing.v2\n"
-            "package: other\n"
-            "title: Other Package\n"
-            # A second, non-matching keyword dilutes this package's score
-            # below `example`'s so the single cap slot has a clear winner,
-            # not a tie (a tied cutoff is ambiguous and drops both).
-            "keywords:\n  - engine refactor\n  - unrelated-filler\n",
-            encoding="utf-8",
-        )
+        _write_config(ctx, **{"hydra_engine.knowledge.routing.MAX_ROUTED_NODES": 1})
+        paths = paths_for(ctx.root, ("example", "other"))
+        write_node(paths, "example", keywords=("engine", "refactor"))
+        write_node(paths, "other", keywords=("engine", "filler"))
         out, err = io.StringIO(), io.StringIO()
         args = type("Args", (), {"prompt": "Please do an engine refactor"})()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
-        self.assertEqual(out.getvalue().count("Package"), 1)
-        self.assertIn("showing the top 1", err.getvalue())
+        self.assertIn("Example", out.getvalue())
+        self.assertNotIn("Other", out.getvalue())
 
-    def test_broken_routing_file_reports_a_warning_alongside_the_matches(self):
+    def test_invalid_node_schema_fails_closed_with_warning(self):
         ctx = _ctx()
         _seed_package(ctx)
         _seed_wrong_schema_package(ctx)
@@ -145,12 +106,8 @@ class CommandRoutePromptTests(unittest.TestCase):
         args = type("Args", (), {"prompt": "Please do an engine refactor"})()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
-        self.assertIn("Example Package", out.getvalue())
-        self.assertIn(
-            "Hydra routing skipped: .hydra-framework/repo/knowledge/knowledge-packages/wrong/routing.yaml "
-            "schema is not `hydra-framework.package-routing.v2`",
-            err.getvalue(),
-        )
+        self.assertNotIn("Example", out.getvalue())
+        self.assertIn("Knowledge v3 routing unavailable", err.getvalue())
 
     def test_stdin_json_input_is_read_when_prompt_argument_is_empty(self):
         ctx = _ctx()
@@ -162,8 +119,8 @@ class CommandRoutePromptTests(unittest.TestCase):
         out = io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
-        self.assertIn("Hydra package routing (pointers only):", out.getvalue())
-        self.assertIn("Example Package", out.getvalue())
+        self.assertIn("Hydra Knowledge v3 routing (pointers only):", out.getvalue())
+        self.assertIn("Example", out.getvalue())
 
     def test_route_prompt_output_does_not_render_route_directives(self):
         ctx = _ctx()
@@ -173,8 +130,8 @@ class CommandRoutePromptTests(unittest.TestCase):
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
         output = out.getvalue()
-        self.assertIn("Hydra package routing (pointers only):", output)
-        self.assertIn("Example Package", output)
+        self.assertIn("Hydra Knowledge v3 routing (pointers only):", output)
+        self.assertIn("Example", output)
         self.assertNotIn("Route:", output)
         self.assertNotIn("hydra://knowledge-unit/example/adopt", output)
         self.assertNotIn("Avoid by default:", output)
@@ -192,7 +149,7 @@ class CommandRoutePromptTests(unittest.TestCase):
         output = out.getvalue()
         self.assertIn("Hydra exact references:", output)
         self.assertIn("`.hydra-framework/repo/knowledge/routing-note.md`", output)
-        self.assertNotIn("Hydra package routing (pointers only):", output)
+        self.assertNotIn("Hydra Knowledge v3 routing (pointers only):", output)
 
     def test_second_turn_with_same_session_and_same_output_emits_nothing(self):
         ctx = _ctx()
@@ -212,7 +169,7 @@ class CommandRoutePromptTests(unittest.TestCase):
         with contextlib.redirect_stdout(second), contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
 
-        self.assertIn("Hydra package routing (pointers only):", first.getvalue())
+        self.assertIn("Hydra Knowledge v3 routing (pointers only):", first.getvalue())
         self.assertEqual(second.getvalue(), "")
 
     def test_empty_prompt_prints_nothing(self):
@@ -242,8 +199,8 @@ class CommandRoutePromptTests(unittest.TestCase):
             self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
         diagnostics = json.loads(out.getvalue())
         self.assertEqual(len(diagnostics["matches"]), 1)
-        self.assertEqual(diagnostics["matches"][0]["package"], "example")
-        self.assertEqual(diagnostics["matches"][0]["reason"], "routing keyword")
+        self.assertEqual(diagnostics["matches"][0]["node"], "example")
+        self.assertEqual(diagnostics["matches"][0]["reason"], "global index")
         self.assertGreater(diagnostics["matches"][0]["score"], 0)
         self.assertEqual(len(diagnostics["exact_references"]), 1)
         self.assertIn(".hydra-framework/repo/knowledge/routing-note.md", diagnostics["exact_references"][0]["path"])
@@ -270,7 +227,7 @@ class CommandRoutePromptTests(unittest.TestCase):
         with contextlib.redirect_stdout(text_out), contextlib.redirect_stderr(io.StringIO()):
             args = type("Args", (), {"prompt": ""})()
             self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
-        self.assertIn("Hydra package routing (pointers only):", text_out.getvalue())
+        self.assertIn("Hydra Knowledge v3 routing (pointers only):", text_out.getvalue())
 
 
 if __name__ == "__main__":

@@ -19,6 +19,7 @@ if str(_SRC) not in sys.path:
 from hydra_engine.commands import context  # noqa: E402
 from hydra_engine.knowledge.packages import ContextCompilerPaths  # noqa: E402
 from hydra_engine.objects.discovery import ObjectLocations  # noqa: E402
+from v3_fixtures import write_node  # noqa: E402
 
 
 def _paths() -> tuple[ContextCompilerPaths, ObjectLocations]:
@@ -42,10 +43,13 @@ def _args(**overrides: object) -> argparse.Namespace:
         "model": "",
         "budget": 12000,
         "package": [],
+        "node": [],
         "domain": "",
+        "space": "",
         "object": [],
         "path": [],
         "route": [],
+        "view": [],
         "family_cap": None,
         "include_family": [],
         "exclude_family": [],
@@ -56,23 +60,20 @@ def _args(**overrides: object) -> argparse.Namespace:
 
 
 def _seed_package(paths: ContextCompilerPaths, name: str, *, keyword: str = "alpha", route: str = "") -> None:
-    pkg = paths.hydra / "repo/knowledge/knowledge-packages" / name
-    pkg.mkdir(parents=True)
-    (pkg / "overview.md").write_text("# Overview\n", encoding="utf-8")
-    text = (
-        "schema: hydra-framework.package-routing.v2\n"
-        f"package: {name}\n"
-        f"title: {name.title()}\n"
-        f"keywords:\n  - {keyword}\n"
-    )
+    text = ""
     if route:
         text += (
             "routes:\n"
             f"  {route}:\n"
             "    use_when:\n"
-            f"      - {keyword}\n"
+            f"      - {keyword} task\n"
+            "    priority_units: []\n"
+            "    requires: []\n"
+            "    avoid_by_default: []\n"
+            "    verify: []\n"
+            "    expand_when: []\n"
         )
-    (pkg / "routing.yaml").write_text(text, encoding="utf-8")
+    write_node(paths, name, keywords=(keyword,), routes=text)
 
 
 class CommandCompileContextTests(unittest.TestCase):
@@ -100,7 +101,7 @@ class CommandCompileContextTests(unittest.TestCase):
             result = context.command_compile_context(_args(json=True), "Fixture task", paths, resolver_paths)
         self.assertEqual(result.exit_code, 0)
         packet = json.loads(out.getvalue())
-        self.assertEqual(packet["schema"], "hydra-framework.context-packet.v1")
+        self.assertEqual(packet["schema"], "hydra-framework.context-packet.v2")
         self.assertEqual(packet["task"], "Fixture task")
         self.assertIsInstance(packet["provenance_freshness"]["registry_freshness_errors"], list)
 
@@ -180,18 +181,18 @@ class CommandCompileContextTests(unittest.TestCase):
         with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
             result = context.command_compile_context(args, "alpha task", paths, resolver_paths)
         self.assertEqual(result.exit_code, 1)
-        self.assertIn("Route not found in package demo: missing", err.getvalue())
+        self.assertIn("Route not found in node demo: missing", err.getvalue())
 
     def test_explicit_route_for_unselected_package_returns_error(self):
         paths, resolver_paths = _paths()
         _seed_package(paths, "selected", keyword="alpha")
         _seed_package(paths, "other", keyword="other", route="main")
         err = io.StringIO()
-        args = _args(route=["other:main"])
+        args = _args(package=["selected"], route=["other:main"])
         with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
             result = context.command_compile_context(args, "alpha task", paths, resolver_paths)
         self.assertEqual(result.exit_code, 1)
-        self.assertIn("Route package not selected: other:main", err.getvalue())
+        self.assertIn("Route node not selected: other:main", err.getvalue())
 
     def test_json_output_echoes_provider_model_and_resolves_explicit_object(self):
         # Moved from `test_hydra.py`'s `ContextCompilerTests`

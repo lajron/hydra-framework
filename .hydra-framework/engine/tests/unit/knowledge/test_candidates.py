@@ -16,6 +16,7 @@ from hydra_engine.documents.digests import normalized_digest  # noqa: E402
 from hydra_engine.knowledge import candidates  # noqa: E402
 from hydra_engine.knowledge.packages import ContextCompilerPaths  # noqa: E402
 from hydra_engine.knowledge.units import Unit  # noqa: E402
+from v3_fixtures import paths_for, write_node, write_unit  # noqa: E402
 
 
 def _unit(root: Path, *, hydra_id: str, reads: tuple[str, ...] = ()) -> Unit:
@@ -200,30 +201,20 @@ class StaleUnitSourcesTests(unittest.TestCase):
         by_kind = {c["kind"]: c for c in result}
         self.assertEqual(by_kind["knowledge-unit"]["stale_sources"], ["source.py"])
 
-    def test_stale_unit_source_report_walks_every_unit_in_every_package(self):
-        packages_root = self.root / ".hydra-framework/repo/knowledge/knowledge-packages"
-        for package, slug, checked_on in [
+    def test_stale_unit_source_report_walks_every_unit_in_every_node(self):
+        self.paths = paths_for(self.root, ("alpha", "beta"))
+        for node, slug, checked_on in [
             ("alpha", "old", "2000-01-01"),
             ("beta", "fresh", "2099-01-01"),
         ]:
-            unit_path = packages_root / package / "units" / f"{slug}.md"
-            unit_path.parent.mkdir(parents=True, exist_ok=True)
-            unit_path.write_text(
-                f"---\nhydra_id: hydra://knowledge-unit/{package}/{slug}\n"
-                f"uid: 11111111-1111-4111-8111-11111111111{len(package)}\n"
-                "schema_version: 3\nkind: knowledge-unit\nunit_kind: answer\n"
-                f"title: {slug}\nstatus: active\nscope: repo\n"
-                "owners:\n  team: fixture\nrelations: []\n"
-                "provenance:\n  sources:\n    - source.py\n"
-                f"checked_on: {checked_on}\n---\n# Unit\n",
-                encoding="utf-8",
-            )
+            write_node(self.paths, node)
+            write_unit(self.paths, node, slug, checked_on=checked_on, sources=("source.py",))
 
         checked_units, rows = candidates.stale_unit_source_report(self.paths)
 
         self.assertEqual(checked_units, 2)
         self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]["package"], "alpha")
+        self.assertEqual(rows[0]["node"], "alpha")
         self.assertEqual(rows[0]["hydra_id"], "hydra://knowledge-unit/alpha/old")
         self.assertEqual(rows[0]["stale_sources"], ["source.py"])
 

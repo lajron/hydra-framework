@@ -18,6 +18,7 @@ if str(_SRC) not in sys.path:
 
 from hydra_engine.commands import subagents  # noqa: E402
 from hydra_engine.knowledge.packages import ContextCompilerPaths  # noqa: E402
+from v3_fixtures import write_node  # noqa: E402
 
 
 def _context_paths() -> ContextCompilerPaths:
@@ -51,9 +52,7 @@ class CommandHookSubagentStartTests(unittest.TestCase):
 
     def test_matched_agent_receives_additional_context_without_state_writes(self):
         paths = _context_paths()
-        package = paths.knowledge_packages_root() / "hydra-framework"
-        package.mkdir(parents=True)
-        (package / "routing.yaml").write_text("routes: []\n", encoding="utf-8")
+        write_node(paths, "hydra-framework")
 
         result, out = self.run_hook({"hook_event_name": "SubagentStart", "agent_type": "Explore"}, paths)
 
@@ -67,9 +66,7 @@ class CommandHookSubagentStartTests(unittest.TestCase):
 
     def test_configured_context_budget_limits_injected_context(self):
         paths = _context_paths()
-        package = paths.knowledge_packages_root() / "hydra-framework"
-        package.mkdir(parents=True)
-        (package / "routing.yaml").write_text("routes: []\n", encoding="utf-8")
+        write_node(paths, "hydra-framework")
         args = argparse.Namespace()
         payload = {"hook_event_name": "SubagentStart", "agent_type": "Explore"}
         out = stdlib_io.StringIO()

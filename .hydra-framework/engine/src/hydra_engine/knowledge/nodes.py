@@ -142,6 +142,8 @@ def _read_routes(data: dict, logical_id: str) -> tuple[Route, ...]:
 
 def read_node(path: Path, paths: ContextCompilerPaths) -> KnowledgeNode:
     data = parse_yaml(path, paths.root, required=True)
+    if yaml_str(data.get("schema")) != NODE_SCHEMA:
+        raise HydraYamlError(f"{display_path(path, paths.root)} schema must be `{NODE_SCHEMA}`")
     logical_id = yaml_str(data.get("node")).lower()
     parts = tuple(part for part in logical_id.split("/") if part)
     parent_id = "/".join(parts[:-1])
@@ -185,6 +187,13 @@ def discover_knowledge_nodes(paths: ContextCompilerPaths) -> list[KnowledgeNode]
 
 def node_root(node: KnowledgeNode) -> Path:
     return node.path.parent
+
+
+def knowledge_node_for_path(path: Path, nodes: list[KnowledgeNode], paths: ContextCompilerPaths) -> KnowledgeNode | None:
+    """Deepest declared node containing `path`, never a lexical guess."""
+    resolved = path.resolve() if path.is_absolute() else (paths.root / path).resolve()
+    matches = [node for node in nodes if resolved == node_root(node).resolve() or node_root(node).resolve() in resolved.parents]
+    return max(matches, key=lambda node: node.depth) if matches else None
 
 
 def discover_node_unit_paths(node: KnowledgeNode) -> list[Path]:

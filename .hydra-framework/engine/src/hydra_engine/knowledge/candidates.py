@@ -6,9 +6,9 @@ from pathlib import Path
 
 from hydra_engine.documents.tokens import display_path, read_text
 from hydra_engine.knowledge.freshness import stale_provenance_sources
-from hydra_engine.knowledge.packages import discover_knowledge_packages
+from hydra_engine.knowledge.nodes import discover_knowledge_nodes, discover_node_unit_paths
 from hydra_engine.knowledge.units import Unit
-from hydra_engine.knowledge.units import discover_unit_paths, read_unit
+from hydra_engine.knowledge.units import read_unit
 
 APPROX_CHARS_PER_TOKEN = 4
 UNIT_PRIORITY = 15
@@ -90,7 +90,7 @@ def stale_unit_sources(unit: Unit, paths: ContextCompilerPaths) -> list[str]:
 
 
 def stale_unit_source_report(paths: ContextCompilerPaths) -> tuple[int, list[dict[str, object]]]:
-    """Every stale knowledge-unit source across every package.
+    """Every stale knowledge-unit source across every node.
 
     This deliberately reuses `stale_unit_sources`'s date-only rule. The
     reporting surface is wider than `compile-context`, but the freshness
@@ -98,8 +98,10 @@ def stale_unit_source_report(paths: ContextCompilerPaths) -> tuple[int, list[dic
     """
     rows: list[dict[str, object]] = []
     checked_units = 0
-    for package_root in discover_knowledge_packages(paths):
-        for unit_path in discover_unit_paths(package_root):
+    if not (paths.hydra / "repo/knowledge/spaces.yaml").is_file():
+        return checked_units, rows
+    for node in discover_knowledge_nodes(paths):
+        for unit_path in discover_node_unit_paths(node):
             unit = read_unit(unit_path, paths.root)
             if unit is None:
                 continue
@@ -108,7 +110,7 @@ def stale_unit_source_report(paths: ContextCompilerPaths) -> tuple[int, list[dic
             if not stale_sources:
                 continue
             rows.append({
-                "package": package_root.name,
+                "node": node.logical_id,
                 "hydra_id": unit.hydra_id,
                 "path": display_path(unit.path, paths.root),
                 "stale_sources": stale_sources,

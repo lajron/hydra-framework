@@ -23,7 +23,8 @@ from pathlib import Path
 from hydra_engine.commands import CommandResult
 from hydra_engine.finding import Finding
 from hydra_engine.knowledge.package_checks import PACKAGE_FILE_FAIL_TOKENS, validate_package_root
-from hydra_engine.knowledge.packages import ContextCompilerPaths, knowledge_package_root_for_path
+from hydra_engine.knowledge.nodes import discover_knowledge_nodes, knowledge_node_for_path, node_root
+from hydra_engine.knowledge.packages import ContextCompilerPaths
 from hydra_engine.providers.paths import ProvidersPaths
 from hydra_engine.providers.reclaim import provider_surface_notice
 from hydra_engine.work.paths import WorkPaths
@@ -77,9 +78,12 @@ def command_hook_post_edit(
 
     if edited.suffix not in {".md", ".dot"}:
         return CommandResult(0)
-    package_root = knowledge_package_root_for_path(edited, context_compiler_paths)
-    if package_root is None:
+    if not (context_compiler_paths.hydra / "repo/knowledge/spaces.yaml").is_file():
         return CommandResult(0)
+    node = knowledge_node_for_path(edited, discover_knowledge_nodes(context_compiler_paths), context_compiler_paths)
+    if node is None:
+        return CommandResult(0)
+    package_root = node_root(node)
     findings = validate_package_root(
         package_root,
         context_compiler_paths,
@@ -96,12 +100,12 @@ def command_hook_post_edit(
     if not own:
         if unrelated_count:
             print(
-                f"Hydra: {unrelated_count} pre-existing package issue(s) in "
+                f"Hydra: {unrelated_count} pre-existing knowledge-node issue(s) in "
                 f"{package_root.relative_to(root)}, unrelated to this edit. "
                 "Run `hydra.py validate` to see them."
             )
         return CommandResult(0)
-    print(f"Hydra package gate FAILED for {package_root.relative_to(root)} after editing {edited.relative_to(root)}:", file=sys.stderr)
+    print(f"Hydra knowledge-node gate FAILED for {package_root.relative_to(root)} after editing {edited.relative_to(root)}:", file=sys.stderr)
     for finding in own[:PACKAGE_GATE_REPORT_LIMIT]:
         print(f"- {finding}", file=sys.stderr)
     skipped = len(own) - PACKAGE_GATE_REPORT_LIMIT
@@ -109,7 +113,7 @@ def command_hook_post_edit(
         print(f"- ... and {skipped} more issue(s) caused by this file", file=sys.stderr)
     if unrelated_count:
         print(
-            f"({unrelated_count} pre-existing package issue(s) elsewhere, unrelated to this edit; "
+            f"({unrelated_count} pre-existing knowledge-node issue(s) elsewhere, unrelated to this edit; "
             "run `hydra.py validate` to see them)",
             file=sys.stderr,
         )

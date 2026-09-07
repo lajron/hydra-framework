@@ -19,6 +19,7 @@ from hydra_engine.documents.digests import normalized_digest  # noqa: E402
 from hydra_engine.documents.frontmatter_blocks import markdown_frontmatter  # noqa: E402
 from hydra_engine.knowledge.packages import ContextCompilerPaths  # noqa: E402
 from hydra_engine.objects.discovery import ObjectLocations  # noqa: E402
+from v3_fixtures import paths_for, write_node, write_unit  # noqa: E402
 
 
 def _paths() -> ContextCompilerPaths:
@@ -78,7 +79,7 @@ class CommandValidatePackageDocsTests(unittest.TestCase):
         with contextlib.redirect_stdout(out):
             result = knowledge.command_validate_package_docs(args, paths, resolver_paths)
         self.assertEqual(result.exit_code, 0)
-        self.assertIn("no knowledge packages found", out.getvalue())
+        self.assertIn("no knowledge nodes found", out.getvalue())
 
     def test_explicit_path_with_broken_link_fails(self):
         paths = _paths()
@@ -91,7 +92,7 @@ class CommandValidatePackageDocsTests(unittest.TestCase):
         with contextlib.redirect_stdout(out):
             result = knowledge.command_validate_package_docs(args, paths, resolver_paths)
         self.assertEqual(result.exit_code, 1)
-        self.assertIn("Hydra package docs: failed", out.getvalue())
+        self.assertIn("Hydra Knowledge v3 docs: failed", out.getvalue())
         self.assertIn("missing.md", out.getvalue())
 
     def test_explicit_path_with_no_errors_reports_ok(self):
@@ -104,7 +105,7 @@ class CommandValidatePackageDocsTests(unittest.TestCase):
         with contextlib.redirect_stdout(out):
             result = knowledge.command_validate_package_docs(args, paths, resolver_paths)
         self.assertEqual(result.exit_code, 0)
-        self.assertIn("Hydra package docs: ok", out.getvalue())
+        self.assertIn("Hydra Knowledge v3 docs: ok", out.getvalue())
 
 
 class KnowledgeStaleCommandTests(unittest.TestCase):
@@ -123,18 +124,9 @@ class KnowledgeFingerprintCommandTests(unittest.TestCase):
     def _seed_unit(self, paths: ContextCompilerPaths) -> tuple[Path, Path]:
         source = paths.root / "source.py"
         source.write_text("x = 1\n", encoding="utf-8")
-        unit_path = paths.hydra / "repo/knowledge/knowledge-packages/example/units/demo.md"
-        unit_path.parent.mkdir(parents=True)
-        unit_path.write_text(
-            "---\nhydra_id: hydra://knowledge-unit/example/demo\n"
-            "uid: 11111111-1111-4111-8111-111111111111\n"
-            "schema_version: 3\nkind: knowledge-unit\nunit_kind: answer\n"
-            "title: Demo\nstatus: active\nscope: repo\nowners:\n  team: fixture\n"
-            "relations: []\nprovenance:\n  sources:\n    - source.py\n"
-            "checked_on: 2026-08-29\nquestion: \"What does this answer?\"\n"
-            "---\n# Demo\n",
-            encoding="utf-8",
-        )
+        paths_for(paths.root, ("example",))
+        write_node(paths, "example")
+        unit_path = write_unit(paths, "example", "demo", sources=("source.py",), checked_on="2026-08-29")
         return source, unit_path
 
     def test_writes_source_digests_for_one_unit(self):
@@ -185,22 +177,18 @@ class KnowledgeFingerprintCommandTests(unittest.TestCase):
 
 def _seed_search_repo() -> tuple[ContextCompilerPaths, ObjectLocations, Path]:
     paths = _paths()
-    pkg = paths.hydra / "repo/knowledge/knowledge-packages/example"
-    pkg.mkdir(parents=True)
-    (pkg / "overview.md").write_text("# Example\nadapter export routing\n", encoding="utf-8")
-    (pkg / "routing.yaml").write_text(
-        "schema: hydra-framework.package-routing.v2\npackage: example\ntitle: Example\nkeywords:\n  - adapter export\n",
-        encoding="utf-8",
-    )
+    paths_for(paths.root, ("example",))
+    write_node(paths, "example", keywords=("adapter", "export"))
+    (paths.hydra / "repo/knowledge/spaces/example/overview.md").write_text("# Example\nadapter export routing\n", encoding="utf-8")
     registry = paths.hydra / "cognition/graph/registry.yaml"
     registry.parent.mkdir(parents=True)
     registry.write_text(
         "schema: hydra-framework.object-registry.v1\n"
         "generated_by: hydra.py ref index\n"
         "objects:\n"
-        "  hydra://knowledge-package/example:\n"
-        "    path: .hydra-framework/repo/knowledge/knowledge-packages/example/overview.md\n"
-        "    kind: knowledge-package\n"
+        "  hydra://knowledge-space/example:\n"
+        "    path: .hydra-framework/repo/knowledge/spaces/example/space.yaml\n"
+        "    kind: knowledge-space\n"
         "    title: Example\n"
         "    aliases: []\n"
         "    relations: []\n",

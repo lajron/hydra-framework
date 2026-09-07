@@ -60,7 +60,7 @@ class AdoptionReportTests(unittest.TestCase):
         self.assertEqual(report["host_stacks"], {})
         self.assertFalse(report["claude_md_present"])
         self.assertFalse(report["settings_json_present"])
-        self.assertEqual(report["knowledge_packages"], [])
+        self.assertEqual(report["knowledge_nodes"], [])
         self.assertEqual(report["unmanaged_surfaces"], [])
 
     def test_reports_seed_version_and_lineage_from_manifest(self):

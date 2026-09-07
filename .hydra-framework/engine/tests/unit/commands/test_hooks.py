@@ -21,6 +21,7 @@ from hydra_engine.knowledge.packages import ContextCompilerPaths  # noqa: E402
 from hydra_engine.objects.discovery import ObjectLocations  # noqa: E402
 from hydra_engine.providers.paths import ProvidersPaths  # noqa: E402
 from hydra_engine.work.paths import WorkPaths  # noqa: E402
+from v3_fixtures import write_node  # noqa: E402
 
 
 def _write(root: Path, rel: str, content: str) -> None:
@@ -35,6 +36,7 @@ class Bundle:
         self.providers_paths = ProvidersPaths(root=self.root, hydra=self.root / ".hydra-framework")
         self.work_paths = WorkPaths(root=self.root, hydra=self.root / ".hydra-framework", local=self.root / ".hydra-framework.local")
         self.context_compiler_paths = ContextCompilerPaths(root=self.root, hydra=self.root / ".hydra-framework")
+        write_node(self.context_compiler_paths, "demo")
         self.resolver_paths = ObjectLocations(
             root=self.root,
             hydra=self.root / ".hydra-framework",
@@ -110,7 +112,7 @@ class CommandHookPostEditTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(out, "")
 
-    def test_edit_outside_any_knowledge_package_is_silent_success(self):
+    def test_edit_outside_any_knowledge_node_is_silent_success(self):
         bundle = Bundle()
         edited = bundle.root / "AI_SYSTEM.md"
         _write(bundle.root, "AI_SYSTEM.md", "content\n")
@@ -118,42 +120,42 @@ class CommandHookPostEditTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(out, "")
 
-    def test_broken_package_edit_fails_the_gate(self):
+    def test_broken_node_edit_fails_the_gate(self):
         bundle = Bundle()
-        edited = bundle.root / ".hydra-framework/repo/knowledge/knowledge-packages/demo/overview.md"
-        _write(bundle.root, ".hydra-framework/repo/knowledge/knowledge-packages/demo/overview.md", "[bad](./missing.md)\n")
+        edited = bundle.root / ".hydra-framework/repo/knowledge/spaces/demo/overview.md"
+        _write(bundle.root, ".hydra-framework/repo/knowledge/spaces/demo/overview.md", "[bad](./missing.md)\n")
         result, _out, err = bundle.run({"tool_input": {"file_path": str(edited)}})
         self.assertEqual(result.exit_code, 2)
-        self.assertIn("Hydra package gate FAILED", err)
+        self.assertIn("Hydra knowledge-node gate FAILED", err)
         self.assertIn("missing link", err)
 
     def test_unrelated_package_break_does_not_fail_a_clean_edit(self):
         bundle = Bundle()
         _write(
             bundle.root,
-            ".hydra-framework/repo/knowledge/knowledge-packages/demo/broken.md",
+            ".hydra-framework/repo/knowledge/spaces/demo/broken.md",
             "[bad](./missing.md)\n",
         )
-        edited = bundle.root / ".hydra-framework/repo/knowledge/knowledge-packages/demo/clean.md"
-        _write(bundle.root, ".hydra-framework/repo/knowledge/knowledge-packages/demo/clean.md", "no links here\n")
+        edited = bundle.root / ".hydra-framework/repo/knowledge/spaces/demo/clean.md"
+        _write(bundle.root, ".hydra-framework/repo/knowledge/spaces/demo/clean.md", "no links here\n")
         result, out, err = bundle.run({"tool_input": {"file_path": str(edited)}})
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(err, "")
-        self.assertIn("1 pre-existing package issue", out)
+        self.assertIn("1 pre-existing knowledge-node issue", out)
 
     def test_own_error_reports_with_unrelated_count_alongside(self):
         bundle = Bundle()
         _write(
             bundle.root,
-            ".hydra-framework/repo/knowledge/knowledge-packages/demo/broken.md",
+            ".hydra-framework/repo/knowledge/spaces/demo/broken.md",
             "[bad](./missing.md)\n",
         )
-        edited = bundle.root / ".hydra-framework/repo/knowledge/knowledge-packages/demo/overview.md"
-        _write(bundle.root, ".hydra-framework/repo/knowledge/knowledge-packages/demo/overview.md", "[bad](./missing.md)\n")
+        edited = bundle.root / ".hydra-framework/repo/knowledge/spaces/demo/overview.md"
+        _write(bundle.root, ".hydra-framework/repo/knowledge/spaces/demo/overview.md", "[bad](./missing.md)\n")
         result, _out, err = bundle.run({"tool_input": {"file_path": str(edited)}})
         self.assertEqual(result.exit_code, 2)
-        self.assertIn("Hydra package gate FAILED", err)
-        self.assertIn("1 pre-existing package issue", err)
+        self.assertIn("Hydra knowledge-node gate FAILED", err)
+        self.assertIn("1 pre-existing knowledge-node issue", err)
 
 
 if __name__ == "__main__":

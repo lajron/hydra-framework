@@ -33,7 +33,7 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 
 ## Current Stage
 
-Phase 3, slice 1: integrate recursive discovery and global validation into active engine consumers.
+Phase 3, slice 2: implement the review-gated v2-to-v3 migrator and migrate the live framework knowledge tree.
 
 ## Readiness
 
@@ -48,9 +48,9 @@ Status: ready
 
 ## Step State
 
-- Active step: make recursive nodes, global units/relations, bindings, views, and v3 validation the active engine path; keep live repository behavior passing until the migration boundary commit.
-- Next step: integrate v3 routing/context compilation and route-level expand_when, then migrate the live framework package through the reviewed migrator.
-- Completed steps: read required contracts and authoritative code; created and validated the primary task; captured a 173-test v2 baseline; added and ran the 216-leaf enterprise fixture; selected global indexed routing and measured depth/scope policy; froze `core/knowledge-architecture.md`; implemented tested contract primitives for recursive nodes/inheritance, strict global graph closure and supersession, namespaced asserted bindings/freshness, reference-only view composition/conflict detection, shared distribution policy, and the registry-independent KnowledgeStore boundary; kept architecture validation passing.
+- Active step: implement `knowledge migrate-v2` dry-run/review/apply with deterministic moves and rewrites, UID preservation, confidence/unresolved states, idempotence, explicit checkpoint evidence, and registry/index rebuild hooks.
+- Next step: run and review the migrator against the live `hydra-framework` v2 package, apply from a clean Git checkpoint, then remove remaining v2 terminology and update canonical knowledge documents.
+- Completed steps: read required contracts and authoritative code; created and validated the primary task; captured a 173-test v2 baseline; added and ran the 216-leaf enterprise fixture; selected global indexed routing and measured depth/scope policy; froze `core/knowledge-architecture.md`; implemented tested contract primitives for recursive nodes/inheritance, strict global graph closure and supersession, namespaced asserted bindings/freshness, reference-only view composition/conflict detection, shared distribution policy, and the registry-independent KnowledgeStore boundary; integrated recursive discovery, global validation/closure, inherited routes, two-phase path rerouting hooks, route-level `expand_when`, v3 context-packet fields, prompt pointers, search/adoption/hook consumers, and fail-closed node parsing into the active engine; removed the flat routing-collision runtime and flat package discovery; converted affected unit tests to v3 fixtures; restored the full 1,246-test unit suite to green.
 - Superseded or skipped steps: none.
 
 ## Changed Files
@@ -65,6 +65,10 @@ Status: ready
 - `.hydra-framework/engine/src/hydra_engine/installation/seed_copy.py` - distribution-profile policy integration.
 - `.hydra-framework/engine/src/hydra_engine/documents/frontmatter_blocks.py` - preserves the YAML parser import boundary for v3 modules.
 - `.hydra-framework/engine/tests/unit/knowledge/test_{nodes,graph,bindings,views,distribution,storage}.py` - contract and negative tests.
+- `.hydra-framework/engine/src/hydra_engine/knowledge/{checks,routing,routing_diagnostics,context_providers,context_packets,search_index,candidates}.py` - active v3 validation, routing, graph selection, context compilation, and indexing integration.
+- `.hydra-framework/engine/src/hydra_engine/knowledge/{packages,package_checks}.py` and deleted `routing_collisions.py` - flat discovery/collision runtime removed; shared node document checks retained pending neutral module rename.
+- `.hydra-framework/engine/src/hydra_engine/{checks,cli,commands,installation,thresholds.py}` - v3 consumers, diagnostics, and threshold registry integration.
+- `.hydra-framework/engine/tests/unit/{v3_fixtures.py,knowledge,commands,cli,checks,installation}` - v3 fixture and affected consumer tests; obsolete flat routing-collision test removed.
 
 ## Validation
 
@@ -82,6 +86,9 @@ Status: ready
 - Rejected by evidence: identity-only global scoring, flat v2 keyword proportion, and mandatory space-first hierarchical pruning.
 - Contract test run: 191 Knowledge tests passed in 0.446s, including depth, invalid scope, relation shape, route override/expand_when, cross-space closure, unresolved dependency, cycle, conflicting supersession, stale/unresolved binding, path binding, reference-only view, view ordering/resolution conflict, distribution leak, and storage-boundary cases.
 - `python3 .hydra-framework/scripts/hydra.py validate`: passed after the contract modules; the initial YAML vocabulary in-degree finding was resolved by reusing the existing `frontmatter_blocks` re-export boundary.
+- Runtime slice narrow validation: 143 Knowledge tests passed and 10 context-command tests passed after the final routing/packet changes.
+- Full runtime-slice unit validation: `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3` discovery over `.hydra-framework/engine/tests/unit` ran 1,246 tests with zero failures and zero errors.
+- The live repository still uses the v2 on-disk package, so `hydra.py validate` is intentionally not claimed green at this checkpoint; the v3 validator now rejects that active legacy tree until the reviewed migration applies.
 
 ## Blockers
 
@@ -92,4 +99,4 @@ Status: ready
 What another model or developer needs to continue safely.
 
 - Running state: none
-- Resume check: `python3 .hydra-framework/validation/knowledge-v3/benchmark.py --output .hydra-framework.local/knowledge-v3/gates.json && python3 .hydra-framework/scripts/hydra.py validate`; expect all deterministic fixture gates except the explicitly pending real-repository distribution gate to pass.
+- Resume check: `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`; expect 1,246 passing tests. Then inspect `git status --short` and implement the migrator before modifying the live v2 knowledge tree.

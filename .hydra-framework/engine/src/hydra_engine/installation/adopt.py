@@ -29,7 +29,7 @@ from hydra_engine.documents.tokens import read_text, write_text
 from hydra_engine.identity.slugs import slugify
 from hydra_engine.installation.host_detection import detect_host_repo
 from hydra_engine.installation.private_tier import private_tier_report
-from hydra_engine.knowledge.packages import discover_knowledge_packages
+from hydra_engine.knowledge.nodes import discover_knowledge_nodes
 from hydra_engine.ports import clock as clock_port
 from hydra_engine.providers.capabilities import PROVIDERS
 from hydra_engine.providers.reclaim import classify_surfaces
@@ -75,7 +75,8 @@ def adoption_report(paths, providers_paths, context_compiler_paths, manifest: di
             count = len(list(target_path.glob("*"))) if target_path.exists() else 0
             provider_surfaces.append((provider.slug, label, target, count))
 
-    packages = discover_knowledge_packages(context_compiler_paths)
+    spaces_config = context_compiler_paths.hydra / "repo/knowledge/spaces.yaml"
+    nodes = discover_knowledge_nodes(context_compiler_paths) if spaces_config.is_file() else []
     surfaces = classify_surfaces(providers_paths)
     unmanaged = [item for item in surfaces if item["status"] in {"orphaned", "drifted", "stale"}]
 
@@ -88,7 +89,7 @@ def adoption_report(paths, providers_paths, context_compiler_paths, manifest: di
         "provider_surfaces": provider_surfaces,
         "claude_md_present": (paths.root / "CLAUDE.md").exists(),
         "settings_json_present": (paths.root / ".claude/settings.json").exists(),
-        "knowledge_packages": packages,
+        "knowledge_nodes": nodes,
         "unmanaged_surfaces": unmanaged,
     }
 

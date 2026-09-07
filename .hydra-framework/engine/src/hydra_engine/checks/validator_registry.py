@@ -69,7 +69,7 @@ from collections.abc import Callable
 
 from hydra_engine.checks import capability_callers, package_and_task_findings, repo_findings
 from hydra_engine import config as hydra_config
-from hydra_engine.knowledge import routing_collisions
+from hydra_engine.knowledge import checks as knowledge_checks
 from hydra_engine.seed import candidate_queue
 from hydra_engine.telemetry import evidence as telemetry_evidence
 
@@ -97,11 +97,8 @@ VALIDATORS = (
     *(Validator(name, check) for name, check in repo_findings.NAMED_CHECKS),
     Validator("config-policy", lambda ctx: hydra_config.validate_config(ctx.config_paths())),
     Validator("flat-knowledge", package_and_task_findings.flat_knowledge_check),
-    Validator("package-docs", package_and_task_findings.package_docs_check),
-    Validator(
-        "package-routing-collisions",
-        lambda ctx: routing_collisions.validate_package_routing_collisions(ctx.context_compiler_paths(), ctx.resolver_paths()),
-    ),
+    Validator("knowledge-node-docs", package_and_task_findings.package_docs_check),
+    Validator("knowledge-v3", knowledge_checks.validate_knowledge_v3),
     Validator("capability-callers", lambda ctx: capability_callers.validate_capability_callers(ctx.hydra, ctx.root)),
     Validator("reflection-queue", package_and_task_findings.reflection_queue_check),
     Validator("candidate-queue", lambda ctx: candidate_queue.validate_candidate_queue(ctx.hydra / "evolution" / "candidates", ctx.root)),

@@ -6,76 +6,94 @@ Status: paused
 
 ## Goal
 
-Implement and migrate to the selected Knowledge v3 Option D architecture with
-one active runtime model, evidence-gated contracts, safe migration, and complete
-validation.
+Implement and migrate to Knowledge v3 Option D with one active runtime model,
+evidence-gated contracts, safe reviewed migration, and full validation.
 
 ## Confirmed Decisions
 
-- Global indexed node retrieval, two implicit pointers, tree used for policy and
-  explanation rather than mandatory first-stage pruning.
-- Default depth three including space; hard maximum four.
-- Descendants inherit owners and policy; scope, identity, provenance, certainty,
-  keywords, and relations never inherit.
-- Typed relation conflicts, unresolved references/bindings, cycles, view-order
-  conflicts, invalid scopes, and depth violations fail closed.
-- `migrate-v2` is the only legacy reader. Active routing and writes become v3-only.
-- Git milestone commits are rollback boundaries.
+- Global indexed node retrieval with two implicit pointers; the tree governs
+  accountability and inheritance rather than acting as mandatory pruning.
+- Default depth is three including the space; hard maximum is four.
+- Descendants inherit owners/defaults/routes with source tracing; identity,
+  scope, provenance, certainty, keywords, and relations do not inherit.
+- Unresolved dependencies/bindings, cycles, ambiguity, supersession conflicts,
+  view conflicts, invalid scopes, and invalid depth fail closed.
+- The active runtime is v3-only. The forthcoming migrator is the isolated v2
+  reader. Git checkpoint commits are the rollback mechanism.
 
 ## Approved Plan
 
-Continue with active engine integration, v3 routing/context, live migration and
-v2 removal, scope-aware distribution consumers, migration verification, full
-validation, and independent review.
+Build the review-gated migrator next, apply it to the live framework only after
+a clean checkpoint and reviewed dry-run, finish distribution/binding CLI and
+identity integration, remove remaining v2 terminology, run full validation and
+benchmarks, then obtain an independent review.
 
 ## Completed Work
 
-- Baseline and decision gates completed with checked-in 216-leaf fixture.
-- Contract frozen in `core/knowledge-architecture.md`.
-- Implemented recursive node/inheritance, global graph, bindings/freshness,
-  views/conflicts, distribution policy, and KnowledgeStore boundary primitives.
-- Added focused tests; all 191 Knowledge tests and full Hydra validation pass.
+- Baseline and decision gates completed on the checked-in 216-leaf fixture.
+- Contracts frozen in `core/knowledge-architecture.md`; contract checkpoint is
+  commit `8ffcc4a`.
+- Implemented node/inheritance, global graph, bindings/freshness, views,
+  distribution policy, and stable KnowledgeStore primitives.
+- Integrated v3 routing, recursive validation, global dependency selection,
+  route-level `expand_when`, v3 packet fields, prompt pointers, path rerouting
+  hooks, indexing, adoption, edit hooks, fingerprinting, and CLI consumers.
+- Removed flat package discovery and the flat routing-collision runtime/tests.
+- Converted affected tests to deterministic v3 fixtures. Full unit suite is
+  green: 1,246 tests, zero failures/errors.
 
 ## Current Stage
 
-Phase 3, slice 1: integrate v3 primitives into active engine consumers.
+Phase 3 slice 2: migration implementation and live repository migration.
 
 ## Changed Files
 
-- `core/knowledge-architecture.md`
-- `engine/src/hydra_engine/knowledge/{nodes,graph,bindings,views,distribution,storage,units}.py`
-- `engine/src/hydra_engine/installation/seed_copy.py`
-- `engine/src/hydra_engine/documents/frontmatter_blocks.py`
-- `engine/tests/unit/knowledge/test_{nodes,graph,bindings,views,distribution,storage}.py`
-- The primary task record and this checkpoint.
+- Active engine: `knowledge/{nodes,checks,graph,bindings,views,distribution,
+  storage,routing,routing_diagnostics,context_providers,context_packets,
+  search_index,candidates,packages,package_checks,units}.py`.
+- Consumers: `checks/`, `cli/`, `commands/`, `installation/`, threshold policy.
+- Tests: affected `knowledge`, `commands`, `cli`, `checks`, and `installation`
+  modules plus `tests/unit/v3_fixtures.py`.
+- Deleted: active `knowledge/routing_collisions.py` and its obsolete test.
+- Durable state: primary task and this checkpoint.
 
 ## Validation Performed
 
-- 191 Knowledge tests passed.
-- `hydra.py validate` passed.
-- Enterprise gates pass except real second-repository distribution, which is
-  explicitly pending.
+- 143 Knowledge tests passed after runtime integration.
+- 10 context-command tests passed.
+- Full unit discovery: 1,246 passed, zero failures/errors.
+- Earlier deterministic enterprise gates pass; real second-repository
+  distribution evidence remains explicitly pending.
+- Full `hydra.py validate` is intentionally pending live migration because the
+  new validator correctly rejects the still-present active v2 package tree.
 
 ## Remaining Work
 
-Register v3 validation and identities, integrate active routing/context and
-route expansion, add binding CLI, migrate the live package and refs, remove v2
-runtime code, complete scope-aware reconciliation/export, build the reviewed
-migrator, update registry/index, run all negative/snapshot/idempotence tests,
-full validation, and independent review.
+Implement/test `knowledge migrate-v2`; create/review dry-run manifest; apply to
+the live framework from a clean checkpoint; preserve every UID and rewrite
+routes/references; add binding verify/accept CLI; finish identities and object
+reference integration; make adoption/reconciliation/export fully scope-aware;
+rename remaining package-era APIs/fields; rebuild registry/index; run snapshots,
+negative tests, migration idempotence, benchmarks, ref check, validate,
+selftest, and independent review.
 
 ## Blockers
 
-Only the real second-repository distribution production gate is pending. The
-deterministic two-profile fixture passes and does not block implementation.
+No implementation blocker. The only pending external-quality gate is a real
+second-repository distribution test; deterministic distribution fixtures pass.
 
 ## Useful References
 
 - `AI_SYSTEM.md`
 - `.hydra-framework/core/knowledge-architecture.md`
 - `.hydra-framework/validation/knowledge-v3/README.md`
-- `.hydra-framework/tasks/personal/milosdenic-dev-gmail-com/2026-09-07-knowledge-v3-architecture.md`
+- Primary task record referenced above
 
 ## Continuation Prompt
 
-Start by reading `AI_SYSTEM.md`, this checkpoint, and the referenced task state. Continue from the current stage without relying on prior conversation history.
+Read `AI_SYSTEM.md`, this checkpoint, and the primary task. Run
+`PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`
+and expect 1,246 passing tests. Inspect `git status --short`; the next code step
+is the isolated, review-gated `knowledge migrate-v2` implementation. Do not edit
+the live v2 tree until its dry-run manifest is reviewed and a clean Git
+checkpoint exists.

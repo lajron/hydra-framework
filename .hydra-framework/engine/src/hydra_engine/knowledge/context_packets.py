@@ -1,7 +1,4 @@
-"""Context packet compilation. Package-routing v2
-replaces context packs; package-routing candidate
-collection moved behind the Knowledge context provider
--- see `knowledge.context_providers`."""
+"""Deterministic Knowledge v3 context-packet compilation."""
 
 from __future__ import annotations
 
@@ -37,11 +34,12 @@ def compile_context_packet(
     provider: str = "",
     model: str = "",
     budget: int = DEFAULT_CONTEXT_BUDGET,
-    package_values: list[str] | None = None,
-    domain: str = "",
+    node_values: list[str] | None = None,
+    space: str = "",
     object_refs: list[str] | None = None,
     path_refs: list[str] | None = None,
     route_values: list[str] | None = None,
+    view_values: list[str] | None = None,
     chars_per_token: int = APPROX_CHARS_PER_TOKEN,
     family_cap: int = DEFAULT_FAMILY_CANDIDATE_CAP,
     include_families: list[str] | None = None,
@@ -105,9 +103,11 @@ def compile_context_packet(
         object_seed_ids=object_seed_ids,
         chars_per_token=chars_per_token,
         family_cap=family_cap,
-        package_values=tuple(package_values or []),
-        domain=domain,
+        node_values=tuple(node_values or []),
+        space=space,
         route_values=tuple(route_values or []),
+        path_values=tuple(path_refs or []),
+        view_values=tuple(view_values or []),
         command_ids=command_ids,
     )
     provider_output = run_context_providers(
@@ -117,7 +117,7 @@ def compile_context_packet(
     )
     for candidate in provider_output.candidates:
         add_candidate(candidates, seen, candidate)
-    packages_out = provider_output.packages
+    nodes_out = provider_output.nodes
     avoid_by_default = provider_output.avoid_by_default
     verify_commands = provider_output.verify
     warnings.extend(provider_output.warnings)
@@ -169,14 +169,17 @@ def compile_context_packet(
     # `Finding` dataclass cannot satisfy the way a plain string can.
     freshness_errors = [str(finding) for finding in validate_object_registry_freshness(resolver_paths)]
     return {
-        "schema": "hydra-framework.context-packet.v1",
+        "schema": "hydra-framework.context-packet.v2",
         "date": today(),
         "generated_at": clock_port.now_utc_iso(),
         "task": task,
         "provider": provider or "unspecified",
         "model": model or "unspecified",
         "budget_tokens": budget,
-        "packages": packages_out,
+        "nodes": nodes_out,
+        "views": provider_output.views,
+        "effective_policy": provider_output.effective_policy,
+        "route_expansions": provider_output.route_expansions,
         "selected_context": selected,
         "omitted_candidates": omitted,
         "required_units": [
@@ -203,7 +206,7 @@ def compile_context_packet(
             "Run `python3 .hydra-framework/scripts/hydra.py validate` before finishing Hydra framework changes.",
         ],
         "known_risk_reminders": [
-            "Do not use this command as a reason to start engine extraction, directory renames, move automation, or downstream reconciliation.",
+            "Treat provisional prompt routing as revisable when verified path bindings become available.",
         ],
         "warnings": warnings,
         "surface_file_count": surface_file_count,

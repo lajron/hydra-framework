@@ -19,7 +19,7 @@ def render_route_prompt(matches, warnings: list[str], state_lines: list[str], re
         print(f"Hydra routing skipped: {warning}", file=sys.stderr)
 
     if matches:
-        print("Hydra package routing (pointers only):")
+        print("Hydra Knowledge v3 routing (pointers only):")
         for match in matches:
             print(f"- {match.title}: read `{match.state}` then `{match.overview}` first. {match.note}")
 

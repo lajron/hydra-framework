@@ -39,7 +39,7 @@ class RenderRoutePromptTests(unittest.TestCase):
         with contextlib.redirect_stdout(stdout):
             rendering.render_route_prompt(matches, [], [])
         output = stdout.getvalue()
-        self.assertIn("Hydra package routing (pointers only):", output)
+        self.assertIn("Hydra Knowledge v3 routing (pointers only):", output)
         self.assertIn("- hydra-framework: read `state.md` then `overview.md` first. Read state first.", output)
         self.assertIn("- other-package: read `other/state.md` then `other/overview.md` first. No packs yet.", output)
 
