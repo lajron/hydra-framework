@@ -1,6 +1,6 @@
 # Architecture Graph
 
-This page is the navigation graph for active package slices. It answers what to
+This page is the navigation graph for active space slices. It answers what to
 read next without requiring broad repository search.
 
 ## Nodes
@@ -24,5 +24,5 @@ read next without requiring broad repository search.
 
 ## See Also
 
-- [Overview](../overview.md) - package entry point and reading map.
+- [Overview](../overview.md) - space entry point and reading map.
 - [Routing](../space.yaml.template) - scoped units per task via `routes:`.

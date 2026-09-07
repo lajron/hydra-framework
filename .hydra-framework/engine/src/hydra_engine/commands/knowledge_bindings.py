@@ -59,14 +59,17 @@ def command_bindings_verify(args, paths: ContextCompilerPaths) -> CommandResult:
     failed: list[str] = []
     for status in statuses:
         name = status.binding.logical_name
-        # Only an otherwise-clean binding may be accepted. A stale-because-
-        # unreviewed fingerprint is the reviewable case; a failed assertion or
-        # a missing target is not, and accepting it would launder a real defect.
-        reviewable = status.state == "stale" and not [
-            item for item in status.errors if "fingerprint" not in item
-        ]
-        if accept and reviewable:
-            bindings_module.record_accepted_fingerprint(status.binding, status.fingerprint, paths)
+        # Only an otherwise-clean binding may be accepted. A failed assertion or
+        # a missing target is not reviewable, and accepting it would launder a
+        # real defect. `awaiting_review` is set by the verifier itself, so this
+        # never depends on the wording of an error message.
+        if accept and status.awaiting_review:
+            try:
+                bindings_module.record_accepted_fingerprint(status.binding, status.fingerprint, paths)
+            except ValueError as error:
+                print(f"- {name} [not accepted] {error}")
+                failed.append(name)
+                continue
             accepted.append(name)
             print(f"- {name} [accepted] {status.fingerprint}")
             continue

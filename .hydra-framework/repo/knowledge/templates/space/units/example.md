@@ -8,7 +8,7 @@ one block into a real `units/<slug>.md` file (with a real envelope, `uid`,
 and verified paths) rather than editing this file in place.
 
 A knowledge space needs units only above roughly five durable questions; below
-that, a single `overview.md` is correct (`repo/knowledge/../../core/knowledge-architecture.md`).
+that, a single `overview.md` is correct (`core/knowledge-architecture.md`).
 
 ## `answer` -- most units
 
@@ -25,7 +25,8 @@ scope: <repo-slug|base-seed|common-seed>
 owners:
   team: <owner>
 relations:
-  - hydra://knowledge-package/<space-slug>
+  - type: relates-to
+    target: hydra://knowledge-space/<space-slug>
 provenance:
   sources:
     - <path to the source of truth this answer was verified against>

@@ -1,7 +1,7 @@
 
-# Package Sources: <package-name>
+# Space Sources: <space-slug>
 
-Type: knowledge-package-sources
+Type: knowledge-space-sources
 Status: active
 Updated: YYYY-MM-DD
 

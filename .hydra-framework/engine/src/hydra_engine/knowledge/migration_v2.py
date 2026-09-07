@@ -99,7 +99,7 @@ def _rewrite_moved_document(
     return _rewrite_refs(rendered, package, route_names).replace("](routing.yaml)", "](space.yaml)")
 
 
-def _converted_expansions(package_root: Path, routing: dict, root: Path) -> tuple[dict[str, list[dict]], list[dict], list[str]]:
+def _converted_expansions(package_root: Path, package: str, routing: dict, root: Path) -> tuple[dict[str, list[dict]], list[dict], list[str]]:
     routes = yaml_map(routing.get("routes"))
     additions: dict[str, list[dict]] = {}
     evidence: list[dict] = []
@@ -125,7 +125,11 @@ def _converted_expansions(package_root: Path, routing: dict, root: Path) -> tupl
             )
             continue
         additions.setdefault(owners[0], []).extend(entries)
-        evidence.append({"unit": unit_id, "route": f"{package}:{owners[0]}", "count": len(entries)})
+        evidence.append({
+            "unit": unit_id,
+            "route": f"hydra://knowledge-route/{package}/{owners[0].replace('_', '-')}",
+            "count": len(entries),
+        })
     return additions, evidence, unresolved
 
 
@@ -194,8 +198,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             "expand_when_conversions": [], "binding_candidates": [], "unresolved": [],
             "confidence": "high",
         }
-        digest = migration_format.payload_digest(payload)
-        return MigrationPlan({**payload, "plan_digest": digest, "review": {"approved": False, "approved_digest": "", "reviewer": "", "evidence": ""}}, {}, {}, (), {})
+        return MigrationPlan(migration_format.review_manifest(payload), {}, {}, (), {})
 
     writes: dict[str, str] = {}
     modes: dict[str, int] = {}
@@ -226,7 +229,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
         if declared != package:
             unresolved.append(f"{_relative(routing_path, root)} declares package `{declared}`, expected `{package}`")
             continue
-        additions, converted, conversion_errors = _converted_expansions(package_root, routing, root)
+        additions, converted, conversion_errors = _converted_expansions(package_root, package, routing, root)
         conversions.extend(converted)
         unresolved.extend(conversion_errors)
         target_root = spaces / package
@@ -290,7 +293,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
 
     moved_sources = set(deletes)
     reference_rewrites: list[dict] = []
-    for path in sorted(item for item in root.rglob("*") if item.is_file()):
+    for path in migration_git.rewrite_candidates(root):
         rel = _relative(path, root)
         if rel in moved_sources or rel in writes or not migration_templates.is_rewritable(rel):
             continue
@@ -336,8 +339,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
         "unresolved": sorted(unresolved),
         "confidence": "high" if (package_rows or deletes) and not unresolved else "requires-review",
     }
-    digest = migration_format.payload_digest(payload)
-    manifest = {**payload, "plan_digest": digest, "review": {"approved": False, "approved_digest": "", "reviewer": "", "evidence": ""}}
+    manifest = migration_format.review_manifest(payload)
     return MigrationPlan(manifest, writes, modes, tuple(sorted(set(deletes))), originals)
 
 

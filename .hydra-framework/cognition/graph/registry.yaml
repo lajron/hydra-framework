@@ -532,7 +532,7 @@ objects:
   hydra://knowledge-template/space/architecture-example:
     uid: 5447f8f8-f5b2-4315-8b4d-d0c4f9f6be93
     path: .hydra-framework/repo/knowledge/templates/space/architecture/01-example.md
-    digest: sha256:88c0685331bbadb1d00d629c56e376c58c1518813b823016efda30b2f47ef3d9
+    digest: sha256:0c66b789fbfcb33f710857efcce8ed9a6dcc5d77e668522ec1c88dce6fa32944
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -547,7 +547,7 @@ objects:
   hydra://knowledge-template/space/architecture-graph:
     uid: 879c98a6-fdc6-4a9c-b263-d82a16a5430d
     path: .hydra-framework/repo/knowledge/templates/space/architecture/00-graph.md
-    digest: sha256:bf9a2ea9e221cb0806a852f8c178344ffab8f1b1d8a3f9808803b0005a291731
+    digest: sha256:b78c5ff83ba1261abb38e05423de0acb659eb10a467a9eb3c120effcba1b86ca
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -562,7 +562,7 @@ objects:
   hydra://knowledge-template/space/check-script:
     uid: 16832a4c-aa19-4262-a282-f6c8fe9655be
     path: .hydra-framework/repo/knowledge/templates/space/scripts/check.sh
-    digest: sha256:060e580e3b6a710a4f2028fad351b42f11ca370e24a4bd5f39c5fbbfa1705e4a
+    digest: sha256:f69487335ff8af6a354373aff2fe39453e401d97e1436041e01a6fba890d0e1b
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -577,7 +577,7 @@ objects:
   hydra://knowledge-template/space/definition-of-done:
     uid: da8c5a95-5537-4d34-b766-afa5f045236f
     path: .hydra-framework/repo/knowledge/templates/space/definition-of-done.md
-    digest: sha256:3cee1b9ead8d8e3475ab5248e551f8cbd3d703e05d51dbac70218b6e074de41f
+    digest: sha256:3ea39d3202b7e9739b4f4efd454caba4cd62aa1c3beb721c7070b2982dd7350f
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -592,7 +592,7 @@ objects:
   hydra://knowledge-template/space/glossary:
     uid: 9294188c-b0f7-4d1b-a2d1-dbfe7695f851
     path: .hydra-framework/repo/knowledge/templates/space/glossary.md
-    digest: sha256:bbb8c993db75afc88deca55aed6cbf6855cd3a38c731cf0d29d517867d35b295
+    digest: sha256:69d9c965872960e41ed5d4d45f7dd1bff34c482ad09ad8e806ee8d965ecf7809
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -607,7 +607,7 @@ objects:
   hydra://knowledge-template/space/overview:
     uid: fc80270e-c601-4f68-a3ed-f3d9e386b9db
     path: .hydra-framework/repo/knowledge/templates/space/overview.md
-    digest: sha256:d795f5933448758e70c19bd0b0bbca99d719029ebc10f1c0c3f5c51b36d58a93
+    digest: sha256:b89f4190b24bfef032e072b7431adac9576ed5fbcf010f40e0f3e8f876c38de5
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -622,7 +622,7 @@ objects:
   hydra://knowledge-template/space/problems:
     uid: 2ad87a96-2725-49e3-aec2-fd90d1ac93c5
     path: .hydra-framework/repo/knowledge/templates/space/problems.md
-    digest: sha256:1a13b8f192f39afec7799ce7a611f4befd19240250a7deb6c78fc6ad02b14ab8
+    digest: sha256:ae26360282ed4bfb312edd91bdeea6bec16d309fac3575934c3fe1fce0b49cf0
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -637,7 +637,7 @@ objects:
   hydra://knowledge-template/space/questions:
     uid: 7f8cb5ca-26d1-49a3-9d7f-1b7673800e75
     path: .hydra-framework/repo/knowledge/templates/space/questions.md
-    digest: sha256:53e1f4ccd91bb762f7b4727b6ee72f75085c2200c094f9c5b2fcecb0d57615a4
+    digest: sha256:bdeeb7b7aba145ff99d4593ec851c8dab0be7ba272e1daf029ec551b1d090350
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -652,7 +652,7 @@ objects:
   hydra://knowledge-template/space/readme:
     uid: 954f110f-31cd-4024-a9cd-68c2ba544fc3
     path: .hydra-framework/repo/knowledge/templates/space/README.md
-    digest: sha256:e50891a8775f37cddbe946ecb9ee6e191c85aadf0dcfc558eab8b3e1953adf63
+    digest: sha256:6714409c8c6a01e6ac7073c49ea86309d1cc4431f214471c76a0c7845cd89c58
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -683,7 +683,7 @@ objects:
   hydra://knowledge-template/space/sources:
     uid: cd61034a-a504-49f2-9bdd-2e2c05601457
     path: .hydra-framework/repo/knowledge/templates/space/sources.md
-    digest: sha256:f4c8b4cc00d16f37cc29700174bc46b3d740d952672d37f95b63f4d2c1407ab6
+    digest: sha256:e6383a5d43eb2c75ef9c93dfa305d164d44927f4c03df915b88b07f7a5741277
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -698,7 +698,7 @@ objects:
   hydra://knowledge-template/space/state:
     uid: 6b07c738-8f8f-4573-a2fb-74fea04e3ebc
     path: .hydra-framework/repo/knowledge/templates/space/state.md
-    digest: sha256:ddf6470979cf432bd6e47f1cff7a4d01628e70dc55b9a30b2863568466bfbe90
+    digest: sha256:588226233f2feb37a4168b44eb917b6c5509dfa972f77465ed875e319c921ec0
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -713,7 +713,7 @@ objects:
   hydra://knowledge-template/space/units-example:
     uid: cde96ca9-d600-4256-903c-a065c98caf55
     path: .hydra-framework/repo/knowledge/templates/space/units/example.md
-    digest: sha256:7ce4fdb26bc76c09cd3fa113d358f8ecbb0058dd66c523368afee9165af89cda
+    digest: sha256:8d01c41d8f469f2ed525b93cc261c5f6acdb128679e9b75b2dff0bce8aa3361b
     family: Knowledge
     kind: knowledge-template
     status: active

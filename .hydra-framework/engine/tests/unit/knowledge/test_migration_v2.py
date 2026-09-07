@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -236,6 +237,53 @@ class MigrationV2Tests(unittest.TestCase):
             )
             # A file changed only by reference rewriting has no move source.
             self.assertEqual(rows["AGENTS.md"], "")
+
+
+    def test_valid_unit_expand_when_converts_to_a_route_level_clause(self):
+        """The success path of the migrator's headline conversion.
+
+        Only the malformed case was covered, so the one line that runs when a
+        conversion actually succeeds referenced an undefined name and crashed.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _legacy(root, expansion=(
+                "expand_when:\n"
+                "  - when_paths:\n      - src/**/Migrations/**\n"
+                "    read:\n      - hydra://knowledge-unit/demo/other\n"
+                "    why: governed schema change\n"
+            ))
+            plan = migration_v2.build_plan(root, checkpoint_commit="abc")
+            self.assertEqual(plan.manifest["unresolved"], [])
+            conversions = plan.manifest["expand_when_conversions"]
+            self.assertEqual(len(conversions), 1)
+            self.assertEqual(conversions[0]["route"], "hydra://knowledge-route/demo/use")
+            self.assertEqual(conversions[0]["unit"], "hydra://knowledge-unit/demo/guide")
+            space = plan.writes[".hydra-framework/repo/knowledge/spaces/demo/space.yaml"]
+            self.assertIn("expand_when:", space)
+            self.assertIn("governed schema change", space)
+
+    def test_untracked_files_are_neither_planned_nor_digested(self):
+        """`require_clean` ignores untracked files, so rewriting one would fall
+        outside the recorded rollback boundary and leak into the digest."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _legacy(root)
+            subprocess.run(["git", "init", "-q", "."], cwd=root, check=True)
+            subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "base"],
+                cwd=root, check=True, capture_output=True,
+            )
+            before = migration_v2.build_plan(root, checkpoint_commit="abc")
+            (root / "scratch.md").write_text(
+                "see .hydra-framework/repo/knowledge/knowledge-packages/demo/overview.md\n", encoding="utf-8"
+            )
+            after = migration_v2.build_plan(root, checkpoint_commit="abc")
+            self.assertEqual(before.manifest["plan_digest"], after.manifest["plan_digest"])
+            self.assertNotIn("scratch.md", after.writes)
+            # A tracked file with the same reference is still rewritten.
+            self.assertIn("AGENTS.md", after.writes)
 
 
 if __name__ == "__main__":

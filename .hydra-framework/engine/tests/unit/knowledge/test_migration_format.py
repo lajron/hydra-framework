@@ -19,5 +19,19 @@ class MigrationFormatTests(unittest.TestCase):
         self.assertEqual(payload_digest(manifest_payload(manifest)), digest)
 
 
+    def test_nested_mappings_and_lists_survive_a_round_trip(self):
+        """A sequence item whose first key held a map used to vanish silently."""
+        for value in (
+            {"checks": [{"config": {"a": "1", "b": "2"}, "name": "x"}]},
+            {"routes": [{"tags": ["x", "y"], "name": "r"}]},
+            {"nested": [{"outer": {"inner": {"deep": "1"}}}]},
+        ):
+            text = emit_yaml(value)
+            self.assertEqual(parse_yaml_text(text, "emitted", Path(".")), value)
+
+    def test_none_emits_a_yaml_null_rather_than_the_string_none(self):
+        self.assertEqual(emit_yaml({"k": None}), "k: null\n")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -57,22 +57,40 @@ def executable_mode(source: Path) -> int:
     return 0o755 if source.stat().st_mode & 0o100 else 0o644
 
 
+LEGACY_CONCEPT_DOC = ".hydra-framework/repo/knowledge/knowledge-packages.md"
+V3_CONTRACT_DOC = ".hydra-framework/core/knowledge-architecture.md"
+
+
 def _rewrite_text(text: str) -> str:
+    """Mechanical identity, path, and placeholder rewrites for one template.
+
+    Deliberately does not attempt to restate prose. Substring rules such as
+    "a package" fired inside unrelated phrases ("data packages") and left
+    neighbouring sentences half-renamed, which reads worse than leaving the
+    wording alone. Migrated template wording needs a human pass.
+    """
     rewritten = (
         text.replace("knowledge-packages/<package-slug>", "spaces/<space-slug>")
-        .replace("knowledge-packages.md", "../../core/knowledge-architecture.md")
+        # Anchored first: the bare filename rule alone turned an already
+        # qualified `repo/knowledge/knowledge-packages.md` into a relative path
+        # stitched into the middle of another path.
+        .replace(LEGACY_CONCEPT_DOC, V3_CONTRACT_DOC)
+        .replace("repo/knowledge/knowledge-packages.md", "core/knowledge-architecture.md")
+        .replace("knowledge-packages.md", "core/knowledge-architecture.md")
         .replace("<package-slug>", "<space-slug>")
         .replace("<Package Name>", "<Space Name>")
+        .replace("<package-name>", "<space-slug>")
         .replace("routing.yaml", "space.yaml.template")
-        .replace("package gate", "node-document gate")
-        .replace("package documentation", "node documentation")
-        .replace("a package", "a knowledge space")
-        .replace("A package", "A knowledge space")
+        .replace("knowledge-package-", "knowledge-space-")
+        # Identity rewriting must precede the relation anchor below, or the
+        # anchor never matches and a v2 bare-string relation ships unchanged.
+        .replace("hydra:/" + "/knowledge-package/", "hydra:/" + "/knowledge-space/")
     )
     return rewritten.replace(
         "relations:\n  - hydra://knowledge-space/<space-slug>",
         "relations:\n  - type: relates-to\n    target: hydra://knowledge-space/<space-slug>",
     )
+
 
 
 SIDECAR_PATH = ".hydra-framework/repo/object-sidecars.yaml"
@@ -91,10 +109,6 @@ _NEVER_REWRITTEN = (
 
 def is_rewritable(rel: str) -> bool:
     return not any(rel == item.rstrip("/") or rel.startswith(item) for item in _NEVER_REWRITTEN)
-
-
-LEGACY_CONCEPT_DOC = ".hydra-framework/repo/knowledge/knowledge-packages.md"
-V3_CONTRACT_DOC = ".hydra-framework/core/knowledge-architecture.md"
 
 
 def rewrite_references(text: str) -> str:

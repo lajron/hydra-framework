@@ -39,6 +39,10 @@ class BindingStatus:
     state: str
     fingerprint: str
     errors: tuple[str, ...]
+    # True only when every assertion held and the sole objection is that the
+    # fingerprint has not been reviewed. Callers must not infer this by
+    # searching `errors`, whose text interpolates author-controlled values.
+    awaiting_review: bool = False
 
 
 class BindingResolutionError(ValueError):
@@ -186,14 +190,64 @@ def verify_binding(binding: Binding, paths: ContextCompilerPaths) -> BindingStat
     fingerprint = "sha256:" + hashlib.sha256(
         json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
+    awaiting_review = False
     if errors:
         state = "unresolved" if not matches else "stale"
     elif not binding.accepted_fingerprint or binding.accepted_fingerprint != fingerprint:
         state = "stale"
+        awaiting_review = True
         errors.append("assertion fingerprint is unreviewed or changed; run bindings verify --accept")
     else:
         state = "verified"
-    return BindingStatus(binding, state, fingerprint, tuple(errors))
+    return BindingStatus(binding, state, fingerprint, tuple(errors), awaiting_review)
+
+
+def _indent_of(line: str) -> int:
+    return len(line) - len(line.lstrip(" "))
+
+
+def _key_of(line: str) -> str:
+    key = line.strip()
+    if not key.endswith(":"):
+        return ""
+    key = key[:-1].strip()
+    if len(key) >= 2 and key[0] == key[-1] and key[0] in "\"'":
+        key = key[1:-1]
+    return key
+
+
+def _binding_entry_span(lines: list[str], key: str) -> tuple[int, int, int] | None:
+    """Locate one direct child of the top-level `bindings:` map.
+
+    Anchoring on any line that merely reads `<key>:` matched nested keys such
+    as `contains:` or `identity:`, so accepting a binding could write into a
+    different entry and leave the fragment unparseable. The search therefore
+    stays inside the `bindings` block and only considers its own child indent.
+    """
+    block = next((index for index, line in enumerate(lines) if _indent_of(line) == 0 and _key_of(line) == "bindings"), None)
+    if block is None:
+        return None
+    child_indent = next(
+        (_indent_of(line) for line in lines[block + 1:] if line.strip() and _indent_of(line) > 0),
+        None,
+    )
+    if child_indent is None:
+        return None
+    for index in range(block + 1, len(lines)):
+        line = lines[index]
+        if line.strip() and _indent_of(line) < child_indent:
+            break
+        if _indent_of(line) != child_indent or _key_of(line) != key:
+            continue
+        end = index + 1
+        while end < len(lines) and (not lines[end].strip() or _indent_of(lines[end]) > child_indent):
+            end += 1
+        field_indent = next(
+            (_indent_of(lines[inner]) for inner in range(index + 1, end) if lines[inner].strip()),
+            child_indent + 2,
+        )
+        return index, end, field_indent
+    return None
 
 
 def record_accepted_fingerprint(binding: Binding, fingerprint: str, paths: ContextCompilerPaths) -> None:
@@ -202,29 +256,24 @@ def record_accepted_fingerprint(binding: Binding, fingerprint: str, paths: Conte
     A line-anchored edit rather than a re-serialisation, so accepting one
     binding never reformats the rest of a hand-authored fragment.
     """
-    lines = binding.source_path.read_text(encoding="utf-8").splitlines()
-    anchor = next(
-        (index for index, line in enumerate(lines) if line.strip() == f"{binding.key}:" and line.startswith("  ")),
-        None,
-    )
-    if anchor is None:
+    text = binding.source_path.read_text(encoding="utf-8")
+    newline = "\r\n" if "\r\n" in text else "\n"
+    lines = text.splitlines()
+    span = _binding_entry_span(lines, binding.key)
+    if span is None:
         raise BindingResolutionError(
-            f"cannot record fingerprint: `{binding.key}` not found in {display_path(binding.source_path, paths.root)}"
+            f"cannot record fingerprint: `{binding.key}` not found under `bindings` in "
+            f"{display_path(binding.source_path, paths.root)}"
         )
-    indent = len(lines[anchor]) - len(lines[anchor].lstrip(" "))
-    field_indent = " " * (indent + 2)
-    end = anchor + 1
-    while end < len(lines) and (not lines[end].strip() or len(lines[end]) - len(lines[end].lstrip(" ")) > indent):
-        end += 1
-    replacement = f'{field_indent}accepted_fingerprint: "{fingerprint}"'
+    anchor, end, field_indent = span
+    replacement = " " * field_indent + f'accepted_fingerprint: "{fingerprint}"'
     for index in range(anchor + 1, end):
-        stripped = lines[index].strip()
-        if stripped.startswith("accepted_fingerprint:") and len(lines[index]) - len(lines[index].lstrip(" ")) == indent + 2:
+        if _indent_of(lines[index]) == field_indent and lines[index].strip().startswith("accepted_fingerprint:"):
             lines[index] = replacement
             break
     else:
         lines.insert(anchor + 1, replacement)
-    binding.source_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    binding.source_path.write_text(newline.join(lines) + newline, encoding="utf-8")
 
 
 def resolve_binding(logical_name: str, bindings: dict[str, Binding], paths: ContextCompilerPaths) -> Path:

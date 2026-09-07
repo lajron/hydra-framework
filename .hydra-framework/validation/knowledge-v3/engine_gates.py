@@ -168,7 +168,7 @@ def _hint_results(task: str, fixture: dict, paths: ContextCompilerPaths) -> tupl
     )
 
 
-def retrieval_gate(fixture: dict, paths: ContextCompilerPaths) -> dict:
+def retrieval_gate(fixture: dict, paths: ContextCompilerPaths, *, hints: bool = True, timings: bool = False) -> dict:
     recalls: list[float] = []
     precisions: list[float] = []
     pointer_tokens: list[int] = []
@@ -177,7 +177,7 @@ def retrieval_gate(fixture: dict, paths: ContextCompilerPaths) -> dict:
     selected_total = 0
     elapsed: list[float] = []
     for workload in fixture["workloads"]:
-        results = _hint_results(workload["task"], fixture, paths)
+        results = _hint_results(workload["task"], fixture, paths) if hints else ()
         start = time.perf_counter_ns()
         selections, warnings = route_nodes(workload["task"], [], "", paths, search_results=results)
         elapsed.append((time.perf_counter_ns() - start) / 1_000_000)
@@ -191,15 +191,19 @@ def retrieval_gate(fixture: dict, paths: ContextCompilerPaths) -> dict:
         false_positives += len(set(selected) - expected)
         selected_total += len(selected)
     count = len(fixture["workloads"])
-    return {
+    report = {
         "recall_at_3": round(statistics.mean(recalls), 4),
         "precision_at_3": round(statistics.mean(precisions), 4),
         "pointer_tokens_mean": round(statistics.mean(pointer_tokens), 2),
         "ambiguity_rate": round(ambiguities / count, 4),
         "false_positive_rate": round(false_positives / max(selected_total, 1), 4),
-        "latency_ms_p50": round(statistics.median(elapsed), 4),
-        "latency_ms_max": round(max(elapsed), 4),
     }
+    # Latency varies by machine, so it stays out of the diffable report unless
+    # asked for. Everything else above is deterministic for a given fixture.
+    if timings:
+        report["latency_ms_p50"] = round(statistics.median(elapsed), 4)
+        report["latency_ms_max"] = round(max(elapsed), 4)
+    return report
 
 
 def path_gate(fixture: dict, paths: ContextCompilerPaths) -> dict:
@@ -237,7 +241,7 @@ def path_gate(fixture: dict, paths: ContextCompilerPaths) -> dict:
     }
 
 
-def run(path: Path = FIXTURE) -> dict:
+def run(path: Path = FIXTURE, *, timings: bool = False) -> dict:
     fixture = json.loads(path.read_text(encoding="utf-8"))
     with tempfile.TemporaryDirectory() as tmp:
         paths = materialize(fixture, Path(tmp))
@@ -252,7 +256,10 @@ def run(path: Path = FIXTURE) -> dict:
             "measured": "shipped hydra_engine.knowledge runtime",
             "fixture": path.name,
             "node_validation_findings": 0,
-            "retrieval": retrieval_gate(fixture, paths),
+            "retrieval": retrieval_gate(fixture, paths, timings=timings),
+            # The index contribution, not node keywords, is what carries v3's
+            # retrieval gain, so the README's claim stays re-runnable here.
+            "retrieval_without_index_hints": retrieval_gate(fixture, paths, hints=False),
             "path_rerouting": path_gate(fixture, paths),
             "real_second_repository_gate": "pending",
         }
@@ -262,8 +269,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fixture", type=Path, default=FIXTURE)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--timings", action="store_true",
+        help="Include machine-dependent latency, which makes the report non-diffable",
+    )
     args = parser.parse_args()
-    report = run(args.fixture)
+    report = run(args.fixture, timings=args.timings)
     text = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

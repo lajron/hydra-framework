@@ -1,7 +1,7 @@
 
-# Package Questions: <package-name>
+# Space Questions: <space-slug>
 
-Type: knowledge-package-questions
+Type: knowledge-space-questions
 Status: active
 Updated: YYYY-MM-DD
 

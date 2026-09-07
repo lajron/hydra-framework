@@ -13,6 +13,34 @@ def _output(root: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
+def tracked_files(root: Path) -> list[str] | None:
+    """Repository-relative tracked paths, or None when `root` is not a Git tree.
+
+    The migration may only rewrite files Git can restore. `require_clean`
+    ignores untracked files, so rewriting one would put it outside the recorded
+    rollback boundary, and its contents would leak into the reviewed plan
+    digest.
+    """
+    try:
+        listed = _output(root, "ls-files", "-z")
+    except (ValueError, OSError):
+        return None
+    return [item for item in listed.split("\0") if item]
+
+
+def rewrite_candidates(root: Path) -> list[Path]:
+    """Files the migration may rewrite, deterministically ordered.
+
+    Tracked files where `root` is a Git tree; otherwise the whole tree, which
+    only happens in inspection and test contexts, since apply always requires
+    a Git checkpoint.
+    """
+    tracked = tracked_files(root)
+    if tracked is None:
+        return sorted(item for item in root.rglob("*") if item.is_file())
+    return sorted(path for item in tracked if (path := root / item).is_file())
+
+
 def checkpoint(root: Path) -> str:
     return _output(root, "rev-parse", "HEAD")
 

@@ -20,6 +20,15 @@ def payload_digest(payload: dict) -> str:
     return text_digest(canonical)
 
 
+def review_manifest(payload: dict) -> dict:
+    """Wrap a plan payload with its digest and an unapproved review block."""
+    return {
+        **payload,
+        "plan_digest": payload_digest(payload),
+        "review": {"approved": False, "approved_digest": "", "reviewer": "", "evidence": ""},
+    }
+
+
 def write_rows(writes: dict[str, str], modes: dict[str, int], sources: dict[str, str]) -> list[dict]:
     return [
         {
@@ -45,11 +54,40 @@ def load_review_manifest(path: Path) -> dict:
 
 
 def _quoted(value: object) -> str:
+    if value is None:
+        return "null"
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, int):
         return str(value)
     return json.dumps(str(value), ensure_ascii=True)
+
+
+def _emit_sequence_mapping(emit, lines: list[str], item: dict, indent: int) -> None:
+    """One mapping inside a sequence, first key merged onto the dash.
+
+    The nested branch matters: emitting a mapping-valued first key through the
+    sequence path dropped it silently, losing data with no unresolved entry and
+    a plan digest that certified the loss as reviewed.
+    """
+    prefix = " " * indent
+    for index, (child_key, child) in enumerate(item.items()):
+        if index:
+            emit(child, indent + 2, str(child_key))
+            continue
+        if isinstance(child, dict) and child:
+            lines.append(f"{prefix}- {child_key}:")
+            for nested_key, nested in child.items():
+                emit(nested, indent + 4, str(nested_key))
+        elif isinstance(child, list) and child:
+            lines.append(f"{prefix}- {child_key}:")
+            emit(child, indent + 4)
+        elif isinstance(child, dict):
+            lines.append(f"{prefix}- {child_key}: {{}}")
+        elif isinstance(child, list):
+            lines.append(f"{prefix}- {child_key}: []")
+        else:
+            lines.append(f"{prefix}- {child_key}: {_quoted(child)}")
 
 
 def emit_yaml(data: dict) -> str:
@@ -77,15 +115,10 @@ def emit_yaml(data: dict) -> str:
             return
         for item in value if isinstance(value, list) else []:
             if isinstance(item, dict):
-                for index, (child_key, child) in enumerate(item.items()):
-                    if index == 0:
-                        if isinstance(child, (dict, list)):
-                            lines.append(f"{prefix}- {child_key}:")
-                            emit(child, indent + 4)
-                        else:
-                            lines.append(f"{prefix}- {child_key}: {_quoted(child)}")
-                    else:
-                        emit(child, indent + 2, str(child_key))
+                _emit_sequence_mapping(emit, lines, item, indent)
+            elif isinstance(item, list):
+                lines.append(f"{prefix}-")
+                emit(item, indent + 2)
             else:
                 lines.append(f"{prefix}- {_quoted(item)}")
 

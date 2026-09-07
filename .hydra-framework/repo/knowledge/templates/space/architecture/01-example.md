@@ -5,7 +5,7 @@ Certainty: unresolved
 
 ## Purpose
 
-Replace this file with the first real package architecture slice.
+Replace this file with the first real architecture slice for this space.
 
 ## Source Truth
 
@@ -15,5 +15,5 @@ Replace this file with the first real package architecture slice.
 
 ## See Also
 
-- [Architecture Graph](00-graph.md) - package slice navigation.
-- [Overview](../overview.md) - package boundaries and reading map.
+- [Architecture Graph](00-graph.md) - space slice navigation.
+- [Overview](../overview.md) - space boundaries and reading map.

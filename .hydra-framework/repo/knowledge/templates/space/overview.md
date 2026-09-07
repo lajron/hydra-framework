@@ -5,7 +5,7 @@ Certainty: verified | inferred | planned
 
 ## Purpose
 
-What this package owns, in one short paragraph.
+What this space owns, in one short paragraph.
 
 ## Boundaries
 
@@ -23,8 +23,8 @@ Out of scope:
 - External specifications are authoritative for rules they own. Link them from
   `sources.md` instead of copying them wholesale.
 - Design-only material must be marked `PLANNED` until implementation ships and
-  the package is verified against code.
-- If a knowledge space claim conflicts with an authoritative source, fix the package or
+  the space is verified against code.
+- If a claim in this space conflicts with an authoritative source, fix the space or
   file a concrete problem with evidence.
 
 ## If You Have Never Read This Before
@@ -43,7 +43,7 @@ Out of scope:
 | Pick units to read for a task | [Routing](space.yaml.template) |
 | Navigate related slices | [Architecture Graph](architecture/00-graph.md) |
 | Track unresolved concerns | [Problems](problems.md) |
-| Know when the package is done enough | [Definition Of Done](definition-of-done.md) |
+| Know when the space is done enough | [Definition Of Done](definition-of-done.md) |
 
 ## Validation
 

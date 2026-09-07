@@ -1,18 +1,18 @@
 # Definition Of Done
 
-This file defines when the package is useful enough to stop polishing. It is a
+This file defines when the space is useful enough to stop polishing. It is a
 stop condition, not a deadline.
 
 ## Audience Goals
 
-- Humans can answer common repository questions by reading the package instead
+- Humans can answer common repository questions by reading the space instead
   of rediscovering patterns from scratch.
 - AI agents can load `state.md`, one route's units, and one or two slices with
   enough context to work safely.
 
 ## Done When
 
-- `overview.md` defines package boundaries and source-of-truth policy.
+- `overview.md` defines space boundaries and source-of-truth policy.
 - Architecture slices listed in the reading map exist or are explicitly parked.
 - Design-only slices carry `certainty: unresolved`; shipped behavior is
   verified against code or its owning external source.
@@ -35,7 +35,7 @@ stop condition, not a deadline.
 
 ## Maintenance Mode
 
-- Touch the relevant package slice next to repository changes that alter its
+- Touch the relevant space slice next to repository changes that alter its
   claims.
 - Move a slice off `certainty: unresolved` only after implementation exists
   and it has been verified.

@@ -1,6 +1,6 @@
 # Problems
 
-Track concrete unresolved package concerns. This is not a wishlist.
+Track concrete unresolved concerns for this space. This is not a wishlist.
 
 ## Open
 

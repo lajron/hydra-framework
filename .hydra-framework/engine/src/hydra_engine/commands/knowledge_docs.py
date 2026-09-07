@@ -27,23 +27,30 @@ def node_roots_from_args(args, paths: ContextCompilerPaths) -> list[Path]:
     return [node.path.parent for node in nodes]
 
 
+def _under(path: str, roots: set[str]) -> bool:
+    return any(path == root or path.startswith(f"{root}/") for root in roots)
+
+
 def _node_document_findings(roots: list[Path], paths: ContextCompilerPaths) -> list:
-    """Node-document findings for the selected roots only.
+    """Node-document findings that concern the selected roots.
 
     The v2 gate validated each package's `routing.yaml`, so the post-edit hook
     caught a malformed document locally. Reuse the same whole-tree rules the
-    full validator applies and keep only what belongs to the selected roots,
-    rather than maintaining a second copy of the node contract.
+    full validator applies rather than keeping a second copy of the contract,
+    and keep two classes of finding: those belonging to a selected root, and
+    those belonging to no node at all, which describe the tree itself and
+    would otherwise be filtered away with no gate reporting them.
     """
     if not (paths.hydra / "repo/knowledge/spaces.yaml").is_file():
         return []
-    prefixes = tuple(
-        (root.relative_to(paths.root).as_posix() if is_relative_to(root, paths.root) else str(root))
-        for root in roots
-    )
+    def relative(path: Path) -> str:
+        return path.relative_to(paths.root).as_posix() if is_relative_to(path, paths.root) else str(path)
+
+    selected = {relative(root) for root in roots}
+    owned = {relative(node.path.parent) for node in discover_knowledge_nodes(paths)}
     return [
         finding for finding in validate_knowledge_nodes(paths)
-        if finding.path.startswith(prefixes)
+        if _under(finding.path, selected) or not _under(finding.path, owned)
     ]
 
 
