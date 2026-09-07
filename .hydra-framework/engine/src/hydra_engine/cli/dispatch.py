@@ -19,7 +19,7 @@ from hydra_engine.checks.aggregation import Check
 from hydra_engine.cli import command_metadata
 from hydra_engine.cli import parser as cli_parser
 from hydra_engine.cli import route_prompt
-from hydra_engine.commands import agent_hooks, capability, context, explain_path, hooks, installation, intake, integrate, knowledge, object_moves, private_tier, providers, references, schema, seed, subagents, takeover, telemetry as telemetry_commands, validation, wiki, work
+from hydra_engine.commands import agent_hooks, capability, context, explain_path, hooks, installation, intake, integrate, knowledge, knowledge_bindings, object_moves, private_tier, providers, references, schema, seed, subagents, takeover, telemetry as telemetry_commands, validation, wiki, work
 from hydra_engine.config import ConfigError, ConfigPaths, config_advisory_notes, load_effective_config, threshold_default, threshold_value
 from hydra_engine.installation.adopt import REQUIRED_PATHS
 from hydra_engine.installation.paths import InstallationPaths
@@ -41,7 +41,7 @@ from hydra_engine.work.paths import WorkPaths
 
 # Every command module's CLI registration, iterated by `cli.parser.build_parser`
 # instead of a per-command switchboard (exempt from check 5's fan-out cap here).
-COMMAND_MODULES = (agent_hooks, capability, context, explain_path, hooks, installation, intake, integrate, knowledge, object_moves, private_tier, providers, references, route_prompt, schema, seed, subagents, takeover, telemetry_commands, wiki, work)
+COMMAND_MODULES = (agent_hooks, capability, context, explain_path, hooks, installation, intake, integrate, knowledge, knowledge_bindings, object_moves, private_tier, providers, references, route_prompt, schema, seed, subagents, takeover, telemetry_commands, wiki, work)
 
 # Independent copy, matching `work.paths.WorkPaths`'s own.
 PERSONAL_TASKS_REL = "tasks/personal"

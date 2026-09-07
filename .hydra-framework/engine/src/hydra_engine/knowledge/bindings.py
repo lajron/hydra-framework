@@ -196,6 +196,37 @@ def verify_binding(binding: Binding, paths: ContextCompilerPaths) -> BindingStat
     return BindingStatus(binding, state, fingerprint, tuple(errors))
 
 
+def record_accepted_fingerprint(binding: Binding, fingerprint: str, paths: ContextCompilerPaths) -> None:
+    """Write one reviewed assertion fingerprint back into its fragment.
+
+    A line-anchored edit rather than a re-serialisation, so accepting one
+    binding never reformats the rest of a hand-authored fragment.
+    """
+    lines = binding.source_path.read_text(encoding="utf-8").splitlines()
+    anchor = next(
+        (index for index, line in enumerate(lines) if line.strip() == f"{binding.key}:" and line.startswith("  ")),
+        None,
+    )
+    if anchor is None:
+        raise BindingResolutionError(
+            f"cannot record fingerprint: `{binding.key}` not found in {display_path(binding.source_path, paths.root)}"
+        )
+    indent = len(lines[anchor]) - len(lines[anchor].lstrip(" "))
+    field_indent = " " * (indent + 2)
+    end = anchor + 1
+    while end < len(lines) and (not lines[end].strip() or len(lines[end]) - len(lines[end].lstrip(" ")) > indent):
+        end += 1
+    replacement = f'{field_indent}accepted_fingerprint: "{fingerprint}"'
+    for index in range(anchor + 1, end):
+        stripped = lines[index].strip()
+        if stripped.startswith("accepted_fingerprint:") and len(lines[index]) - len(lines[index].lstrip(" ")) == indent + 2:
+            lines[index] = replacement
+            break
+    else:
+        lines.insert(anchor + 1, replacement)
+    binding.source_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def resolve_binding(logical_name: str, bindings: dict[str, Binding], paths: ContextCompilerPaths) -> Path:
     binding = bindings.get(logical_name)
     if binding is None:
