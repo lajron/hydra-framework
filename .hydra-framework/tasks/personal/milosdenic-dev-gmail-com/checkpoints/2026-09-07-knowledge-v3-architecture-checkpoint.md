@@ -30,8 +30,8 @@ runtime. Use reviewed Git commits as rollback boundaries.
 
 ## Approved Plan
 
-Scope and close the polish tail: binding CLI, distribution terminology, golden
-snapshots, enterprise fixture reruns. Then obtain a final independent review.
+Obtain a final independent review over the completed v3 system, then complete
+the task.
 
 ## Completed Work
 
@@ -58,7 +58,7 @@ snapshots, enterprise fixture reruns. Then obtain a final independent review.
 
 ## Current Stage
 
-Phase 5: live repository migrated and verified; closing the polish tail.
+Phase 5: migration applied and polish tail closed; final independent review outstanding.
 
 ## Changed Files
 
@@ -74,18 +74,18 @@ the third-digest rejection and the fourth-digest approval.
 
 ## Remaining Work
 
-Scope each tail item concretely before implementing:
+Final independent review over the completed system. Every other tail item is
+closed:
 
-- Binding CLI: `bindings verify --accept` and the resolution surface exist as
-  contract primitives but have no command wiring.
-- Distribution terminology: residual v2 vocabulary in the wiki page that still
-  describes the removed tree, and one stale keyword in the knowledge-unit skill
-  metadata.
-- Golden snapshots: ten `selftest` golden failures, all pre-existing and all
-  now describing v2 output that the v3 runtime no longer produces.
-- Enterprise fixture reruns: re-measure the 216-leaf gates against the shipped
-  v3 runtime rather than the contract prototypes.
-- Final independent review over the completed system.
+- Binding CLI: `bindings list` and `bindings verify [--accept]` ship, with
+  acceptance refusing to launder a failed assertion.
+- Distribution terminology: v2 vocabulary retired from docs, capabilities,
+  generated surfaces, and the wiki; the orientation page is rewritten as
+  `knowledge-spaces.md`.
+- Golden snapshots: vacuous negatives repaired, node-document validation
+  restored to the per-node gate, `selftest` green at 1,430 tests.
+- Enterprise fixture rerun: `engine_gates.py` measures the shipped runtime and
+  records where it falls short of the prototype's numbers.
 
 ## Blockers
 

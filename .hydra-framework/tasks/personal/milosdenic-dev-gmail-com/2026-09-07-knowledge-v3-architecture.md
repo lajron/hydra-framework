@@ -33,7 +33,7 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 
 ## Current Stage
 
-Phase 5: live repository migrated to v3 and verified; closing the polish tail.
+Phase 5: live repository migrated to v3, polish tail closed, awaiting final independent review.
 
 ## Readiness
 
@@ -48,8 +48,8 @@ Status: ready
 
 ## Step State
 
-- Active step: close the polish tail - binding CLI, distribution terminology, golden snapshots, enterprise fixture reruns - each scoped concretely before implementation.
-- Next step: final independent review over the completed v3 system.
+- Active step: final independent review over the completed v3 system.
+- Next step: none; the task closes when that review is recorded.
 - Completed steps: read required contracts and authoritative code; created and validated the primary task; captured a 173-test v2 baseline; added and ran the 216-leaf enterprise fixture; selected global indexed routing and measured depth/scope policy; froze `core/knowledge-architecture.md`; implemented tested contract primitives for recursive nodes/inheritance, strict global graph closure and supersession, namespaced asserted bindings/freshness, reference-only view composition/conflict detection, shared distribution policy, and the registry-independent KnowledgeStore boundary; integrated recursive discovery, global validation/closure, inherited routes, two-phase path rerouting hooks, route-level `expand_when`, v3 context-packet fields, prompt pointers, search/adoption/hook consumers, and fail-closed node parsing into the active engine; removed the flat routing-collision runtime and flat package discovery; converted affected unit tests to v3 fixtures; restored the full 1,246-test unit suite to green.
 - Superseded or skipped steps: none.
 - Also completed: scoped migration reference rewriting away from engine sources, contract goldens, and the derived registry; made the plan digest reproducible across checkouts; anchored template path rewriting; confined identity/title rewriting to the object sidecar; recorded real move sources in the manifest; redirected the superseded v2 concept doc to the frozen v3 contract; removed v2 authoring guidance from `repo/README.md` and the framework glossary.
@@ -120,12 +120,20 @@ Status: ready
 - Post-apply on this repository: `ref check` ok on 56 objects, `validate` ok, 1,270 unit tests green, the legacy `knowledge-packages/` tree gone, `check.sh` executable, and in-place rewrites left at their existing modes.
 - Live v3 runtime on this repository: `route-prompt` emits v3 node pointers, `compile-context` produces a `hydra-framework.context-packet.v2` packet selecting the migrated space and its inherited routes, `knowledge-search` returns v3-path snippets with preserved UIDs, and the node-document gate passes.
 
+- Golden snapshots: three negative goldens were passing vacuously because their v2 fixtures were no longer discovered, and the per-node gate had lost the node-document validation the v2 gate gave the post-edit hook. Both are restored, node findings now name their file, and the remaining goldens were legitimate re-records. `selftest` is green at 1,430 tests.
+- Binding CLI: `bindings list` and `bindings verify [--accept]` now exist. Acceptance writes the reviewed fingerprint, refuses any binding whose target is missing or whose assertions fail, and is never implicit in validation.
+- Distribution terminology: v2 vocabulary is retired from framework docs, capability sources, generated provider surfaces, and the wiki. The orientation page is rewritten for v3 and renamed `knowledge-spaces.md` with its five inbound links updated. Two migration artifacts in the live space were also corrected: a self-referential `relates-to` on `space.yaml` and a stale routing keyword.
+- Enterprise fixture rerun: `validation/knowledge-v3/engine_gates.py` materializes the 216-leaf fixture as a real v3 tree and drives the shipped runtime. The tree validates with zero findings and every binding reaches `verified`. Option D still beats v2 on the shipped engine at recall 0.5952 versus 0.4921 and precision 0.6905 versus 0.5397, but by less than the prototype's recorded 0.6746 and 0.8333, and with no index hints the shipped router falls to 0.4762 and 0.5714. The index contribution, not node keywords, carries the gain. Path rerouting matches the prototype exactly.
+- The rerun also found `knowledge_node_for_path` resolving every node root per search result; resolving once per routing call cut fixture routing from 152 ms to 39 ms at p50 with identical selections. The residual 25 ms is the per-call whole-tree reparse that the `KnowledgeStore` boundary exists to address.
+- Final clean-clone verification at `8143d26`: `validate` ok, `ref check` ok on 56 objects, `validate-wiki` ok, `export-adapters --check` up to date across 76 generated files, `selftest` green at 1,430 tests, `knowledge migrate-v2` reports `already-v3`, and the engine gates reproduce.
+
 ## Blockers
 
 - Real second-repository distribution evidence is not yet known to be available; deterministic fixture evidence can advance the implementation, but cannot silently satisfy that production gate.
 - Migration digest `sha256:a7efbdd3cbd4afa8275db1eb45b4cd56c80e9b249986f390df86e345e3ad29f2` is explicitly rejected and must never be approved or applied. Its known defects are corrected, but the replacement digest still requires isolated post-apply proof.
 - Replacement digest `sha256:da690c5044497bc1d228105947c047a50e4c0dcebfad4bf67c8f1eac4e43f010` is also rejected and must never be approved or applied; its sidecar/template discovery defects are corrected in a later slice.
 - Third digest `sha256:db1a5b58f255d884581e42edbf5ea55ab1e3ab92d37b3d205592c0694a0ab598` is rejected and must never be approved or applied; blanket reference rewriting corrupted engine sources, tests, and goldens, and the digest was not reproducible across checkouts.
+- The frozen contract's retrieval evidence comes from the prototype harness. The shipped engine clears the same gates by a smaller margin, recorded in `validation/knowledge-v3/README.md`. Read the contract's cold-start conclusion together with those numbers.
 
 ## Continuation Notes
 
