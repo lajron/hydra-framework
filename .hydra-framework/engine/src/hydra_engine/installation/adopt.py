@@ -29,7 +29,7 @@ from hydra_engine.documents.tokens import read_text, write_text
 from hydra_engine.identity.slugs import slugify
 from hydra_engine.installation.host_detection import detect_host_repo
 from hydra_engine.installation.private_tier import private_tier_report
-from hydra_engine.knowledge.nodes import discover_knowledge_nodes
+from hydra_engine.knowledge.node_catalog import discover_knowledge_nodes
 from hydra_engine.ports import clock as clock_port
 from hydra_engine.providers.capabilities import PROVIDERS
 from hydra_engine.providers.reclaim import classify_surfaces

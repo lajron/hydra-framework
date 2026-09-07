@@ -9,14 +9,11 @@ from hydra_engine.documents.tokens import HydraYamlError, display_path
 from hydra_engine.documents.frontmatter_blocks import parse_yaml, yaml_int, yaml_list, yaml_map, yaml_str
 from hydra_engine.finding import Finding
 from hydra_engine.identity.hydra_ids import HYDRA_ID_RE
+from hydra_engine.knowledge.contracts import DEFAULT_DEPTH, LEGAL_SCOPES, MAX_DEPTH, RELATION_TYPES
 from hydra_engine.knowledge.packages import ContextCompilerPaths
 
 SPACES_SCHEMA = "hydra-framework.knowledge-spaces.v1"
 NODE_SCHEMA = "hydra-framework.knowledge-node.v1"
-DEFAULT_DEPTH = 3
-MAX_DEPTH = 4
-LEGAL_SCOPES = ("base-seed", "common-seed", "repo-local")
-RELATION_TYPES = ("relates-to", "governs", "implements", "tests", "operates", "supersedes")
 
 
 @dataclasses.dataclass(frozen=True)

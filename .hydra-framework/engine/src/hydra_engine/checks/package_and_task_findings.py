@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from hydra_engine.checks.provider_surfaces import provider_surface_findings
 from hydra_engine.checks.task_contract_docs import REQUIRED_TASK_SECTIONS
-from hydra_engine.knowledge import flat_files, nodes, package_checks
+from hydra_engine.knowledge import flat_files, node_catalog, package_checks
 from hydra_engine.providers import reclaim
 from hydra_engine.seed import reflections
 from hydra_engine.work import task_records
@@ -28,9 +28,9 @@ def provider_surfaces_check(ctx) -> list:
 
 def package_docs_check(ctx) -> list:
     findings = []
-    if not (nodes.knowledge_root(ctx.context_compiler_paths()) / "spaces.yaml").is_file():
+    if not (node_catalog.knowledge_root(ctx.context_compiler_paths()) / "spaces.yaml").is_file():
         return findings
-    for node in nodes.discover_knowledge_nodes(ctx.context_compiler_paths()):
+    for node in node_catalog.discover_knowledge_nodes(ctx.context_compiler_paths()):
         findings.extend(package_checks.validate_package_root(
             node.path.parent,
             ctx.context_compiler_paths(),

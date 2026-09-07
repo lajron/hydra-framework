@@ -8,7 +8,7 @@ from hydra_engine.commands import CommandResult
 from hydra_engine.documents.digests import normalized_digest
 from hydra_engine.documents.tokens import display_path, read_text, write_text
 from hydra_engine.knowledge.freshness import resolve_source_path
-from hydra_engine.knowledge.nodes import discover_knowledge_nodes, discover_node_unit_paths
+from hydra_engine.knowledge.node_catalog import discover_knowledge_nodes, discover_node_unit_paths
 from hydra_engine.knowledge.packages import ContextCompilerPaths
 from hydra_engine.knowledge.units import read_unit
 

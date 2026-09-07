@@ -13,7 +13,7 @@ from hydra_engine.documents.markdown import strip_markdown_code_fences
 from hydra_engine.documents.tokens import display_path, is_relative_to, read_text
 from hydra_engine.identity.slugs import slugify
 from hydra_engine.knowledge.candidates import APPROX_CHARS_PER_TOKEN, approx_tokens
-from hydra_engine.knowledge.nodes import discover_knowledge_nodes, knowledge_node_for_path, resolve_inheritance
+from hydra_engine.knowledge.node_catalog import discover_knowledge_nodes, knowledge_node_for_path, resolve_inheritance
 from hydra_engine.knowledge.packages import ContextCompilerPaths
 from hydra_engine.objects.registry import registry_object_entries
 from hydra_engine.telemetry.writer import event_growth_notes as knowledge_events_growth_notes, events_path as telemetry_events_path, knowledge_counts as telemetry_counts, record_knowledge_command_usage as record_command_usage, record_knowledge_route as record_route

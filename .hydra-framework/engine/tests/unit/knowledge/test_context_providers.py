@@ -142,7 +142,7 @@ class RunContextProvidersTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             request = _request(root, task="anything")
-            with mock.patch("hydra_engine.knowledge.context_providers.search_documents", return_value=((), None, "source")) as search:
+            with mock.patch("hydra_engine.knowledge.context_support.search", return_value=((), None, "source")) as search:
                 context_providers.run_context_providers(request, include_families=("Source", "Capability", "Work"))
             search.assert_called_once()
 

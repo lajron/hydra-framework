@@ -23,8 +23,7 @@ from pathlib import Path
 from hydra_engine.commands import CommandResult
 from hydra_engine.finding import Finding
 from hydra_engine.knowledge.package_checks import PACKAGE_FILE_FAIL_TOKENS, validate_package_root
-from hydra_engine.knowledge.nodes import discover_knowledge_nodes, knowledge_node_for_path, node_root
-from hydra_engine.knowledge.packages import ContextCompilerPaths
+from hydra_engine.knowledge.node_catalog import discover_knowledge_nodes, knowledge_node_for_path, node_root
 from hydra_engine.providers.paths import ProvidersPaths
 from hydra_engine.providers.reclaim import provider_surface_notice
 from hydra_engine.work.paths import WorkPaths

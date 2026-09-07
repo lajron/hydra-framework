@@ -14,26 +14,22 @@ from pathlib import Path
 
 from hydra_engine.commands import CommandResult
 from hydra_engine.commands.knowledge_fingerprint import command_knowledge_fingerprint
-from hydra_engine.documents.tokens import is_relative_to
+from hydra_engine.commands import knowledge_docs
+from hydra_engine.commands import knowledge_migration
 from hydra_engine.knowledge.candidates import APPROX_CHARS_PER_TOKEN, stale_unit_source_report
 from hydra_engine.knowledge import search_index
-from hydra_engine.knowledge.package_checks import PACKAGE_FILE_FAIL_TOKENS, validate_package_root
-from hydra_engine.knowledge.nodes import discover_knowledge_nodes
 from hydra_engine.knowledge.packages import ContextCompilerPaths
 from hydra_engine.knowledge.surfaces import measure_context_surfaces
 
 
-def package_roots_from_args(args, paths: ContextCompilerPaths) -> list[Path]:
-    if getattr(args, "path", None):
-        return [Path(args.path).resolve()]
-    selector = getattr(args, "node", None) or getattr(args, "package", None)
-    if not (paths.hydra / "repo/knowledge/spaces.yaml").is_file():
-        return []
-    nodes = discover_knowledge_nodes(paths)
-    if selector:
-        matches = [node.path.parent for node in nodes if node.logical_id == selector or node.logical_id.rsplit("/", 1)[-1] == selector]
-        return matches
-    return [node.path.parent for node in nodes]
+package_roots_from_args = knowledge_docs.node_roots_from_args
+
+
+def command_validate_package_docs(args, paths, resolver_paths, command_ids=(), file_fail_tokens=8000, chars_per_token=4):
+    """Compatibility command name; implementation validates v3 node roots."""
+    return knowledge_docs.validate_node_docs(
+        args, paths, resolver_paths, command_ids, file_fail_tokens, chars_per_token,
+    )
 
 
 def print_context_surface_report(rows: list[dict[str, int | str]], totals: dict[str, int]) -> None:
@@ -62,42 +58,6 @@ def command_measure_context(
     if args.fail_over is not None and totals["approx_tokens"] > args.fail_over:
         print(f"Hydra context surface exceeds budget: {totals['approx_tokens']} > {args.fail_over}", file=sys.stderr)
         return CommandResult(2)
-    return CommandResult(0)
-
-
-def command_validate_package_docs(
-    args,
-    paths: ContextCompilerPaths,
-    resolver_paths: ObjectLocations,
-    command_ids: tuple[str, ...] = (),
-    file_fail_tokens: int = PACKAGE_FILE_FAIL_TOKENS,
-    chars_per_token: int = APPROX_CHARS_PER_TOKEN,
-) -> CommandResult:
-    roots = package_roots_from_args(args, paths)
-    if not roots:
-        print("Hydra Knowledge v3 docs: no knowledge nodes found")
-        return CommandResult(0)
-
-    errors: list = []
-    for root in roots:
-        shown = root.relative_to(paths.root) if is_relative_to(root, paths.root) else root
-        print(f"Hydra Knowledge v3 docs: {shown}")
-        errors.extend(validate_package_root(
-            root,
-            paths,
-            resolver_paths,
-            render=args.render,
-            command_ids=command_ids,
-            file_fail_tokens=file_fail_tokens,
-            chars_per_token=chars_per_token,
-        ))
-
-    if errors:
-        print("Hydra Knowledge v3 docs: failed")
-        for error in errors:
-            print(f"- {error}")
-        return CommandResult(1)
-    print("Hydra Knowledge v3 docs: ok")
     return CommandResult(0)
 
 
@@ -274,6 +234,13 @@ def register(subparsers) -> None:
     fingerprint = knowledge_sub.add_parser("fingerprint", help="Write source digests for one knowledge unit")
     fingerprint.add_argument("--unit", required=True, help="Knowledge-unit hydra_id to fingerprint")
     fingerprint.set_defaults(func=_dispatch_knowledge_fingerprint)
+    migrate = knowledge_sub.add_parser("migrate-v2", help="Plan or apply the review-gated Knowledge v2 to v3 migration")
+    migrate.add_argument(
+        "--output", default=".hydra-framework.local/migrations/knowledge-v3-review.json",
+        help="Dry-run review manifest path",
+    )
+    migrate.add_argument("--apply", metavar="REVIEW_MANIFEST", help="Apply one explicitly approved review manifest")
+    migrate.set_defaults(func=_dispatch_knowledge_migrate_v2)
 
 
 def _dispatch_measure_context(args, ctx) -> int:
@@ -332,3 +299,7 @@ def _dispatch_knowledge_stale(args, ctx) -> int:
 
 def _dispatch_knowledge_fingerprint(args, ctx) -> int:
     return command_knowledge_fingerprint(args, ctx.context_compiler_paths()).exit_code
+
+
+def _dispatch_knowledge_migrate_v2(args, ctx) -> int:
+    return knowledge_migration.command_migrate_v2(args, ctx)

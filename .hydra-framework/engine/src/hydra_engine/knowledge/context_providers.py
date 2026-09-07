@@ -5,13 +5,11 @@ from __future__ import annotations
 import dataclasses
 from typing import Callable
 
-from hydra_engine.documents.tokens import HydraYamlError, display_path
+from hydra_engine.documents.tokens import HydraYamlError
 from hydra_engine.identity.object_families import family_for
-from hydra_engine.identity.slugs import slugify
 from hydra_engine.knowledge.bindings import BindingResolutionError, bound_nodes_for_paths, bindings_root, load_bindings
-from hydra_engine.knowledge.candidates import add_candidate, file_candidate, resolve_context_path, unit_candidates
-from hydra_engine.knowledge.graph import KnowledgeGraphError, global_required_closure, resolve_supersession
-from hydra_engine.knowledge.nodes import discover_knowledge_nodes, discover_node_unit_paths, resolve_inheritance
+from hydra_engine.knowledge import context_support
+from hydra_engine.knowledge.nodes import discover_knowledge_nodes, resolve_inheritance
 from hydra_engine.knowledge.routing import (
     NodeSelection,
     context_terms,
@@ -20,9 +18,7 @@ from hydra_engine.knowledge.routing import (
     route_nodes,
     routes_for_node,
 )
-from hydra_engine.knowledge.search_index import search as search_documents
-from hydra_engine.knowledge.units import read_unit
-from hydra_engine.knowledge.views import ViewConflictError, compose_views, discover_views
+from hydra_engine.knowledge import unit_selection, view_routing
 
 PROVIDER_CANDIDATE_PRIORITY = 30
 DEFAULT_FAMILY_CANDIDATE_CAP = 8
@@ -68,60 +64,6 @@ class ContextProvider:
     collect: Callable[["ProviderRequest"], ProviderOutput]
 
 
-def _auto_view_ids(task: str, views) -> set[str]:
-    task_terms = context_terms(task)
-    selected: set[str] = set()
-    for view in views:
-        if any(len(task_terms & context_terms(" ".join((route.name, *route.use_when)))) >= 2 for route in view.routes):
-            selected.add(view.hydra_id)
-    return selected
-
-
-def _view_selections(task: str, requested: tuple[str, ...], views, warnings: list[str]) -> set[str]:
-    by_id = {view.hydra_id: view for view in views}
-    by_slug = {view.view_id: view.hydra_id for view in views}
-    if not requested:
-        return _auto_view_ids(task, views)
-    selected: set[str] = set()
-    for value in requested:
-        normalized = value.lower()
-        view_id = normalized if normalized.startswith("hydra://knowledge-view/") else by_slug.get(slugify(normalized), "")
-        if view_id in by_id:
-            selected.add(view_id)
-        else:
-            warnings.append(f"View not found: {value}")
-    return selected
-
-
-def _collect_all_units(nodes, root) -> tuple[dict, dict[str, str]]:
-    units: dict = {}
-    owners: dict[str, str] = {}
-    for node in nodes:
-        for path in discover_node_unit_paths(node):
-            unit = read_unit(path, root)
-            if unit is None or not unit.hydra_id:
-                continue
-            unit_id = unit.hydra_id.lower()
-            units[unit_id] = unit
-            owners[unit_id] = node.logical_id
-    return units, owners
-
-
-def _search_ranked_units(request: ProviderRequest, units: dict, unit_owners: dict[str, str], node_id: str, seen: set[str]) -> list:
-    by_path = {display_path(unit.path, request.paths.root): unit for unit in units.values()}
-    selected: list = []
-    for result in request.search_results:
-        doc = result.document
-        unit = units.get(doc.hydra_id.lower()) if doc.hydra_id else by_path.get(doc.path)
-        if unit is None or unit_owners.get(unit.hydra_id.lower()) != node_id or unit.hydra_id.lower() in seen:
-            continue
-        selected.append(unit)
-        seen.add(unit.hydra_id.lower())
-        if request.family_cap >= 0 and len(selected) >= request.family_cap:
-            break
-    return selected
-
-
 def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
     warnings: list[str] = []
     try:
@@ -158,14 +100,14 @@ def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
         elif owner.lower() not in selected_route_owners:
             warnings.append(f"Route node not selected: {value}")
 
-    views = discover_views(request.paths)
-    selected_view_ids = _view_selections(request.task, request.view_values, views, warnings)
+    try:
+        selected_view_ids, composed = view_routing.select_and_compose_views(
+            request.task, request.view_values, request.paths, set(path_matches.values()), warnings,
+        )
+    except view_routing.ViewConflictError as error:
+        return ProviderOutput(warnings=[*warnings, f"Knowledge view error: {error}"])
     view_unit_seeds: set[str] = set()
-    if selected_view_ids:
-        try:
-            composed = compose_views(selected_view_ids, {view.hydra_id: view for view in views}, bound_node_ids=set(path_matches.values()))
-        except ViewConflictError as error:
-            return ProviderOutput(warnings=[*warnings, f"Knowledge view error: {error}"])
+    if composed is not None:
         selected_by_id = {selection.node.logical_id: selection for selection in selections}
         for ref in composed.includes:
             for prefix in ("hydra://knowledge-node/", "hydra://knowledge-space/"):
@@ -178,7 +120,7 @@ def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
                 view_unit_seeds.add(ref)
         selections = [selected_by_id[key] for key in sorted(selected_by_id)]
 
-    units, unit_owners = _collect_all_units(nodes, request.paths.root)
+    units, unit_owners = unit_selection.collect_all_units(nodes, request.paths.root)
     required_seeds = {value.lower() for value in request.object_seed_ids if value.lower().startswith("hydra://knowledge-unit/")}
     required_seeds.update(view_unit_seeds)
     priority_ids: set[str] = set()
@@ -211,11 +153,8 @@ def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
                 if value not in verify_commands:
                     verify_commands.append(value)
     try:
-        required_ids, _required_by = global_required_closure(units, required_seeds) if required_seeds else (set(), {})
-        priority_closure, _priority_required_by = global_required_closure(units, priority_ids) if priority_ids else (set(), {})
-        required_ids.update(priority_closure - priority_ids)
-        selected_ids, superseded = resolve_supersession(units, required_ids | priority_ids)
-    except KnowledgeGraphError as error:
+        required_ids, _required_by, selected_ids, superseded = unit_selection.resolve_selected_graph(units, required_seeds, priority_ids)
+    except unit_selection.KnowledgeGraphError as error:
         return ProviderOutput(warnings=[*warnings, f"Knowledge graph error: {error}"])
 
     candidates: list[dict] = []
@@ -231,21 +170,21 @@ def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
                 warnings.append(f"Knowledge binding error: {error}")
                 continue
             if path.is_file():
-                add_candidate(candidates, seen_candidates, file_candidate(
+                context_support.add_candidate(candidates, seen_candidates, context_support.file_candidate(
                     path, kind=kind, reason=f"{node.logical_id} {selection.reason}", priority=priority,
                     paths=request.paths, source=node.hydra_id, chars_per_token=request.chars_per_token,
                 ))
         node_unit_ids = {unit_id for unit_id, owner in unit_owners.items() if owner == node.logical_id}
         chosen: list = []
         if not active_routes[node.logical_id]:
-            chosen.extend(_search_ranked_units(request, units, unit_owners, node.logical_id, selected_unit_ids))
+            chosen.extend(unit_selection.search_ranked_units(request, units, unit_owners, node.logical_id, selected_unit_ids))
         for unit in chosen:
             selected_unit_ids.add(unit.hydra_id.lower())
-        for candidate in unit_candidates(
+        for candidate in context_support.unit_candidates(
             chosen, package=node.logical_id, paths=request.paths, required_ids=required_ids,
             warnings=warnings, chars_per_token=request.chars_per_token,
         ):
-            add_candidate(candidates, seen_candidates, candidate)
+            context_support.add_candidate(candidates, seen_candidates, candidate)
         node_rows.append({
             "node": node.logical_id, "hydra_id": node.hydra_id, "title": node.title,
             "reason": selection.reason, "score": None if selection.score == float("inf") else round(selection.score, 4),
@@ -254,11 +193,11 @@ def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
     graph_units = [units[unit_id] for unit_id in sorted(selected_ids) if unit_id not in selected_unit_ids]
     for unit in graph_units:
         selected_unit_ids.add(unit.hydra_id.lower())
-    for candidate in unit_candidates(
+    for candidate in context_support.unit_candidates(
         graph_units, package="global-knowledge-graph", paths=request.paths, required_ids=required_ids,
         warnings=warnings, chars_per_token=request.chars_per_token,
     ):
-        add_candidate(candidates, seen_candidates, candidate)
+            context_support.add_candidate(candidates, seen_candidates, candidate)
     for target, winner in superseded.items():
         warnings.append(f"Knowledge unit superseded: {target} by {winner}")
     return ProviderOutput(
@@ -275,12 +214,12 @@ def _family_search_collector(family: str):
             doc = result.document
             if not doc.path or doc.path in seen_paths or family_for(doc.hydra_id, doc.kind) != family:
                 continue
-            path = resolve_context_path(doc.path, request.paths)
+            path = context_support.resolve_context_path(doc.path, request.paths)
             if not path.exists() or not path.is_file():
                 continue
             seen_paths.add(doc.path)
-            candidate = file_candidate(
-                path, kind=f"context-provider-{slugify(family)}",
+            candidate = context_support.file_candidate(
+                path, kind=f"context-provider-{view_routing.normalized_token(family)}",
                 reason=f"{family} context provider match" + (f" for {request.task!r}" if request.task else ""),
                 priority=PROVIDER_CANDIDATE_PRIORITY, paths=request.paths, source=doc.hydra_id,
                 chars_per_token=request.chars_per_token,
@@ -304,7 +243,7 @@ def _matched_families(values: tuple[str, ...]) -> tuple[set[str], list[str]]:
     matched: set[str] = set()
     unknown: list[str] = []
     for value in values:
-        hit = next((family for family in PROVIDERS_BY_FAMILY if slugify(value) == slugify(family)), None)
+        hit = next((family for family in PROVIDERS_BY_FAMILY if view_routing.normalized_token(value) == view_routing.normalized_token(family)), None)
         if hit:
             matched.add(hit)
         else:
@@ -324,7 +263,7 @@ def run_context_providers(
         if (family in included if include_families else True) and family not in excluded
     ]
     if active:
-        results, _features, _source = search_documents(
+        results, _features, _source = context_support.search(
             request.task, paths=request.paths, resolver_paths=request.resolver_paths,
             local=request.resolver_paths.local, command_ids=request.command_ids,
             path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT,
@@ -342,7 +281,7 @@ def run_context_providers(
     for family in active:
         output = PROVIDERS_BY_FAMILY[family].collect(request)
         for candidate in output.candidates:
-            add_candidate(candidates, seen, candidate)
+            context_support.add_candidate(candidates, seen, candidate)
         nodes.extend(output.nodes)
         views.extend(value for value in output.views if value not in views)
         policies.update(output.effective_policy)

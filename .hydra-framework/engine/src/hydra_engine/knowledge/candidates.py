@@ -6,7 +6,7 @@ from pathlib import Path
 
 from hydra_engine.documents.tokens import display_path, read_text
 from hydra_engine.knowledge.freshness import stale_provenance_sources
-from hydra_engine.knowledge.nodes import discover_knowledge_nodes, discover_node_unit_paths
+from hydra_engine.knowledge.node_catalog import discover_knowledge_nodes, discover_node_unit_paths
 from hydra_engine.knowledge.units import Unit
 from hydra_engine.knowledge.units import read_unit
 

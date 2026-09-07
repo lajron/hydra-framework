@@ -87,7 +87,11 @@ def missing_envelope_fields(data: dict, *, kind: str, title: str, status: str, s
         for name, value in (("kind", kind), ("title", title), ("status", status), ("scope", scope))
         if not value
     ]
-    if not yaml_map(data.get("owners")):
+    # Descendant Knowledge v3 nodes inherit owners from their accountability
+    # chain.  The Knowledge validator proves that chain and requires owners on
+    # spaces, so the generic object envelope must not demand a duplicate local
+    # declaration on `knowledge-node` objects.
+    if not yaml_map(data.get("owners")) and kind != "knowledge-node":
         missing.append("owners")
     if "relations" not in data:
         missing.append("relations")
@@ -118,10 +122,12 @@ def build_hydra_object(
 
     provenance = yaml_map(data.get("provenance"))
     owners = yaml_map(data.get("owners"))
-    relation_values = yaml_list(data.get("relations"))
+    raw_relations = data.get("relations")
+    relation_values = raw_relations if isinstance(raw_relations, list) else yaml_list(raw_relations)
     relations: list[str] = []
     for value in relation_values:
-        relations.extend(hydra_refs_in_text(envelope_path, value))
+        relation_text = yaml_str(value.get("target")) if isinstance(value, dict) else str(value)
+        relations.extend(hydra_refs_in_text(envelope_path, relation_text))
 
     # No defaults here on purpose. An absent field stays absent and is reported
     # by validation from ENVELOPE_REQUIRED_FROM_SCHEMA_VERSION onward; it is

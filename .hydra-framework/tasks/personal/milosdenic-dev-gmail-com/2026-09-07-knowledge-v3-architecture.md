@@ -33,7 +33,7 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 
 ## Current Stage
 
-Phase 3, slice 2: implement the review-gated v2-to-v3 migrator and migrate the live framework knowledge tree.
+Phase 4: migration implementation complete; create and review the live dry-run manifest.
 
 ## Readiness
 
@@ -48,8 +48,8 @@ Status: ready
 
 ## Step State
 
-- Active step: implement `knowledge migrate-v2` dry-run/review/apply with deterministic moves and rewrites, UID preservation, confidence/unresolved states, idempotence, explicit checkpoint evidence, and registry/index rebuild hooks.
-- Next step: run and review the migrator against the live `hydra-framework` v2 package, apply from a clean Git checkpoint, then remove remaining v2 terminology and update canonical knowledge documents.
+- Active step: commit the tested migrator, generate its live dry-run from the clean checkpoint, and review every move, UID mapping, rewrite, binding candidate, confidence state, and unresolved decision.
+- Next step: approve the exact manifest digest with reviewer evidence, apply it, verify registry/index rebuild and idempotence, then convert/remove the legacy templates and remaining package-era terminology.
 - Completed steps: read required contracts and authoritative code; created and validated the primary task; captured a 173-test v2 baseline; added and ran the 216-leaf enterprise fixture; selected global indexed routing and measured depth/scope policy; froze `core/knowledge-architecture.md`; implemented tested contract primitives for recursive nodes/inheritance, strict global graph closure and supersession, namespaced asserted bindings/freshness, reference-only view composition/conflict detection, shared distribution policy, and the registry-independent KnowledgeStore boundary; integrated recursive discovery, global validation/closure, inherited routes, two-phase path rerouting hooks, route-level `expand_when`, v3 context-packet fields, prompt pointers, search/adoption/hook consumers, and fail-closed node parsing into the active engine; removed the flat routing-collision runtime and flat package discovery; converted affected unit tests to v3 fixtures; restored the full 1,246-test unit suite to green.
 - Superseded or skipped steps: none.
 
@@ -88,6 +88,8 @@ Status: ready
 - `python3 .hydra-framework/scripts/hydra.py validate`: passed after the contract modules; the initial YAML vocabulary in-degree finding was resolved by reusing the existing `frontmatter_blocks` re-export boundary.
 - Runtime slice narrow validation: 143 Knowledge tests passed and 10 context-command tests passed after the final routing/packet changes.
 - Full runtime-slice unit validation: `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3` discovery over `.hydra-framework/engine/tests/unit` ran 1,246 tests with zero failures and zero errors.
+- Migrator slice: 1,259 unit tests passed with zero failures/errors. Tests cover deterministic dry-run output, UID evidence, reference/route rewrites, typed-relation conversion, unresolved ambiguous unit expansion, exact-digest approval, reviewer/evidence requirements, changed-plan rejection before writes, and post-apply idempotence.
+- `hydra.py validate` now has no architecture/module/caller findings. Its only findings before live migration are two expected stale registry digests and the expected missing v3 `spaces.yaml`; registry/index rebuild is the final apply stage.
 - The live repository still uses the v2 on-disk package, so `hydra.py validate` is intentionally not claimed green at this checkpoint; the v3 validator now rejects that active legacy tree until the reviewed migration applies.
 
 ## Blockers
@@ -99,4 +101,4 @@ Status: ready
 What another model or developer needs to continue safely.
 
 - Running state: none
-- Resume check: `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`; expect 1,246 passing tests. Then inspect `git status --short` and implement the migrator before modifying the live v2 knowledge tree.
+- Resume check: `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`; expect 1,259 passing tests. Then run `python3 .hydra-framework/scripts/hydra.py knowledge migrate-v2 --output .hydra-framework.local/migrations/knowledge-v3-review.json` from a clean worktree and review without applying.

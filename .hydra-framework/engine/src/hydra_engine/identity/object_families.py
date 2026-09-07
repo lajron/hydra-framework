@@ -89,8 +89,14 @@ class ObjectFamily:
 OBJECT_FAMILIES = (
     ObjectFamily(
         name="Knowledge",
-        id_prefixes=("knowledge-package", "knowledge-slice", "knowledge-template", "knowledge-unit"),
-        kinds=("knowledge-package", "knowledge-slice", "knowledge-template", "knowledge-unit"),
+        id_prefixes=(
+            "knowledge-package", "knowledge-slice", "knowledge-template", "knowledge-unit",
+            "knowledge-space", "knowledge-node", "knowledge-view", "knowledge-route",
+        ),
+        kinds=(
+            "knowledge-package", "knowledge-slice", "knowledge-template", "knowledge-unit",
+            "knowledge-space", "knowledge-node", "knowledge-view",
+        ),
     ),
     ObjectFamily(
         name="Capability",

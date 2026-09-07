@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from hydra_engine.documents.frontmatter_blocks import parse_yaml, yaml_str
-from hydra_engine.knowledge.nodes import LEGAL_SCOPES
+from hydra_engine.documents.yaml_documents import parse_yaml, yaml_str
+from hydra_engine.knowledge.contracts import LEGAL_SCOPES
 
 DISTRIBUTION_PROFILES = {
     "base": frozenset({"base-seed"}),

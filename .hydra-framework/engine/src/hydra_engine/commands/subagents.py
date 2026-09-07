@@ -8,7 +8,7 @@ import sys
 from hydra_engine.agent_hooks.subagent_context import SUBAGENT_CONTEXT_AGENT_TYPES, SUBAGENT_CONTEXT_TOKEN_BUDGET, build_subagent_context
 from hydra_engine.commands import CommandResult
 from hydra_engine.knowledge.candidates import APPROX_CHARS_PER_TOKEN
-from hydra_engine.knowledge.nodes import discover_knowledge_nodes
+from hydra_engine.knowledge.node_catalog import discover_knowledge_nodes
 from hydra_engine.knowledge.packages import ContextCompilerPaths
 
 
