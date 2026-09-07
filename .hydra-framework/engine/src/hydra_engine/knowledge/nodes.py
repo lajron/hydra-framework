@@ -186,11 +186,30 @@ def node_root(node: KnowledgeNode) -> Path:
     return node.path.parent
 
 
-def knowledge_node_for_path(path: Path, nodes: list[KnowledgeNode], paths: ContextCompilerPaths) -> KnowledgeNode | None:
+def node_roots_by_path(nodes: list[KnowledgeNode]) -> dict[Path, KnowledgeNode]:
+    """Resolved node root -> node, resolved once for repeated path lookups.
+
+    `knowledge_node_for_path` resolves every node root on every call, so a
+    caller looking up many paths pays that filesystem walk once per path. On
+    the 258-node enterprise fixture that dominated routing cost.
+    """
+    return {node_root(node).resolve(): node for node in sorted(nodes, key=lambda node: node.depth)}
+
+
+def knowledge_node_for_path(
+    path: Path,
+    nodes: list[KnowledgeNode],
+    paths: ContextCompilerPaths,
+    roots: dict[Path, KnowledgeNode] | None = None,
+) -> KnowledgeNode | None:
     """Deepest declared node containing `path`, never a lexical guess."""
     resolved = path.resolve() if path.is_absolute() else (paths.root / path).resolve()
-    matches = [node for node in nodes if resolved == node_root(node).resolve() or node_root(node).resolve() in resolved.parents]
-    return max(matches, key=lambda node: node.depth) if matches else None
+    by_root = node_roots_by_path(nodes) if roots is None else roots
+    for candidate in (resolved, *resolved.parents):
+        node = by_root.get(candidate)
+        if node is not None:
+            return node
+    return None
 
 
 def discover_node_unit_paths(node: KnowledgeNode) -> list[Path]:

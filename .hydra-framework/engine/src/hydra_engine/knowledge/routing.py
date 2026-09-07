@@ -16,6 +16,7 @@ from hydra_engine.knowledge.nodes import (
     discover_knowledge_nodes,
     discover_node_unit_paths,
     knowledge_node_for_path,
+    node_roots_by_path,
     node_root,
     resolve_inheritance,
 )
@@ -133,11 +134,12 @@ def route_nodes(
 
     task_terms = frozenset(context_terms(task))
     scores = {node.logical_id: node_keyword_score(node, task_terms) for node in nodes if node.routable}
+    node_roots = node_roots_by_path(nodes) if search_results else {}
     for position, result in enumerate(search_results):
         document = result.document
         if not document.path:
             continue
-        node = knowledge_node_for_path(Path(document.path), nodes, paths)
+        node = knowledge_node_for_path(Path(document.path), nodes, paths, node_roots)
         if node is None or not node.routable:
             continue
         scores[node.logical_id] = scores.get(node.logical_id, 0.0) + 1.0 / (position + 1)

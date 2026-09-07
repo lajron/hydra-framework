@@ -5,6 +5,8 @@ import unittest
 from pathlib import Path
 
 from hydra_engine.knowledge.nodes import (
+    knowledge_node_for_path,
+    node_roots_by_path,
     MAX_DEPTH,
     discover_knowledge_nodes,
     resolve_inheritance,
@@ -136,6 +138,32 @@ class KnowledgeNodeTests(unittest.TestCase):
             self.assertIn("must declare it explicitly", details)
             self.assertIn("requires non-empty use_when", details)
             self.assertIn("expand_when requires when_paths, read, and why", details)
+
+
+class NodeForPathTests(unittest.TestCase):
+    def test_deepest_node_wins_and_precomputed_roots_agree(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths = _paths(root)
+            spaces = paths.hydra / "repo/knowledge/spaces/product"
+            _node(spaces / "space.yaml", "product", kind="knowledge-space", routable=False)
+            _node(spaces / "commerce/node.yaml", "product/commerce", kind="knowledge-node", routable=False)
+            leaf = spaces / "commerce/checkout"
+            _node(leaf / "node.yaml", "product/commerce/checkout", kind="knowledge-node", extra="overview: ./overview.md\n")
+            (leaf / "overview.md").write_text("# Checkout\n", encoding="utf-8")
+            nodes = discover_knowledge_nodes(paths)
+            roots = node_roots_by_path(nodes)
+            # A precomputed root map must not change which node a path resolves to.
+            for probe in (leaf / "units", leaf, spaces / "commerce", spaces):
+                uncached = knowledge_node_for_path(probe, nodes, paths)
+                cached = knowledge_node_for_path(probe, nodes, paths, roots)
+                self.assertIsNotNone(uncached, probe)
+                self.assertEqual(uncached.logical_id, cached.logical_id)
+            self.assertEqual(
+                knowledge_node_for_path(leaf / "units/x.md", nodes, paths).logical_id,
+                "product/commerce/checkout",
+            )
+            self.assertIsNone(knowledge_node_for_path(root / "elsewhere", nodes, paths, roots))
 
 
 if __name__ == "__main__":
