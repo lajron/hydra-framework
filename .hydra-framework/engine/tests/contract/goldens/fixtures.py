@@ -209,6 +209,115 @@ role_defaults:
 roles: {}
 """
 
+
+# Distinct from FROZEN_UID so a space fixture never collides with the
+# duplicate-uid case in the every-validator-fails golden.
+KNOWLEDGE_SPACE_UID = "00000000-0000-0000-0000-0000000000aa"
+
+KNOWLEDGE_SPACES_FIXTURE = (
+    "schema: hydra-framework.knowledge-spaces.v1\n"
+    "default_depth: 3\n"
+    "max_depth: 4\n"
+    "spaces:\n"
+    "  - demo\n"
+)
+
+
+def knowledge_space_fixture(
+    *,
+    space: str = "demo",
+    overview: str = "# Demo\n",
+    space_doc: str | None = None,
+    extra: dict[str, str] | None = None,
+) -> dict[str, str]:
+    """One valid Knowledge v3 space, or a deliberately broken one.
+
+    `space_doc` replaces the node document so a negative golden can exercise
+    the node contract; `overview`/`extra` supply owned content.
+    """
+    root = f".hydra-framework/repo/knowledge/spaces/{space}"
+    default_doc = (
+        "schema: hydra-framework.knowledge-node.v1\n"
+        f"node: {space}\n"
+        f"hydra_id: hydra://knowledge-space/{space}\n"
+        f"uid: {KNOWLEDGE_SPACE_UID}\n"
+        "schema_version: 3\n"
+        "kind: knowledge-space\n"
+        f"title: {space.title()}\n"
+        "status: active\n"
+        "scope: repo-local\n"
+        "owners:\n"
+        "  team: fixture-owners\n"
+        "relations: []\n"
+        "provenance:\n"
+        "  sources: []\n"
+        "routable: true\n"
+        "state: ./state.md\n"
+        "overview: ./overview.md\n"
+        "keywords: []\n"
+    )
+    fixture = {
+        ".hydra-framework/repo/knowledge/spaces.yaml": KNOWLEDGE_SPACES_FIXTURE,
+        f"{root}/space.yaml": default_doc if space_doc is None else space_doc,
+        f"{root}/state.md": f"# {space} state\n",
+        f"{root}/overview.md": overview,
+    }
+    fixture.update(extra or {})
+    return fixture
+
+
+
+SPACE_DOC_WITH_ROUTE = (
+    "schema: hydra-framework.knowledge-node.v1\n"
+    "node: demo\n"
+    "hydra_id: hydra://knowledge-space/demo\n"
+    f"uid: {KNOWLEDGE_SPACE_UID}\n"
+    "schema_version: 3\n"
+    "kind: knowledge-space\n"
+    "title: Demo\n"
+    "status: active\n"
+    "scope: repo-local\n"
+    "owners:\n"
+    "  team: fixture-owners\n"
+    "relations: []\n"
+    "provenance:\n"
+    "  sources: []\n"
+    "routable: true\n"
+    "state: ./state.md\n"
+    "overview: ./overview.md\n"
+    "keywords:\n"
+    "  - demo\n"
+    "  - routing\n"
+    "routes:\n"
+    "  demo_task:\n"
+    "    use_when:\n"
+    "      - handle a demo routing task\n"
+    "    priority_units:\n"
+    "      - hydra://knowledge-unit/demo/guide\n"
+)
+
+DEMO_UNIT = (
+    "---\n"
+    "hydra_id: hydra://knowledge-unit/demo/guide\n"
+    "uid: 00000000-0000-0000-0000-0000000000bb\n"
+    "schema_version: 3\n"
+    "kind: knowledge-unit\n"
+    "title: Demo Guide\n"
+    "status: active\n"
+    "scope: repo-local\n"
+    "owners:\n"
+    "  team: fixture-owners\n"
+    "relations: []\n"
+    "provenance:\n"
+    "  sources: []\n"
+    "unit_kind: answer\n"
+    "question: How is a demo routing task handled?\n"
+    "reads: []\n"
+    "requires: []\n"
+    "---\n\n"
+    "# Demo Guide\n\nFixture unit body.\n"
+)
+
 CONFIG_POLICY_FIXTURE = {
     ".hydra-framework/config/engine-policy.yaml": engine_policy_fixture(),
     ".hydra-framework/config/delegation-policy.yaml": DELEGATION_POLICY_FIXTURE,

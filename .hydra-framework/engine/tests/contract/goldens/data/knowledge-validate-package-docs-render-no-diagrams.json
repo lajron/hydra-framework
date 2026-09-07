@@ -8,13 +8,16 @@
     ".hydra-framework/manifest.yaml": "bc74566ab21d13c108337058c3db644e60fd8036887039425542e79efcb73c93",
     ".hydra-framework/capabilities/agents/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     ".hydra-framework/capabilities/skills/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    ".hydra-framework/repo/knowledge/knowledge-packages/demo/overview.md": "31ca6c61ca3fcc54029a62bd082448b88718b913d24e195794969dd2d123b990",
     ".hydra-framework/tasks/personal/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     ".hydra-framework/tasks/templates/checkpoint.md": "25f014f86a8490b4c636b360b343e8d2a8cc818c68948a3d4d243d928b7c0d99",
     ".hydra-framework/tasks/templates/task.md": "32dd805b125370ccb27117f3984a894c773d0685fcd378aa6cbce3da715dba10",
     "AGENTS.md": "a52ae73fc0a471d277c57a8c65af99c0b3e814f984b2ead607c36d5115eb12bb",
-    "AI_SYSTEM.md": "5a1cc2ad0944ad277aa08fe46d44c654ef5fa0256d6ca91925a2af23d6dfa5d6"
+    "AI_SYSTEM.md": "5a1cc2ad0944ad277aa08fe46d44c654ef5fa0256d6ca91925a2af23d6dfa5d6",
+    ".hydra-framework/repo/knowledge/spaces.yaml": "d081c89b58fca5bfa41931d329060d4371d34a6ea428e3a46a3856f7144b2229",
+    ".hydra-framework/repo/knowledge/spaces/demo/overview.md": "31ca6c61ca3fcc54029a62bd082448b88718b913d24e195794969dd2d123b990",
+    ".hydra-framework/repo/knowledge/spaces/demo/space.yaml": "1168785cfaef0c0171831ec5a789de78e48a0b8d7bfdd03de7e506ab832d3ea5",
+    ".hydra-framework/repo/knowledge/spaces/demo/state.md": "6efd283115e7890b38a56584b60a57d2b99ee2e8cd30153a83db6d98ef483656"
   },
   "stderr": "",
-  "stdout": "Hydra package docs: .hydra-framework/repo/knowledge/knowledge-packages/demo\nHydra package docs: ok\n"
+  "stdout": "Hydra Knowledge v3 docs: .hydra-framework/repo/knowledge/spaces/demo\nHydra Knowledge v3 docs: ok\n"
 }

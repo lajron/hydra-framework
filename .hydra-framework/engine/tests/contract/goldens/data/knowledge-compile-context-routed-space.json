@@ -1,0 +1,24 @@
+{
+  "exit_code": 0,
+  "manifest": {
+    ".hydra-framework/README.md": "0de5f42b131305a48c4775ac871045712943998891b583e4381784801df42f4b",
+    ".hydra-framework/adapters/providers/claude/capability-map.yaml": "b003af671c56a0420ad81e7ad9b88a94b6f78d330e086a7d8fd61f6e1b9e23b6",
+    ".hydra-framework/adapters/providers/codex/capability-map.yaml": "b7477930e8b873de520503637055733760efabf4afe99e83739eda30ea03b632",
+    ".hydra-framework/capabilities/agents/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".hydra-framework/capabilities/skills/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".hydra-framework/core/placement-rules.md": "5ccfd85befd6aa3ff7d5dd0fc1417b21ae5e3186839a360348c8b8ed51dfb60b",
+    ".hydra-framework/manifest.yaml": "bc74566ab21d13c108337058c3db644e60fd8036887039425542e79efcb73c93",
+    ".hydra-framework/repo/knowledge/spaces.yaml": "d081c89b58fca5bfa41931d329060d4371d34a6ea428e3a46a3856f7144b2229",
+    ".hydra-framework/repo/knowledge/spaces/demo/overview.md": "31ca6c61ca3fcc54029a62bd082448b88718b913d24e195794969dd2d123b990",
+    ".hydra-framework/repo/knowledge/spaces/demo/space.yaml": "73d0b7917434160745029c52a8d3d3fa56eeca906c66e74ff3e2cebea9bedc9c",
+    ".hydra-framework/repo/knowledge/spaces/demo/state.md": "6efd283115e7890b38a56584b60a57d2b99ee2e8cd30153a83db6d98ef483656",
+    ".hydra-framework/repo/knowledge/spaces/demo/units/guide.md": "f38bd7c44c3d4bff2279d98afe1870e014b9b242933aa48bb75cecd44e822b16",
+    ".hydra-framework/tasks/personal/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".hydra-framework/tasks/templates/checkpoint.md": "25f014f86a8490b4c636b360b343e8d2a8cc818c68948a3d4d243d928b7c0d99",
+    ".hydra-framework/tasks/templates/task.md": "32dd805b125370ccb27117f3984a894c773d0685fcd378aa6cbce3da715dba10",
+    "AGENTS.md": "a52ae73fc0a471d277c57a8c65af99c0b3e814f984b2ead607c36d5115eb12bb",
+    "AI_SYSTEM.md": "5a1cc2ad0944ad277aa08fe46d44c654ef5fa0256d6ca91925a2af23d6dfa5d6"
+  },
+  "stderr": "",
+  "stdout": "Hydra context packet\nSchema: hydra-framework.context-packet.v2\nDate: 2026-01-01\nTask: demo routing task\nProvider/model: unspecified / unspecified\nBudget: 12000 approx tokens\nNodes:\n- demo (global index): Demo [routes: demo_task]\nSelected context:\n- .hydra-framework/repo/knowledge/spaces/demo/state.md [node-state, 4 approx tokens] - demo global index\n- .hydra-framework/repo/knowledge/spaces/demo/units/guide.md [knowledge-unit, 94 approx tokens] - global-knowledge-graph unit hydra://knowledge-unit/demo/guide; hydra://knowledge-unit/demo/guide (active)\n- .hydra-framework/repo/knowledge/spaces/demo/overview.md [node-overview, 2 approx tokens] - demo global index\nOmitted candidates:\n- none\nToken estimate:\n- Always-loaded surfaces: 20\n- Selected context: 100\n- Total if loaded: 120\n- Approximation: 1 token ~= 4 characters\nProvenance and freshness:\n- Resolver objects: 2\n- Registry freshness: ok or no registry present\nValidation reminders:\n- Run `python3 .hydra-framework/scripts/hydra.py ref check` after object metadata changes.\n- Run `python3 .hydra-framework/scripts/hydra.py validate` before finishing Hydra framework changes.\nKnown-risk reminders:\n- Treat provisional prompt routing as revisable when verified path bindings become available.\n"
+}

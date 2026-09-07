@@ -4,10 +4,14 @@
     ".hydra-framework/README.md": "0de5f42b131305a48c4775ac871045712943998891b583e4381784801df42f4b",
     ".hydra-framework/adapters/providers/claude/capability-map.yaml": "b003af671c56a0420ad81e7ad9b88a94b6f78d330e086a7d8fd61f6e1b9e23b6",
     ".hydra-framework/adapters/providers/codex/capability-map.yaml": "b7477930e8b873de520503637055733760efabf4afe99e83739eda30ea03b632",
-    ".hydra-framework/core/placement-rules.md": "5ccfd85befd6aa3ff7d5dd0fc1417b21ae5e3186839a360348c8b8ed51dfb60b",
-    ".hydra-framework/manifest.yaml": "bc74566ab21d13c108337058c3db644e60fd8036887039425542e79efcb73c93",
     ".hydra-framework/capabilities/agents/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     ".hydra-framework/capabilities/skills/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".hydra-framework/core/placement-rules.md": "5ccfd85befd6aa3ff7d5dd0fc1417b21ae5e3186839a360348c8b8ed51dfb60b",
+    ".hydra-framework/manifest.yaml": "bc74566ab21d13c108337058c3db644e60fd8036887039425542e79efcb73c93",
+    ".hydra-framework/repo/knowledge/spaces.yaml": "d081c89b58fca5bfa41931d329060d4371d34a6ea428e3a46a3856f7144b2229",
+    ".hydra-framework/repo/knowledge/spaces/demo/overview.md": "31ca6c61ca3fcc54029a62bd082448b88718b913d24e195794969dd2d123b990",
+    ".hydra-framework/repo/knowledge/spaces/demo/space.yaml": "1168785cfaef0c0171831ec5a789de78e48a0b8d7bfdd03de7e506ab832d3ea5",
+    ".hydra-framework/repo/knowledge/spaces/demo/state.md": "6efd283115e7890b38a56584b60a57d2b99ee2e8cd30153a83db6d98ef483656",
     ".hydra-framework/tasks/personal/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     ".hydra-framework/tasks/templates/checkpoint.md": "25f014f86a8490b4c636b360b343e8d2a8cc818c68948a3d4d243d928b7c0d99",
     ".hydra-framework/tasks/templates/task.md": "32dd805b125370ccb27117f3984a894c773d0685fcd378aa6cbce3da715dba10",
@@ -15,5 +19,5 @@
     "AI_SYSTEM.md": "5a1cc2ad0944ad277aa08fe46d44c654ef5fa0256d6ca91925a2af23d6dfa5d6"
   },
   "stderr": "",
-  "stdout": "Hydra context packet\nSchema: hydra-framework.context-packet.v2\nDate: 2026-01-01\nTask: fixture task\nProvider/model: unspecified / unspecified\nBudget: 12000 approx tokens\nNodes:\n- none\nSelected context:\n- none\nOmitted candidates:\n- none\nToken estimate:\n- Always-loaded surfaces: 20\n- Selected context: 0\n- Total if loaded: 20\n- Approximation: 1 token ~= 4 characters\nProvenance and freshness:\n- Resolver objects: 0\n- Registry freshness: ok or no registry present\nValidation reminders:\n- Run `python3 .hydra-framework/scripts/hydra.py ref check` after object metadata changes.\n- Run `python3 .hydra-framework/scripts/hydra.py validate` before finishing Hydra framework changes.\nKnown-risk reminders:\n- Treat provisional prompt routing as revisable when verified path bindings become available.\nWarnings:\n- Knowledge v3 discovery failed: .hydra-framework/repo/knowledge/spaces.yaml: file not found\n"
+  "stdout": "Hydra Knowledge v3 docs: .hydra-framework/repo/knowledge/spaces/demo\nHydra Knowledge v3 docs: ok\n"
 }

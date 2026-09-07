@@ -16,7 +16,7 @@
     ".hydra-framework/validation/capability-callers.yaml": "9b23c656cf01b2aa7d28546655c3de1fe7bed224c070b6150eeed9304c97a53c",
     ".hydra-framework/repo/knowledge/state-tiers.md": "34b8a53d2362965b93aa3fed14b29c45afbea5ee1971c7a89af538b453f17228",
     ".hydra-framework/config/delegation-policy.yaml": "28800c8f9d533f1a6fb4204d29a7cfb626fe4a5e43bfdbe9fce851d3af894c48",
-    ".hydra-framework/config/engine-policy.yaml": "2b36dad9e1d0ff3a4f9d8d0a2cc68a0079e96a1e832488f6d7ef921393ac6e5f"
+    ".hydra-framework/config/engine-policy.yaml": "6c56f73ccae04ea41b26987594c8e3f9eed69be4496e64e5b7613e1c5fc5e3d0"
   },
   "stderr": "",
   "stdout": "Hydra validate: ok\nnote: provider `claude` cannot mechanically enforce delegation controls: generic-subagent-start-context, max-active-workers, max-depth\nnote: provider `codex` cannot mechanically enforce delegation controls: generic-subagent-start-context, max-active-workers, max-depth\n"

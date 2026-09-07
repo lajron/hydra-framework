@@ -7,6 +7,7 @@ from pathlib import Path
 from hydra_engine.commands import CommandResult
 from hydra_engine.documents.tokens import is_relative_to
 from hydra_engine.knowledge.node_catalog import discover_knowledge_nodes
+from hydra_engine.knowledge.nodes import validate_knowledge_nodes
 from hydra_engine.knowledge import package_checks
 from hydra_engine.knowledge.packages import ContextCompilerPaths
 
@@ -26,6 +27,26 @@ def node_roots_from_args(args, paths: ContextCompilerPaths) -> list[Path]:
     return [node.path.parent for node in nodes]
 
 
+def _node_document_findings(roots: list[Path], paths: ContextCompilerPaths) -> list:
+    """Node-document findings for the selected roots only.
+
+    The v2 gate validated each package's `routing.yaml`, so the post-edit hook
+    caught a malformed document locally. Reuse the same whole-tree rules the
+    full validator applies and keep only what belongs to the selected roots,
+    rather than maintaining a second copy of the node contract.
+    """
+    if not (paths.hydra / "repo/knowledge/spaces.yaml").is_file():
+        return []
+    prefixes = tuple(
+        (root.relative_to(paths.root).as_posix() if is_relative_to(root, paths.root) else str(root))
+        for root in roots
+    )
+    return [
+        finding for finding in validate_knowledge_nodes(paths)
+        if finding.path.startswith(prefixes)
+    ]
+
+
 def validate_node_docs(
     args,
     paths: ContextCompilerPaths,
@@ -38,7 +59,7 @@ def validate_node_docs(
     if not roots:
         print("Hydra Knowledge v3 docs: no knowledge nodes found")
         return CommandResult(0)
-    findings: list = []
+    findings: list = _node_document_findings(roots, paths)
     for root in roots:
         shown = root.relative_to(paths.root) if is_relative_to(root, paths.root) else root
         print(f"Hydra Knowledge v3 docs: {shown}")

@@ -96,6 +96,13 @@ class KnowledgeNodeTests(unittest.TestCase):
             self.assertIn("relation target is not a valid hydra id", details)
             self.assertIn(f"exceeds {MAX_DEPTH}", details)
             self.assertIn("empty structural node", details)
+            # Findings render as `detail` alone, so every node finding must
+            # name its own file or the reader cannot locate the problem.
+            for finding in findings:
+                self.assertTrue(
+                    str(finding).startswith(finding.path + ":"),
+                    f"node finding does not name its path: {finding}",
+                )
 
     def test_route_override_and_expand_when_contracts(self):
         with tempfile.TemporaryDirectory() as tmp:

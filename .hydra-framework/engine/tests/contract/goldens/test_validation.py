@@ -16,7 +16,8 @@ from __future__ import annotations
 import unittest
 
 from ..harness import run_command
-from .fixtures import CONFIG_POLICY_FIXTURE, PROVIDER_CAPABILITY_MAPS_FIXTURE, assert_golden, frozen_ports, hydra_object_markdown, run_golden
+from .fixtures import (CONFIG_POLICY_FIXTURE, PROVIDER_CAPABILITY_MAPS_FIXTURE, assert_golden, frozen_ports,
+                       hydra_object_markdown, knowledge_space_fixture, run_golden)
 
 EVERY_VALIDATOR_FAILS_FIXTURE = {
     # task_records_check: missing sections (no "## Readiness" etc.) and an
@@ -46,8 +47,8 @@ EVERY_VALIDATOR_FAILS_FIXTURE = {
     ".hydra-framework/repo/knowledge-units/0002-b.md": hydra_object_markdown(
         hydra_id="hydra://knowledge-unit/duplicate", title="B"
     ),
-    # package_docs_check: a knowledge package with a broken relative link.
-    ".hydra-framework/repo/knowledge/knowledge-packages/example/overview.md": "[broken](missing.md)\n",
+    # package_docs_check: a knowledge space with a broken relative link.
+    **knowledge_space_fixture(overview="[broken](missing.md)\n"),
     # capability_callers_check: bad classification, with snippets that still resolve.
     ".hydra-framework/validation/capability-callers.yaml": (
         "schema: hydra-framework.capability-callers.v1\n"

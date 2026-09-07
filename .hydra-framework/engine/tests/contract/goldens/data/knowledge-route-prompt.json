@@ -15,6 +15,6 @@
     "AI_SYSTEM.md": "5a1cc2ad0944ad277aa08fe46d44c654ef5fa0256d6ca91925a2af23d6dfa5d6",
     ".hydra-framework.local/telemetry/events.jsonl": "b32ebf7dbf54f7ed5b4b496c1024cc102b58db660f740b98e145164a445a0486"
   },
-  "stderr": "",
+  "stderr": "Hydra routing skipped: Knowledge v3 routing unavailable: .hydra-framework/repo/knowledge/spaces.yaml: file not found\n",
   "stdout": ""
 }

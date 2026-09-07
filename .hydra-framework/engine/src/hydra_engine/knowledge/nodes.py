@@ -269,13 +269,13 @@ def validate_knowledge_nodes(paths: ContextCompilerPaths) -> list[Finding]:
     if root.is_dir():
         for item in sorted(root.iterdir()):
             if item.is_dir() and item.name not in declared:
-                findings.append(Finding(path=display_path(item, paths.root), code=code, detail=f"unlisted knowledge space `{item.name}`"))
+                findings.append(Finding(path=display_path(item, paths.root), code=code, detail=f"{display_path(item, paths.root)}: unlisted knowledge space `{item.name}`"))
 
     nodes: list[KnowledgeNode] = []
     for space in sorted(declared):
         space_file = root / space / "space.yaml"
         if not space_file.is_file():
-            findings.append(Finding(path=display_path(space_file, paths.root), code=code, detail=f"listed space `{space}` is missing space.yaml"))
+            findings.append(Finding(path=display_path(space_file, paths.root), code=code, detail=f"{display_path(space_file, paths.root)}: listed space `{space}` is missing space.yaml"))
             continue
         candidates = [space_file, *sorted((root / space).rglob("node.yaml"))]
         for path in candidates:
@@ -289,40 +289,40 @@ def validate_knowledge_nodes(paths: ContextCompilerPaths) -> list[Finding]:
     for node in nodes:
         rel = display_path(node.path, paths.root)
         if node.logical_id in by_id:
-            findings.append(Finding(path=rel, code=code, detail=f"duplicate logical node `{node.logical_id}`"))
+            findings.append(Finding(path=rel, code=code, detail=f"{rel}: duplicate logical node `{node.logical_id}`"))
         by_id[node.logical_id] = node
         expected_kind = "knowledge-space" if node.depth == 1 else "knowledge-node"
         expected_hydra_id = f"hydra://{expected_kind}/{node.logical_id}"
         if node.path.resolve() != expected_node_path(node, paths).resolve():
-            findings.append(Finding(path=rel, code=code, detail=f"node `{node.logical_id}` does not match its directory placement"))
+            findings.append(Finding(path=rel, code=code, detail=f"{rel}: node `{node.logical_id}` does not match its directory placement"))
         if node.kind != expected_kind or node.hydra_id != expected_hydra_id:
-            findings.append(Finding(path=rel, code=code, detail=f"node identity must be `{expected_hydra_id}` with kind `{expected_kind}`"))
+            findings.append(Finding(path=rel, code=code, detail=f"{rel}: node identity must be `{expected_hydra_id}` with kind `{expected_kind}`"))
         if node.depth > config.max_depth:
-            findings.append(Finding(path=rel, code=code, detail=f"node depth {node.depth} exceeds {config.max_depth}; attach to the containing node, promote a stable boundary, or use a relation/view"))
+            findings.append(Finding(path=rel, code=code, detail=f"{rel}: node depth {node.depth} exceeds {config.max_depth}; attach to the containing node, promote a stable boundary, or use a relation/view"))
         if node.depth > 1 and node.parent_id not in by_id and node.parent_id not in {item.logical_id for item in nodes}:
-            findings.append(Finding(path=rel, code=code, detail=f"node parent does not resolve: {node.parent_id}"))
+            findings.append(Finding(path=rel, code=code, detail=f"{rel}: node parent does not resolve: {node.parent_id}"))
         if node.scope not in LEGAL_SCOPES:
-            findings.append(Finding(path=rel, code=code, detail=f"scope `{node.scope}` is not one of {LEGAL_SCOPES}"))
+            findings.append(Finding(path=rel, code=code, detail=f"{rel}: scope `{node.scope}` is not one of {LEGAL_SCOPES}"))
         required_fields = [("uid", node.uid), ("title", node.title), ("status", node.status)]
         if node.depth == 1:
             required_fields.append(("owners", node.owners))
         for field, value in required_fields:
             if not value:
-                findings.append(Finding(path=rel, code=code, detail=f"node is missing `{field}`"))
+                findings.append(Finding(path=rel, code=code, detail=f"{rel}: node is missing `{field}`"))
         for raw in (node.state, node.overview):
             if raw and (Path(raw).is_absolute() or (not raw.startswith(("./", "@")))):
-                findings.append(Finding(path=rel, code=code, detail=f"node document path must be node-relative or logical: {raw}"))
+                findings.append(Finding(path=rel, code=code, detail=f"{rel}: node document path must be node-relative or logical: {raw}"))
         owned_content = bool(discover_node_unit_paths(node) or node.routes or node.state or node.overview)
         children = any(item.parent_id == node.logical_id for item in nodes)
         if owned_content and not node.routable:
-            findings.append(Finding(path=rel, code=code, detail="only a routable node may own units, routes, state, or overview"))
+            findings.append(Finding(path=rel, code=code, detail=f"{rel}: only a routable node may own units, routes, state, or overview"))
         if not owned_content and not children:
-            findings.append(Finding(path=rel, code=code, detail="empty structural node has neither children nor owned content"))
+            findings.append(Finding(path=rel, code=code, detail=f"{rel}: empty structural node has neither children nor owned content"))
         for relation in node.relations:
             if relation.relation_type not in RELATION_TYPES:
-                findings.append(Finding(path=rel, code=code, detail=f"relation type `{relation.relation_type}` is not one of {RELATION_TYPES}"))
+                findings.append(Finding(path=rel, code=code, detail=f"{rel}: relation type `{relation.relation_type}` is not one of {RELATION_TYPES}"))
             if not HYDRA_ID_RE.match(relation.target):
-                findings.append(Finding(path=rel, code=code, detail=f"relation target is not a valid hydra id: {relation.target}"))
+                findings.append(Finding(path=rel, code=code, detail=f"{rel}: relation target is not a valid hydra id: {relation.target}"))
         ancestor_routes: dict[str, Route] = {}
         parent = by_id.get(node.parent_id)
         if parent:
@@ -330,12 +330,12 @@ def validate_knowledge_nodes(paths: ContextCompilerPaths) -> list[Finding]:
         for route in node.routes:
             inherited = ancestor_routes.get(route.name)
             if inherited and route.overrides != inherited.route_id:
-                findings.append(Finding(path=rel, code=code, detail=f"route `{route.name}` overrides `{inherited.route_id}` and must declare it explicitly"))
+                findings.append(Finding(path=rel, code=code, detail=f"{rel}: route `{route.name}` overrides `{inherited.route_id}` and must declare it explicitly"))
             if route.overrides and (not inherited or route.overrides != inherited.route_id):
-                findings.append(Finding(path=rel, code=code, detail=f"route `{route.name}` has invalid overrides target `{route.overrides}`"))
+                findings.append(Finding(path=rel, code=code, detail=f"{rel}: route `{route.name}` has invalid overrides target `{route.overrides}`"))
             if not route.use_when:
-                findings.append(Finding(path=rel, code=code, detail=f"route `{route.name}` requires non-empty use_when"))
+                findings.append(Finding(path=rel, code=code, detail=f"{rel}: route `{route.name}` requires non-empty use_when"))
             for expansion in route.expand_when:
                 if not expansion.when_paths or not expansion.read or not expansion.why:
-                    findings.append(Finding(path=rel, code=code, detail=f"route `{route.name}` expand_when requires when_paths, read, and why"))
+                    findings.append(Finding(path=rel, code=code, detail=f"{rel}: route `{route.name}` expand_when requires when_paths, read, and why"))
     return findings
