@@ -33,7 +33,7 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 
 ## Current Stage
 
-Phase 4: migration implementation complete; create and review the live dry-run manifest.
+Phase 4: independent review findings corrected; checkpoint and regenerate the live manifest.
 
 ## Readiness
 
@@ -48,8 +48,8 @@ Status: ready
 
 ## Step State
 
-- Active step: commit the tested migrator, generate its live dry-run from the clean checkpoint, and review every move, UID mapping, rewrite, binding candidate, confidence state, and unresolved decision.
-- Next step: approve the exact manifest digest with reviewer evidence, apply it, verify registry/index rebuild and idempotence, then convert/remove the legacy templates and remaining package-era terminology.
+- Active step: create the replacement Git checkpoint and regenerate the exact live migration manifest.
+- Next step: repeat the isolated apply plus `ref check`/`validate`/`selftest` review; approve/apply only if the replacement manifest passes.
 - Completed steps: read required contracts and authoritative code; created and validated the primary task; captured a 173-test v2 baseline; added and ran the 216-leaf enterprise fixture; selected global indexed routing and measured depth/scope policy; froze `core/knowledge-architecture.md`; implemented tested contract primitives for recursive nodes/inheritance, strict global graph closure and supersession, namespaced asserted bindings/freshness, reference-only view composition/conflict detection, shared distribution policy, and the registry-independent KnowledgeStore boundary; integrated recursive discovery, global validation/closure, inherited routes, two-phase path rerouting hooks, route-level `expand_when`, v3 context-packet fields, prompt pointers, search/adoption/hook consumers, and fail-closed node parsing into the active engine; removed the flat routing-collision runtime and flat package discovery; converted affected unit tests to v3 fixtures; restored the full 1,246-test unit suite to green.
 - Superseded or skipped steps: none.
 
@@ -69,6 +69,8 @@ Status: ready
 - `.hydra-framework/engine/src/hydra_engine/knowledge/{packages,package_checks}.py` and deleted `routing_collisions.py` - flat discovery/collision runtime removed; shared node document checks retained pending neutral module rename.
 - `.hydra-framework/engine/src/hydra_engine/{checks,cli,commands,installation,thresholds.py}` - v3 consumers, diagnostics, and threshold registry integration.
 - `.hydra-framework/engine/tests/unit/{v3_fixtures.py,knowledge,commands,cli,checks,installation}` - v3 fixture and affected consumer tests; obsolete flat routing-collision test removed.
+- `.hydra-framework/engine/src/hydra_engine/knowledge/migration_templates.py` - deterministic conversion of inactive v2 authoring templates into the v3 template root.
+- `.hydra-framework/engine/tests/repository/test_context_compiler.py` - real-repository packet contract migrated from v2 `packages`/`package_values` to v3 nodes and canonical route identities.
 
 ## Validation
 
@@ -91,14 +93,21 @@ Status: ready
 - Migrator slice: 1,259 unit tests passed with zero failures/errors. Tests cover deterministic dry-run output, UID evidence, reference/route rewrites, typed-relation conversion, unresolved ambiguous unit expansion, exact-digest approval, reviewer/evidence requirements, changed-plan rejection before writes, and post-apply idempotence.
 - `hydra.py validate` now has no architecture/module/caller findings. Its only findings before live migration are two expected stale registry digests and the expected missing v3 `spaces.yaml`; registry/index rebuild is the final apply stage.
 - The live repository still uses the v2 on-disk package, so `hydra.py validate` is intentionally not claimed green at this checkpoint; the v3 validator now rejects that active legacy tree until the reviewed migration applies.
+- Live dry-run at checkpoint `67fada6a3c89a638768c8b5e2eba15eed8e7feb2` produced digest `sha256:a7efbdd3cbd4afa8275db1eb45b4cd56c80e9b249986f390df86e345e3ad29f2`: one package, 24 writes, 16 deletes, 16 preserved UIDs, six external reference rewrites, five route rewrites, 36 de-duplicated advisory binding candidates, and zero declared unresolved decisions.
+- Independent isolated apply review rejected that digest. Apply and `ref check` succeeded, but `validate` found two moved overview links still targeting `routing.yaml` plus an active legacy root README, and `selftest` exposed v2 repository context-test consumers (`package_values`/`packages`). The manifest therefore overstated confidence despite known-invalid postconditions; it was not approved or applied to this checkout.
+- The reviewer reran the same filtered selftest before apply and confirmed its 11 failures/6 errors already existed at checkpoint `67fada6`; they are required v3 consumer/golden debt, not an apply regression. The three added `validate` failures were caused by the rejected plan.
+- Corrective tests now prove moved routing links target `space.yaml`, the legacy root/templates are fully removed after deterministic conversion into `repo/knowledge/templates/space`, route rewrites change consumer text, binding-candidate sources use migrated paths, and tampered manifest payloads are rejected even when the stored digest/approval fields are unchanged.
+- Runtime routing accepts canonical `hydra://knowledge-route/...` selectors (including inherited routes) while retaining the bounded deprecated `owner:name` CLI compatibility form.
+- Replacement corrective unit run: 1,262 tests passed with zero failures/errors. `hydra.py validate` again reports only the expected pre-migration stale registry entries and missing `spaces.yaml`; all module size, mirror, fan-out, and caller gates pass.
 
 ## Blockers
 
 - Real second-repository distribution evidence is not yet known to be available; deterministic fixture evidence can advance the implementation, but cannot silently satisfy that production gate.
+- Migration digest `sha256:a7efbdd3cbd4afa8275db1eb45b4cd56c80e9b249986f390df86e345e3ad29f2` is explicitly rejected and must never be approved or applied. Its known defects are corrected, but the replacement digest still requires isolated post-apply proof.
 
 ## Continuation Notes
 
 What another model or developer needs to continue safely.
 
 - Running state: none
-- Resume check: `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`; expect 1,259 passing tests. Then run `python3 .hydra-framework/scripts/hydra.py knowledge migrate-v2 --output .hydra-framework.local/migrations/knowledge-v3-review.json` from a clean worktree and review without applying.
+- Resume check: `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`; expect 1,262 passing tests. Then generate a replacement manifest from a clean checkpoint. Never approve or apply digest `sha256:a7efbdd3cbd4afa8275db1eb45b4cd56c80e9b249986f390df86e345e3ad29f2`.

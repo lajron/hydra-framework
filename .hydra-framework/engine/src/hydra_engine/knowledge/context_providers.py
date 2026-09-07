@@ -15,6 +15,7 @@ from hydra_engine.knowledge.routing import (
     context_terms,
     node_document_path,
     route_expansion_ids,
+    route_selector_owner,
     route_nodes,
     routes_for_node,
 )
@@ -88,16 +89,20 @@ def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
     explicit_routing = bool(request.node_values or request.space)
     if path_matches and not explicit_routing:
         selections = [NodeSelection(by_node_id[node_id], "bound path", float("inf")) for node_id in sorted(set(path_matches.values()))]
-    selected_route_owners = {
-        value
+    selected_route_owners = {selection.node.logical_id for selection in selections}
+    selected_route_ids = {
+        route.route_id
         for selection in selections
-        for value in (selection.node.logical_id, selection.node.hydra_id)
+        for route in resolve_inheritance(selection.node, by_node_id)["routes"].values()
     }
     for value in request.route_values:
-        owner, separator, _name = value.rpartition(":")
-        if not separator:
+        owner = route_selector_owner(value, nodes)
+        if not owner:
             warnings.append(f"Route selector must be node-qualified: {value}")
-        elif owner.lower() not in selected_route_owners:
+        elif value.lower().startswith("hydra://knowledge-route/"):
+            if value.lower() not in selected_route_ids:
+                warnings.append(f"Route node not selected: {value}")
+        elif owner not in selected_route_owners:
             warnings.append(f"Route node not selected: {value}")
 
     try:

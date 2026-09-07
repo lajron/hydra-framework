@@ -9,12 +9,11 @@ the first write.  Git checkpoint commits are the rollback boundary.
 from __future__ import annotations
 
 import dataclasses
-import hashlib
 import json
 from pathlib import Path
 
 from hydra_engine.documents.yaml_documents import parse_yaml, parse_yaml_text, yaml_list, yaml_map, yaml_str
-from hydra_engine.knowledge import migration_format, migration_git
+from hydra_engine.knowledge import migration_format, migration_git, migration_templates
 
 MIGRATION_SCHEMA = "hydra-framework.knowledge-migration.v1"
 SPACES_SCHEMA = "hydra-framework.knowledge-spaces.v1"
@@ -32,15 +31,6 @@ class MigrationPlan:
     writes: dict[str, str]
     deletes: tuple[str, ...]
     originals: dict[str, str]
-
-
-def _digest_text(text: str) -> str:
-    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _digest_payload(payload: dict) -> str:
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
-    return _digest_text(canonical)
 
 
 def _frontmatter(text: str, path: Path, root: Path) -> tuple[dict | None, str]:
@@ -70,20 +60,34 @@ def _typed_relations(value: object, package: str) -> list[dict]:
     return relations
 
 
-def _rewrite_refs(text: str, package: str) -> str:
+def _rewrite_refs(text: str, package: str, route_names: tuple[str, ...] = ()) -> str:
     old_root = f".hydra-framework/repo/knowledge/knowledge-packages/{package}"
     new_root = f".hydra-framework/repo/knowledge/spaces/{package}"
-    return (
+    rewritten = (
         text.replace(old_root, new_root)
         .replace(f"hydra://knowledge-package/{package}", f"hydra://knowledge-space/{package}")
         .replace(f"hydra://knowledge-slice/{package}/routing", f"hydra://knowledge-space/{package}")
     )
+    for name in route_names:
+        rewritten = rewritten.replace(
+            f"{package}:{name}",
+            f"hydra://knowledge-route/{package}/{name.replace('_', '-')}",
+        )
+    return rewritten
 
 
-def _rewrite_moved_document(text: str, source: Path, root: Path, package: str, *, overview: bool = False) -> str:
+def _rewrite_moved_document(
+    text: str,
+    source: Path,
+    root: Path,
+    package: str,
+    route_names: tuple[str, ...],
+    *,
+    overview: bool = False,
+) -> str:
     data, body = _frontmatter(text, source, root)
     if data is None:
-        return _rewrite_refs(text, package)
+        return _rewrite_refs(text, package, route_names).replace("](routing.yaml)", "](space.yaml)")
     if overview:
         data["hydra_id"] = f"hydra://knowledge-slice/{package}/overview"
         data["kind"] = "knowledge-slice"
@@ -92,7 +96,7 @@ def _rewrite_moved_document(text: str, source: Path, root: Path, package: str, *
     rendered = "---\n" + migration_format.emit_yaml(data) + "---\n"
     if body:
         rendered += "\n" + body.rstrip() + "\n"
-    return _rewrite_refs(rendered, package)
+    return _rewrite_refs(rendered, package, route_names).replace("](routing.yaml)", "](space.yaml)")
 
 
 def _converted_expansions(package_root: Path, routing: dict, root: Path) -> tuple[dict[str, list[dict]], list[dict], list[str]]:
@@ -177,7 +181,8 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
         item for item in legacy.iterdir()
         if item.is_dir() and item.name != "templates"
     ) if legacy.is_dir() else []
-    if not package_roots and (knowledge / "spaces.yaml").is_file():
+    legacy_files = legacy.is_dir() and any(path.is_file() for path in legacy.rglob("*"))
+    if not package_roots and not legacy_files and (knowledge / "spaces.yaml").is_file():
         payload = {
             "schema": MIGRATION_SCHEMA,
             "source_version": 2,
@@ -189,13 +194,15 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             "expand_when_conversions": [], "binding_candidates": [], "unresolved": [],
             "confidence": "high",
         }
-        digest = _digest_payload(payload)
+        digest = migration_format.payload_digest(payload)
         return MigrationPlan({**payload, "plan_digest": digest, "review": {"approved": False, "approved_digest": "", "reviewer": "", "evidence": ""}}, {}, (), {})
 
     writes: dict[str, str] = {}
     originals: dict[str, str] = {}
     deletes: list[str] = []
+    migration_templates.plan(legacy, knowledge, root, writes, originals, deletes)
     package_rows: list[dict] = []
+    package_routes: dict[str, tuple[str, ...]] = {}
     preserved_uids: list[dict] = []
     identity_rewrites: list[dict] = []
     route_rewrites: list[dict] = []
@@ -232,14 +239,23 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             {"from": f"hydra://knowledge-package/{package}", "to": f"hydra://knowledge-slice/{package}/overview", "use": "overview object"},
             {"from": f"hydra://knowledge-slice/{package}/routing", "to": f"hydra://knowledge-space/{package}", "use": "routing object"},
         ])
-        for route_name in sorted(yaml_map(routing.get("routes"))):
+        route_names = tuple(sorted(yaml_map(routing.get("routes"))))
+        package_routes[package] = route_names
+        for route_name in route_names:
             route_rewrites.append({"from": f"{package}:{route_name}", "to": f"hydra://knowledge-route/{package}/{route_name.replace('_', '-')}"})
 
         for source in sorted(path for path in package_root.rglob("*") if path.is_file() and path != routing_path):
             target = target_root / source.relative_to(package_root)
             content = source.read_text(encoding="utf-8")
             originals[_relative(source, root)] = content
-            rewritten = _rewrite_moved_document(content, source, root, package, overview=source.name == "overview.md")
+            rewritten = _rewrite_moved_document(
+                content,
+                source,
+                root,
+                package,
+                route_names,
+                overview=source.name == "overview.md",
+            )
             writes[_relative(target, root)] = rewritten
             data, _body = _frontmatter(content, source, root)
             if data and yaml_str(data.get("uid")):
@@ -247,7 +263,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             if data:
                 for raw in yaml_list(yaml_map(data.get("provenance")).get("sources")) + yaml_list(data.get("reads")):
                     if raw and not raw.startswith(("hydra://", "@")):
-                        binding_candidates.add((_relative(source, root), raw))
+                        binding_candidates.add((_relative(target, root), raw))
             deletes.append(_relative(source, root))
         deletes.append(_relative(routing_path, root))
         originals[_relative(routing_path, root)] = routing_path.read_text(encoding="utf-8")
@@ -276,26 +292,27 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             continue
         rewritten = content
         for row in package_rows:
-            rewritten = _rewrite_refs(rewritten, row["package"])
+            package = row["package"]
+            rewritten = _rewrite_refs(rewritten, package, package_routes[package])
         if rewritten != content:
             writes[rel] = rewritten
             originals[rel] = content
-            reference_rewrites.append({"path": rel, "before": _digest_text(content), "after": _digest_text(rewritten)})
+            reference_rewrites.append({"path": rel, "before": migration_format.text_digest(content), "after": migration_format.text_digest(rewritten)})
 
     write_rows = []
     for rel, content in sorted(writes.items()):
         source_match = next((item for item in deletes if item.endswith("/" + Path(rel).name)), "")
-        write_rows.append({"path": rel, "digest": _digest_text(content), "source": source_match})
+        write_rows.append({"path": rel, "digest": migration_format.text_digest(content), "source": source_match})
     payload = {
         "schema": MIGRATION_SCHEMA,
         "source_version": 2,
         "target_version": 3,
         "checkpoint_commit": checkpoint_commit or migration_git.checkpoint(root),
-        "status": "planned" if package_rows else "blocked",
+        "status": "planned" if package_rows or deletes else "blocked",
         "packages": package_rows,
         "writes": write_rows,
         "deletes": [
-            {"path": rel, "digest": _digest_text(originals[rel])}
+            {"path": rel, "digest": migration_format.text_digest(originals[rel])}
             for rel in sorted(set(deletes))
         ],
         "reference_rewrites": reference_rewrites,
@@ -308,9 +325,9 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             for source, path in sorted(binding_candidates)
         ],
         "unresolved": sorted(unresolved),
-        "confidence": "high" if package_rows and not unresolved else "requires-review",
+        "confidence": "high" if (package_rows or deletes) and not unresolved else "requires-review",
     }
-    digest = _digest_payload(payload)
+    digest = migration_format.payload_digest(payload)
     manifest = {**payload, "plan_digest": digest, "review": {"approved": False, "approved_digest": "", "reviewer": "", "evidence": ""}}
     return MigrationPlan(manifest, writes, tuple(sorted(set(deletes))), originals)
 
@@ -335,6 +352,11 @@ def apply_reviewed_plan(root: Path, reviewed_manifest: dict) -> MigrationPlan:
     plan_digest = str(reviewed_manifest.get("plan_digest") or "")
     if review.get("approved") is not True or review.get("approved_digest") != plan_digest:
         raise MigrationError("migration manifest is not explicitly approved for its exact plan_digest")
+    recomputed_digest = migration_format.payload_digest(migration_format.manifest_payload(reviewed_manifest))
+    if recomputed_digest != plan_digest:
+        raise MigrationError(
+            f"review manifest payload digest mismatch: declared `{plan_digest}`, computed `{recomputed_digest}`"
+        )
     if not str(review.get("reviewer") or "").strip() or not str(review.get("evidence") or "").strip():
         raise MigrationError("migration approval requires reviewer and evidence")
     if reviewed_manifest.get("unresolved"):
@@ -370,6 +392,8 @@ def apply_reviewed_plan(root: Path, reviewed_manifest: dict) -> MigrationPlan:
     legacy = root / ".hydra-framework/repo/knowledge/knowledge-packages"
     if legacy.is_dir():
         for directory in sorted((item for item in legacy.rglob("*") if item.is_dir()), key=lambda item: len(item.parts), reverse=True):
-            if directory.name != "templates" and not any(directory.iterdir()):
+            if not any(directory.iterdir()):
                 directory.rmdir()
+        if not any(legacy.iterdir()):
+            legacy.rmdir()
     return current

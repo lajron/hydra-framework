@@ -165,6 +165,22 @@ def resolve_named_route(routes: dict[str, Route], name: str) -> Route | None:
     return routes.get(name)
 
 
+def route_selector_owner(value: str, nodes: list[KnowledgeNode]) -> str:
+    """Return the owning logical node for canonical or deprecated selectors."""
+    lowered = value.lower()
+    if lowered.startswith("hydra://knowledge-route/"):
+        return next(
+            (
+                node.logical_id
+                for node in sorted(nodes, key=lambda item: len(item.logical_id), reverse=True)
+                if lowered.startswith(f"hydra://knowledge-route/{node.logical_id}/")
+            ),
+            "",
+        )
+    owner, separator, _name = lowered.rpartition(":")
+    return owner if separator else ""
+
+
 def routes_for_node(
     selection: NodeSelection, task: str, route_values: list[str], nodes_by_id: dict[str, KnowledgeNode], warnings: list[str],
 ) -> list[Route]:
@@ -172,8 +188,13 @@ def routes_for_node(
     routes = effective["routes"]
     requested: list[str] = []
     for value in route_values:
-        owner, separator, name = value.rpartition(":")
-        if separator and owner.lower() in {selection.node.logical_id, selection.node.hydra_id}:
+        lowered = value.lower()
+        canonical = next((route for route in routes.values() if route.route_id == lowered), None)
+        if canonical is not None:
+            requested.append(canonical.name)
+            continue
+        owner, separator, name = lowered.rpartition(":")
+        if separator and owner in {selection.node.logical_id, selection.node.hydra_id}:
             requested.append(name)
     if requested:
         resolved: list[Route] = []

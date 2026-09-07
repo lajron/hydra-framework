@@ -23,7 +23,7 @@ def validate_knowledge_v3(ctx) -> list[Finding]:
     code = "knowledge-v3"
     legacy = paths.hydra / "repo/knowledge/knowledge-packages"
     configured = paths.hydra / "repo/knowledge/spaces.yaml"
-    active_legacy = legacy.is_dir() and any(item.name != "templates" for item in legacy.iterdir())
+    active_legacy = legacy.is_dir() and any(legacy.iterdir())
     if not configured.is_file() and not active_legacy:
         return []
     findings = validate_knowledge_nodes(paths)
@@ -97,7 +97,7 @@ def validate_knowledge_v3(ctx) -> list[Finding]:
 
     all_ids.update(view.hydra_id for view in discover_views(paths))
     findings.extend(validate_views(paths, all_ids))
-    if legacy.is_dir() and any(item.name != "templates" for item in legacy.iterdir()):
+    if active_legacy:
         findings.append(Finding(
             path=display_path(legacy, paths.root), code=code,
             detail="active v2 knowledge-packages remain; migrate them before v3 validation can pass",

@@ -3,12 +3,12 @@
 Split out of `scripts/tests/test_hydra.py`'s `ContextCompilerTests`. These
 methods are not hermetically fixture-able the way `knowledge/test_context_packets.py`'s
 mirror tests are: they assert against this repository's own real
-`hydra-framework` knowledge package -- its `routing.yaml` routes and
+`hydra-framework` Knowledge v3 space -- its `space.yaml` routes and
 `units/` -- the same way the other named frozen classes assert
 against real repository state.
 
 Renamed from `test_context_packs.py`: context packs are gone,
-replaced end to end by package-routing v2 routes and units, so a
+replaced end to end by Knowledge v3 node routes and units, so a
 file named for the deleted mechanism would be actively misleading.
 """
 
@@ -55,22 +55,23 @@ class RealRepositoryContextPacketTests(unittest.TestCase):
             budget=20000,
         )
         for field in [
-            "date", "generated_at", "task", "provider", "model", "packages",
+            "date", "generated_at", "task", "provider", "model", "nodes",
+            "views", "effective_policy", "route_expansions",
             "selected_context", "omitted_candidates", "token_estimate",
             "provenance_freshness", "validation_reminders", "known_risk_reminders",
         ]:
             self.assertIn(field, packet)
-        self.assertTrue(any(item["package"] == "hydra-framework" for item in packet["packages"]))
+        self.assertTrue(any(item["node"] == "hydra-framework" for item in packet["nodes"]))
         selected_paths = {item["path"] for item in packet["selected_context"]}
-        self.assertIn(".hydra-framework/repo/knowledge/knowledge-packages/hydra-framework/state.md", selected_paths)
-        self.assertIn(".hydra-framework/repo/knowledge/knowledge-packages/hydra-framework/overview.md", selected_paths)
+        self.assertIn(".hydra-framework/repo/knowledge/spaces/hydra-framework/state.md", selected_paths)
+        self.assertIn(".hydra-framework/repo/knowledge/spaces/hydra-framework/overview.md", selected_paths)
 
     def test_explicit_object_reference_uses_resolver_metadata(self) -> None:
         packet = compile_context_packet(
             task="Use the reflection-absorb skill",
             paths=_paths(),
             resolver_paths=_resolver_paths(),
-            package_values=["hydra-framework"],
+            node_values=["hydra-framework"],
             object_refs=["hydra://capability/skill/reflection-absorb"],
             budget=20000,
         )
@@ -84,10 +85,10 @@ class RealRepositoryContextPacketTests(unittest.TestCase):
 
     def test_budget_omits_candidates_without_exceeding_selection(self) -> None:
         packet = compile_context_packet(
-            task="Hydra knowledge package context compiler",
+            task="Hydra Knowledge v3 context compiler",
             paths=_paths(),
             resolver_paths=_resolver_paths(),
-            package_values=["hydra-framework"],
+            node_values=["hydra-framework"],
             budget=1,
         )
         self.assertEqual(packet["selected_context"], [])
@@ -102,12 +103,12 @@ class RealRepositoryContextPacketTests(unittest.TestCase):
             task="adding or changing a Hydra skill subagent or slash command",
             paths=_paths(),
             resolver_paths=_resolver_paths(),
-            package_values=["hydra-framework"],
-            route_values=["hydra-framework:add_module"],
+            node_values=["hydra-framework"],
+            route_values=["hydra://knowledge-route/hydra-framework/add-module"],
             budget=20000,
         )
-        hydra_framework = [p for p in packet["packages"] if p["package"] == "hydra-framework"][0]
-        self.assertEqual(hydra_framework["route"], "add_module")
+        hydra_framework = [p for p in packet["nodes"] if p["node"] == "hydra-framework"][0]
+        self.assertEqual(hydra_framework["routes"], ["add_module"])
         unit_ids = {item.get("hydra_id") for item in packet["selected_context"] if item["kind"] == "knowledge-unit"}
         self.assertIn("hydra://knowledge-unit/hydra-framework/add-module", unit_ids)
 
@@ -116,12 +117,12 @@ class RealRepositoryContextPacketTests(unittest.TestCase):
             task="adding renaming or removing a required task record field",
             paths=_paths(),
             resolver_paths=_resolver_paths(),
-            package_values=["hydra-framework"],
-            route_values=["hydra-framework:change_task_contract"],
+            node_values=["hydra-framework"],
+            route_values=["hydra://knowledge-route/hydra-framework/change-task-contract"],
             budget=20000,
         )
-        hydra_framework = [p for p in packet["packages"] if p["package"] == "hydra-framework"][0]
-        self.assertEqual(hydra_framework["route"], "change_task_contract")
+        hydra_framework = [p for p in packet["nodes"] if p["node"] == "hydra-framework"][0]
+        self.assertEqual(hydra_framework["routes"], ["change_task_contract"])
         self.assertIn("archived and completed task records", packet["avoid_by_default"])
         self.assertIn("python3 .hydra-framework/scripts/hydra.py validate", packet["verify"])
 
@@ -147,7 +148,7 @@ class RealRepositoryContextPacketTests(unittest.TestCase):
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0]["kind"], "context-provider-capability")
         self.assertIn("rank", matches[0])
-        self.assertEqual(packet["packages"], [])
+        self.assertEqual(packet["nodes"], [])
 
     def test_family_cap_bounds_one_providers_contribution(self) -> None:
         packet = compile_context_packet(
@@ -178,11 +179,11 @@ class RealRepositoryContextPacketTests(unittest.TestCase):
             task="Hydra build status",
             paths=_paths(),
             resolver_paths=_resolver_paths(),
-            package_values=["hydra-framework"],
+            node_values=["hydra-framework"],
             budget=20000,
         )
-        hydra_framework = [p for p in packet["packages"] if p["package"] == "hydra-framework"][0]
-        self.assertEqual(hydra_framework["route"], "")
+        hydra_framework = [p for p in packet["nodes"] if p["node"] == "hydra-framework"][0]
+        self.assertEqual(hydra_framework["routes"], [])
         unit_ids = {item.get("hydra_id") for item in packet["selected_context"] if item["kind"] == "knowledge-unit"}
         self.assertIn("hydra://knowledge-unit/hydra-framework/build-status", unit_ids)
 

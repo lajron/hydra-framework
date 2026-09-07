@@ -72,6 +72,15 @@ class KnowledgeV3RoutingTests(unittest.TestCase):
             routes = routes_for_node(selection, "", ["product/checkout:deploy"], {node.logical_id: node for node in nodes}, warnings)
             self.assertEqual([route.name for route in routes], ["deploy"])
             self.assertEqual(warnings, [])
+            routes = routes_for_node(
+                selection,
+                "",
+                ["hydra://knowledge-route/product/deploy"],
+                {node.logical_id: node for node in nodes},
+                warnings,
+            )
+            self.assertEqual([route.name for route in routes], ["deploy"])
+            self.assertEqual(warnings, [])
 
     def test_route_expand_when_resolves_logical_binding(self):
         with tempfile.TemporaryDirectory() as tmp:

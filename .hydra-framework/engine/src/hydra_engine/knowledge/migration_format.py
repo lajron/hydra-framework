@@ -2,7 +2,21 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+
+
+def text_digest(text: str) -> str:
+    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def manifest_payload(manifest: dict) -> dict:
+    return {key: value for key, value in manifest.items() if key not in {"plan_digest", "review"}}
+
+
+def payload_digest(payload: dict) -> str:
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return text_digest(canonical)
 
 
 def _quoted(value: object) -> str:

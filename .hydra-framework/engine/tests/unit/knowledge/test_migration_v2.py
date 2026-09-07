@@ -28,7 +28,7 @@ def _legacy(root: Path, *, expansion: str = "") -> None:
     (package / "overview.md").write_text(
         "---\nhydra_id: hydra://knowledge-package/demo\nuid: 22222222-2222-4222-8222-222222222222\n"
         "schema_version: 3\nkind: knowledge-package\ntitle: Demo\nstatus: active\nscope: base-seed\n"
-        "owners:\n  team: demo\nrelations: []\nprovenance:\n  sources: []\n---\n# Demo\n",
+        "owners:\n  team: demo\nrelations: []\nprovenance:\n  sources: []\n---\n# Demo\n\n[Routing](routing.yaml)\n",
         encoding="utf-8",
     )
     (package / "state.md").write_text("# State\n", encoding="utf-8")
@@ -44,9 +44,14 @@ def _legacy(root: Path, *, expansion: str = "") -> None:
     )
     external = root / "AGENTS.md"
     external.write_text(
-        "Read .hydra-framework/repo/knowledge/knowledge-packages/demo/overview.md and hydra://knowledge-package/demo.\n",
+        "Read .hydra-framework/repo/knowledge/knowledge-packages/demo/overview.md, hydra://knowledge-package/demo, and demo:use.\n",
         encoding="utf-8",
     )
+    templates = root / ".hydra-framework/repo/knowledge/knowledge-packages/templates"
+    templates.mkdir()
+    (templates / "routing.yaml").write_text("schema: hydra-framework.package-routing.v2\n", encoding="utf-8")
+    (templates / "overview.md").write_text("[Routing](routing.yaml) for a package.\n", encoding="utf-8")
+    (templates.parent / "README.md").write_text("# Knowledge Packages\n", encoding="utf-8")
 
 
 class MigrationV2Tests(unittest.TestCase):
@@ -62,7 +67,7 @@ class MigrationV2Tests(unittest.TestCase):
             self.assertEqual(len(first.manifest["preserved_uids"]), 3)
             self.assertEqual(
                 first.manifest["binding_candidates"],
-                [{"source": ".hydra-framework/repo/knowledge/knowledge-packages/demo/units/guide.md", "path": "scripts/demo.py", "confidence": "candidate-only"}],
+                [{"source": ".hydra-framework/repo/knowledge/spaces/demo/units/guide.md", "path": "scripts/demo.py", "confidence": "candidate-only"}],
             )
             self.assertTrue(any(row["to"] == "hydra://knowledge-route/demo/use" for row in first.manifest["route_rewrites"]))
             self.assertTrue(any(row["path"] == "AGENTS.md" for row in first.manifest["reference_rewrites"]))
@@ -100,6 +105,10 @@ class MigrationV2Tests(unittest.TestCase):
             self.assertEqual(unit["uid"], "33333333-3333-4333-8333-333333333333")
             self.assertEqual(unit["relations"], [{"type": "relates-to", "target": "hydra://knowledge-space/demo"}])
             self.assertIn("knowledge/spaces/demo", (root / "AGENTS.md").read_text(encoding="utf-8"))
+            self.assertIn("hydra://knowledge-route/demo/use", (root / "AGENTS.md").read_text(encoding="utf-8"))
+            self.assertIn("[Routing](space.yaml)", (root / ".hydra-framework/repo/knowledge/spaces/demo/overview.md").read_text(encoding="utf-8"))
+            self.assertTrue((root / ".hydra-framework/repo/knowledge/templates/space/space.yaml").is_file())
+            self.assertFalse((root / ".hydra-framework/repo/knowledge/knowledge-packages").exists())
             again = migration_v2.build_plan(root, checkpoint_commit="abc")
             self.assertEqual(again.manifest["status"], "already-v3")
             self.assertEqual(again.manifest["writes"], [])
@@ -119,6 +128,22 @@ class MigrationV2Tests(unittest.TestCase):
                 with self.assertRaisesRegex(migration_v2.MigrationError, "plan changed after review"):
                     migration_v2.apply_reviewed_plan(root, reviewed)
             self.assertTrue((root / ".hydra-framework/repo/knowledge/knowledge-packages/demo/routing.yaml").exists())
+
+    def test_apply_rejects_tampered_review_payload(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _legacy(root)
+            plan = migration_v2.build_plan(root, checkpoint_commit="abc")
+            reviewed = dict(plan.manifest)
+            reviewed["confidence"] = "tampered"
+            reviewed["review"] = {
+                "approved": True,
+                "approved_digest": plan.manifest["plan_digest"],
+                "reviewer": "fixture",
+                "evidence": "reviewed",
+            }
+            with self.assertRaisesRegex(migration_v2.MigrationError, "payload digest mismatch"):
+                migration_v2.apply_reviewed_plan(root, reviewed)
 
 
 if __name__ == "__main__":
