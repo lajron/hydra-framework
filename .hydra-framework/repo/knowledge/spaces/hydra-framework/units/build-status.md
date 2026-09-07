@@ -58,7 +58,7 @@ plan document: the base upgrade plan describes intent, this describes the build.
 | Frontmatter + sidecar metadata, aliases | built | `hydra.py ref check` |
 | Derived registry, YAML export | built | `cognition/graph/registry.yaml` |
 | Move detection, classified by uid + path + digest | built | `hydra.py ref check` after a manual `mv` |
-| Context compiler over knowledge packages | built | `hydra.py compile-context` |
+| Context compiler over knowledge spaces | built | `hydra.py compile-context` |
 | Compilable knowledge units (`reads:` resolved, `requires` budget-exempt) | built | `hydra.py compile-context`; `hydra_engine/knowledge/units.py` |
 | Engine boundary, `hydra_engine` package plus compatibility shim | built | `hydra.py command-metadata --json` exposes the registered command surface through `hydra_engine.cli.dispatch`; `selftest` remains shim-resident |
 | Enforced module bounds (size cap, acyclic imports, layer direction, in-degree cap, test-per-module) | built | `hydra.py validate`; `selftest` includes negative probes for module-size, import-cycle, upward-import, in-degree, missing-test, and banned-name violations |

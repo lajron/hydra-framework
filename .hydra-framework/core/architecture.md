@@ -79,4 +79,4 @@ Tradeoff: it is portable and generator-friendly, but it risks boilerplate and du
 
 Use responsibility-first structure now. Allow package-like repeated module shapes where they are useful for agents, skills, workflows, integrations, and technology packs. Use deep structures only when semantic boundaries justify them.
 
-Use repeated local shapes for knowledge packages when the subject has durable internal structure. A repository service, app, bounded context, domain, product area, or automation area may own local state, questions, risks, procedures, sources, and validation notes without replacing the global canonical knowledge layer.
+Use repeated local shapes for knowledge spaces when the subject has durable internal structure. A repository service, app, bounded context, domain, product area, or automation area may own local state, questions, risks, procedures, sources, and validation notes without replacing the global canonical knowledge layer.

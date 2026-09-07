@@ -26,7 +26,7 @@ Use this procedure when applying the Hydra seed to a real project repository.
 5. Create the human wiki surface for the project with `python3 .hydra-framework/scripts/hydra.py wiki scaffold <project-name>` when it does not already exist.
 6. Treat existing project docs, README files, diagrams, issue records, and code as source material initially. Do not rewrite or delete them as part of installing Hydra.
 7. Migrate documentation one area at a time. For each module, feature, or system, create or update a human page under `project-wiki/<project-name>/` and link it to verified code and existing docs.
-8. Create Hydra knowledge packages only for complex or repeatedly-used areas where scoped AI operational knowledge improves retrieval, handoff, validation, or repeated execution. Do not create one package per folder by default.
+8. Create Hydra knowledge spaces only for complex or repeatedly-used areas where scoped AI operational knowledge improves retrieval, handoff, validation, or repeated execution. Do not create one space per folder by default.
 9. Keep source-of-truth state with its owner: code in code, live workflow state in issue trackers or CI, package state in package managers, durable rules in their canonical Hydra `core/` or `repo/knowledge/` owner, and human explanations in the wiki.
 10. Record migration progress in task state when the migration spans sessions or affects team-visible docs.
 
@@ -34,7 +34,7 @@ To clear a source area rather than migrate opportunistically, follow `.hydra-fra
 
 For a newly adopted project, first name the project wiki area and establish
 source links. Migrate useful scattered documentation one area at a time into
-human wiki pages or Hydra knowledge packages according to reuse and complexity.
+human wiki pages or Hydra knowledge spaces according to reuse and complexity.
 
 ## Propose A Hydra Framework Change
 

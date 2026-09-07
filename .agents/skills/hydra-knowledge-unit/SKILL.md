@@ -1,6 +1,6 @@
 ---
 name: hydra-knowledge-unit
-description: Write or revalidate one knowledge-package unit against its source of truth, recording divergences and out-of-scope findings instead of silently resolving them.
+description: Write or revalidate one knowledge-space unit against its source of truth, recording divergences and out-of-scope findings instead of silently resolving them.
 ---
 
 # Knowledge Unit Skill
@@ -22,7 +22,7 @@ input, not documentation.
   claims may have drifted from the tree.
 
 Do **not** trigger this skill to decide *whether* something belongs in a
-knowledge package at all. That classification is not this skill's job. See
+knowledge space at all. That classification is not this skill's job. See
 Boundaries.
 
 ## Inputs

@@ -13,7 +13,7 @@ Validation should eventually check:
 - `intake/` material is not referenced as canonical without promotion
 - generated cognition files identify their canonical source
 - task records have one authoritative current state
-- knowledge packages use expected filenames where present
+- knowledge spaces and nodes use expected filenames where present
 - archived or superseded material is labeled clearly
 - private paths are not committed into `.hydra-framework/`
 

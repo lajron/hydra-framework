@@ -403,7 +403,7 @@ Use the scaffold as a starting point, then migrate existing project docs one are
 things, in order:
 
 1. If the edited path is inside a provider directory (`.claude/`, `.agents/`, `.codex/`) and is not a current generated file, it prints guidance for reclaiming it. This is advisory: it never blocks the write.
-2. Otherwise, if the edited path belongs to a knowledge package, it runs that package gate and fails on deterministic errors.
+2. Otherwise, if the edited path belongs to a knowledge space, it runs that node-document gate and fails on deterministic errors.
 
 ```bash
 python3 .hydra-framework/scripts/hydra.py hook-post-edit

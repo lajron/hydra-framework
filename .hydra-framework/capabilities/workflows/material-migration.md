@@ -142,7 +142,7 @@ Use this when the material is large enough that per-item intake cannot answer
    `triage/` and link it from the row. Small obvious items need only the row.
 
 7. **Propose in batches by destination, not in source order.** All rows headed
-   for one knowledge package at once. The agent writes a bounded proposal
+   for one knowledge space at once. The agent writes a bounded proposal
    manifest and drafts under the batch workspace. New package boundaries,
    conflicts, sensitive/private material, and ambiguous classifications become
    reasons on the same coherent batch approval rather than separate per-unit

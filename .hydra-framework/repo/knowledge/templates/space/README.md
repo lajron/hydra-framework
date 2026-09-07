@@ -1,4 +1,4 @@
-# Knowledge Package Templates
+# Knowledge Space Templates
 
 These templates define the default shape for repository areas that need durable
 local knowledge. Copy only the files a knowledge space needs, then replace placeholders.

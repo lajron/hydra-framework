@@ -30,7 +30,7 @@ A supersession note should identify:
 - new authority
 - reason for replacement
 - date
-- affected knowledge packages or tasks
+- affected knowledge spaces or tasks
 
 ## Previous Attempts
 

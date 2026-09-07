@@ -57,5 +57,5 @@ and its templates.
 
 [Migration](/project-wiki/hydra-framework/extending-hydra/migration.md) drains a bounded source area. [Seed And Adopt Hydra](/project-wiki/hydra-framework/start-here/adopt-a-repository.md)
 brings Hydra into another repository without migrating its existing material.
-[Knowledge Packages](/project-wiki/hydra-framework/extending-hydra/knowledge-packages.md) explains the destination for
+[Knowledge Spaces](/project-wiki/hydra-framework/extending-hydra/knowledge-spaces.md) explains the destination for
 repeated repository knowledge.

@@ -18,7 +18,7 @@ This is the return path of Hydra's copy-based spread. Copies diverge; without re
 3. Read `lineage` in `manifest.yaml` to learn which base version this copy descends from. A missing lineage block means the classification is less trustworthy. Say so.
 4. Classify unexplained differences by intent, not just by content:
    - `promote`: solves a general problem any repository would hit. Candidate for the base seed.
-   - `repo-local`: correct here, wrong or meaningless elsewhere (host-specific paths, one team's conventions, this repository's knowledge packages).
+   - `repo-local`: correct here, wrong or meaningless elsewhere (host-specific paths, one team's conventions, this repository's knowledge spaces).
    - `stale`: local copy is behind the base. The base version should win.
    - `conflicting`: both sides changed the same meaning. Needs a human decision.
 5. For every `promote` candidate, require evidence before recommending it: the observed problem, the change, and some sign it worked. A change that only looks tidier is not a promotion candidate.
@@ -38,6 +38,6 @@ Then a short summary: explained count, unexplained counts per classification, pr
 ## Boundaries
 
 - Report and record; do not apply base-to-local or local-to-base overwrites unless explicitly asked.
-- Do not promote repository-specific knowledge packages, task records, wiki pages, or private local state into the seed.
+- Do not promote repository-specific knowledge spaces, task records, wiki pages, or private local state into the seed.
 - Do not treat a newer timestamp as authority. Content and stated intent decide, not mtime.
 - If the base checkout is unavailable, say so and stop. Do not guess what the base contained.

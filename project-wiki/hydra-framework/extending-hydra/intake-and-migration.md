@@ -31,7 +31,7 @@ canonical workflow and skills linked below.
 
 ## Related Routes
 
-[Knowledge Packages](/project-wiki/hydra-framework/extending-hydra/knowledge-packages.md) explains where promoted meaning
+[Knowledge Spaces](/project-wiki/hydra-framework/extending-hydra/knowledge-spaces.md) explains where promoted meaning
 belongs. [Private Workspace](/project-wiki/hydra-framework/working-with-hydra/private-workspace.md)
 explains where unreviewed or machine-local material stays. Use [Validation](/project-wiki/hydra-framework/operations/validation.md)
 after the relevant shared or wiki surface changes.

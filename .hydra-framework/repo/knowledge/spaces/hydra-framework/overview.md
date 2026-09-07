@@ -29,7 +29,7 @@ diverged copy is reconciled against the base seed.
 
 It exists because this repository's product *is* the framework, so framework
 mechanics are the subject matter an agent most often needs to look up. It is also
-the reference example for what a knowledge package looks like.
+the reference example for what a knowledge space looks like.
 
 ## Boundaries
 

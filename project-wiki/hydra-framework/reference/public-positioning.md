@@ -73,7 +73,7 @@ surface.**
 | **provider adapter** | A runtime discovery surface derived from canonical capabilities; not a source of truth. |
 | **deterministic local lexical search** | The verified `knowledge-search` retrieval and ordering procedure only. Never shorten this to “deterministic Hydra.” |
 | **bounded context compilation** | Selection of cited read pointers under a caller-supplied approximate token budget, with explicit overage and omission reporting. |
-| **knowledge package** | A routed, validated local knowledge structure for one repository subject with enough durable complexity. |
+| **knowledge space** | A routed, validated local knowledge structure for one repository accountability boundary with enough durable complexity. |
 | **adoption** | Copying and wiring Hydra into a repository while preserving existing host material. |
 | **seed reconciliation** | Comparing an adapted copy with its base and classifying explained or unexplained differences. |
 | **mechanical validation** | Checks over repository artifacts and contracts. It is not proof of security, correctness, or good agent judgment. |

@@ -22,15 +22,20 @@ flowchart TB
 
 ## How routing picks what to read
 
-Each subject area (a knowledge package) declares keywords and named routes,
-task shapes like "adding a new skill." When a task's wording overlaps enough
-with a route, that route wins and narrows reading down to the handful of
-files it names instead of the whole package, along with commands to verify
-afterward. Without a matching route, Hydra falls back to considering the
-whole package. The exact fields (`priority_units`, `requires`, `verify`, and
-so on) are defined in
-[Knowledge Packages](/project-wiki/hydra-framework/extending-hydra/knowledge-packages.md);
-this page is about how retrieval runs, not the package shape itself.
+Each subject area (a knowledge space, or a node inside one) declares keywords
+and named routes, task shapes like "adding a new skill." When a task's wording
+overlaps enough with a route, that route wins and narrows reading down to the
+handful of files it names instead of the whole space, along with commands to
+verify afterward. Without a matching route, Hydra falls back to considering the
+whole space.
+
+Prompt wording is only the first phase. When known file paths are available,
+verified bindings resolve them to the nodes that own them, and a bound node is
+selected outright even if the wording pointed somewhere else. The exact fields
+(`priority_units`, `requires`, `verify`, `expand_when`, and so on) are defined
+in
+[Knowledge Spaces](/project-wiki/hydra-framework/extending-hydra/knowledge-spaces.md);
+this page is about how retrieval runs, not the space shape itself.
 
 Everything else Hydra can retrieve (code, in-flight tasks, telemetry
 evidence) has its own family with one retrieval provider, as described in

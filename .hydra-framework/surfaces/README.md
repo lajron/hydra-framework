@@ -19,7 +19,7 @@ Human-readable wiki pages live under `project-wiki/`:
 - `project-wiki/<project-name>/` — explains product systems, modules, features, and operations.
 
 `.hydra-framework/` remains the AI/automation source for framework rules, tasks,
-knowledge packages, modules, adapters, scripts, and validation
+knowledge spaces, modules, adapters, scripts, and validation
 evidence. Product teammates should understand product systems from
 `project-wiki/<project-name>/` without browsing `.hydra-framework/`.
 

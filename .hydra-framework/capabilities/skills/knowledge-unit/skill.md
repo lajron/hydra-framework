@@ -17,7 +17,7 @@ input, not documentation.
   claims may have drifted from the tree.
 
 Do **not** trigger this skill to decide *whether* something belongs in a
-knowledge package at all. That classification is not this skill's job. See
+knowledge space at all. That classification is not this skill's job. See
 Boundaries.
 
 ## Inputs

@@ -5,7 +5,7 @@ schema_version: 3
 hydra_object_kind: skill
 kind: procedure
 name: knowledge-unit
-description: Write or revalidate one knowledge-package unit against its source of truth, recording divergences and out-of-scope findings instead of silently resolving them.
+description: Write or revalidate one knowledge-space unit against its source of truth, recording divergences and out-of-scope findings instead of silently resolving them.
 scope: common-seed
 maturity: seed
 owners:
@@ -16,7 +16,7 @@ provider_requirements:
   - run_local_commands
 dependencies:
   knowledge:
-    - knowledge-packages
+    - knowledge-architecture
     - certainty-model
   skills:
     - repository-inspection

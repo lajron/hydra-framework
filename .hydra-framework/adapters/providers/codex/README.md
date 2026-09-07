@@ -44,8 +44,8 @@ python3 .hydra-framework/scripts/hydra.py hook-codex-retry-guard
 ```
 
 `route-prompt` consumes prompt text or prompt JSON on stdin and emits pointers
-only. `hook-post-edit` consumes tool-call JSON on stdin and runs the package gate
-only when the edited file belongs to a Hydra knowledge package.
+only. `hook-post-edit` consumes tool-call JSON on stdin and runs the node-document
+gate only when the edited file belongs to a Hydra knowledge space.
 
 Codex `PostToolUse` on `^Bash$` is the Bash result surface for both successful
 and non-zero shell commands. `hook-codex-command-output` consumes Codex's

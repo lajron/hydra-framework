@@ -62,9 +62,16 @@ The explicitly scoped migration of a legacy non-Hydra or agentic setup. It is
 separate from adoption and does not make provider surfaces canonical. See
 [Take over legacy material](/project-wiki/hydra-framework/extending-hydra/migration.md#take-over-legacy-agentic-material).
 
-## Knowledge Package
+## Knowledge Space
 
-A local mini knowledge base for a repository area with durable complexity. See the knowledge-package contract.
+A local mini knowledge base for one accountability boundary with durable
+complexity, listed in `spaces.yaml` and rooted at a `space.yaml`. See
+[Knowledge Spaces](/project-wiki/hydra-framework/extending-hydra/knowledge-spaces.md).
+
+## Knowledge Node
+
+A descendant boundary inside a space, carrying its own `node.yaml`. The tree is
+three levels deep by default and four at most, counting the space.
 
 ## Operational Readiness
 

@@ -13,7 +13,8 @@ wiki link gate is separate from canonical Hydra validation because
 | Need | Command | Evidence owner |
 | --- | --- | --- |
 | Check Markdown and double-bracket wiki links after a page move | `python3 .hydra-framework/scripts/hydra.py validate-wiki` | Wiki command and link validator |
-| Check one knowledge package's links, routes, units, and size | `python3 .hydra-framework/scripts/hydra.py validate-package-docs --package hydra-framework` | Package checks |
+| Check one knowledge space's node document, links, units, and size | `python3 .hydra-framework/scripts/hydra.py validate-package-docs --node hydra-framework` | Node and document checks |
+| Check that logical bindings still resolve and their assertions hold | `python3 .hydra-framework/scripts/hydra.py bindings verify` | Binding resolution and assertions |
 | Check repository-wide Hydra state | `python3 .hydra-framework/scripts/hydra.py validate` | Validator registry and aggregation |
 | Check generated provider surfaces for drift | `python3 .hydra-framework/scripts/hydra.py export-adapters --check` | Provider export planner |
 | Check engine behavior and CLI contracts | `python3 .hydra-framework/scripts/hydra.py selftest` | Bundled unit, repository, and contract tests |

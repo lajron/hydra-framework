@@ -100,7 +100,7 @@ it worked. "Looks tidier" is not evidence. Record candidates in
 
 ## What Never Promotes
 
-- Repository-specific knowledge packages, wiki pages, and task records.
+- Repository-specific knowledge spaces, wiki pages, and task records.
 - Host-specific paths, service names, and build commands.
 - Anything from `.hydra-framework.local/`.
 - Generated provider surfaces. Promote the canonical module instead.

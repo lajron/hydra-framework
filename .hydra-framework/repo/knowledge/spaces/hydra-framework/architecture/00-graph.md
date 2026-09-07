@@ -108,7 +108,7 @@ forking permanently.
 
 | Layer | Trigger | Scope |
 | --- | --- | --- |
-| `hook-post-edit` | write into a provider dir or knowledge package | that file and its package |
+| `hook-post-edit` | write into a provider dir or knowledge space | that file and its node |
 | `route-prompt` | prompt submit | emits package pointers only |
 | `validate` | manual, `doctor`, CI | task records, module metadata, capability maps, surfaces, contract drift, package links |
 | `export-adapters --check` | manual, CI | generated-surface freshness |

@@ -9,9 +9,7 @@ status: "active"
 scope: "base-seed"
 owners:
   team: "hydra"
-relations:
-  - type: "relates-to"
-    target: "hydra://knowledge-space/hydra-framework"
+relations: []
 provenance:
   sources: []
 role: "accountability-root"
@@ -27,7 +25,7 @@ keywords:
   - "capability class"
   - "effort budget"
   - "placement rule"
-  - "knowledge package"
+  - "knowledge space"
   - "seed reconciliation"
   - "diff-base"
   - "reclaim"

@@ -131,7 +131,7 @@ objects:
   hydra://capability/skill/knowledge-unit:
     uid: 4b77b871-fbbc-4e0c-8809-7cced96282f7
     path: .hydra-framework/capabilities/skills/knowledge-unit/metadata.yaml
-    digest: sha256:38a2a5de779f73079ed7e782e1ce007188b27f04b7d377f63936993aa4302852
+    digest: sha256:7b8ef22df1d5d2fe6a0451bfc8196efaa1a7331e6ab8621d70f1894f1871b59c
     family: Capability
     kind: skill
     status: seed
@@ -292,7 +292,7 @@ objects:
   hydra://capability/workflow/material-migration:
     uid: 821d266e-30ed-48ef-8e96-f574a88b4ef1
     path: .hydra-framework/capabilities/workflows/material-migration.md
-    digest: sha256:b4ccc0aad97cf6cedc25597538cdb9dc1040b0e2e16be771462522e96a607f90
+    digest: sha256:8d455b763fb03f38123736fcf8af7de3a434e4c89526047396351320550ffbfa
     family: Capability
     kind: workflow
     status: active
@@ -389,7 +389,7 @@ objects:
   hydra://knowledge-slice/hydra-framework/architecture-graph:
     uid: bfb8c8c7-17f9-4183-93d4-325de2b9232b
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/architecture/00-graph.md
-    digest: sha256:8cf5e6deda13819f80a78e8cadcc030b801a8ac699dd8b3f7ce84b327da20213
+    digest: sha256:43b2fded2f46bb38cb9991e8a9f8441904aa11ffa2b17dfff26780f34fa2e947
     family: Knowledge
     kind: knowledge-slice
     status: active
@@ -435,7 +435,7 @@ objects:
   hydra://knowledge-slice/hydra-framework/overview:
     uid: e86b49f5-8055-4aeb-a001-084148d578bc
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/overview.md
-    digest: sha256:9c893ef151919bd0e7341b1986898ebd4b251498fb4b79cbe23fd24ca81e5eea
+    digest: sha256:c89418a3c309fe6b5c3d7ccc0dc3b9d1e7896c058356023fca8a823d4abbd04d
     family: Knowledge
     kind: knowledge-slice
     status: active
@@ -518,7 +518,7 @@ objects:
   hydra://knowledge-space/hydra-framework:
     uid: d732d9ce-e807-4858-8888-8f541e6c486b
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/space.yaml
-    digest: sha256:7870aead6c1b00ad1adf7a7330f65084aaf301b12a93f63ea7428204660a0bf7
+    digest: sha256:35a9d7fc7b140b3c737e740b75a7e20a4486dd6770c9b23ec99146d916080a69
     family: Knowledge
     kind: knowledge-space
     status: active
@@ -527,8 +527,7 @@ objects:
     schema_version: 3
     title: "Hydra Framework Itself"
     aliases: []
-    relations:
-      - hydra://knowledge-space/hydra-framework
+    relations: []
     provenance_sources: []
   hydra://knowledge-template/space/architecture-example:
     uid: 5447f8f8-f5b2-4315-8b4d-d0c4f9f6be93
@@ -653,7 +652,7 @@ objects:
   hydra://knowledge-template/space/readme:
     uid: 954f110f-31cd-4024-a9cd-68c2ba544fc3
     path: .hydra-framework/repo/knowledge/templates/space/README.md
-    digest: sha256:58449910198e6521da7a7bac61a42706ddc0a047b4faa1e928e0e91a35e600e9
+    digest: sha256:e50891a8775f37cddbe946ecb9ee6e191c85aadf0dcfc558eab8b3e1953adf63
     family: Knowledge
     kind: knowledge-template
     status: active
@@ -789,7 +788,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/build-status:
     uid: b01fff6c-38ac-4bde-92c3-98890aac83bb
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/build-status.md
-    digest: sha256:876a27305d75c886903e6a0b64c921836a44da5eea1d2f3fa995b89a03db88ae
+    digest: sha256:eca52b4fd34e1e183ecd1102790486f5612f1fb6cfd1b1eda8d7572bfdcd8085
     family: Knowledge
     kind: knowledge-unit
     status: active

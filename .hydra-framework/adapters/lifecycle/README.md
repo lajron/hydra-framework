@@ -19,8 +19,8 @@ Hydra now exposes provider-neutral hook commands through
 
 - `route-prompt`: prompt-time package routing from `routing.yaml`, emitting
   pointers only.
-- `hook-post-edit`: post-edit package validation for changed Markdown or DOT
-  files under knowledge packages.
+- `hook-post-edit`: post-edit node-document validation for changed Markdown or
+  DOT files under knowledge spaces.
 - `hook-token pre-context`: context surface budget guard. It should run silently
   on success and only print when the configured workflow budget is exceeded.
 - `hook-token command-result`: command-output feedback guard. It summarizes

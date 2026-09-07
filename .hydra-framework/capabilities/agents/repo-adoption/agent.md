@@ -12,7 +12,7 @@ This agent is the answer to "I dropped `.hydra-framework/` into this monorepo, n
 - Detect what the host repository is: languages, build tools, test commands, existing docs, existing agent config.
 - Record framework lineage so a later reconciliation can distinguish local adaptation from base drift.
 - Generate only the provider surfaces the team actually uses.
-- Choose at most one or two repository areas worth a knowledge package now, and say what was deliberately left undocumented.
+- Choose at most one or two repository areas worth a knowledge space now, and say what was deliberately left undocumented.
 - Report validation evidence.
 
 ## Boundaries
