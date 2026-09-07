@@ -200,7 +200,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
     identity_rewrites: list[dict] = []
     route_rewrites: list[dict] = []
     conversions: list[dict] = []
-    binding_candidates: list[dict] = []
+    binding_candidates: set[tuple[str, str]] = set()
     unresolved: list[str] = []
 
     for package_root in package_roots:
@@ -247,7 +247,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             if data:
                 for raw in yaml_list(yaml_map(data.get("provenance")).get("sources")) + yaml_list(data.get("reads")):
                     if raw and not raw.startswith(("hydra://", "@")):
-                        binding_candidates.append({"source": _relative(source, root), "path": raw, "confidence": "candidate-only"})
+                        binding_candidates.add((_relative(source, root), raw))
             deletes.append(_relative(source, root))
         deletes.append(_relative(routing_path, root))
         originals[_relative(routing_path, root)] = routing_path.read_text(encoding="utf-8")
@@ -303,7 +303,10 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
         "identity_rewrites": sorted(identity_rewrites, key=lambda row: (row["from"], row["use"])),
         "route_rewrites": route_rewrites,
         "expand_when_conversions": conversions,
-        "binding_candidates": sorted(binding_candidates, key=lambda row: (row["source"], row["path"])),
+        "binding_candidates": [
+            {"source": source, "path": path, "confidence": "candidate-only"}
+            for source, path in sorted(binding_candidates)
+        ],
         "unresolved": sorted(unresolved),
         "confidence": "high" if package_rows and not unresolved else "requires-review",
     }

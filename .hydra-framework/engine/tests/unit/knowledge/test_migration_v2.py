@@ -37,7 +37,7 @@ def _legacy(root: Path, *, expansion: str = "") -> None:
         "schema_version: 3\nkind: knowledge-unit\ntitle: Guide\nstatus: active\nscope: base-seed\n"
         "owners:\n  team: demo\nrelations:\n  - hydra://knowledge-package/demo\n"
         "provenance:\n  sources: []\nunit_kind: note\nquestion: What is demo?\n"
-        "reads: []\nrequires: []\n"
+        "reads:\n  - scripts/demo.py\n  - scripts/demo.py\nrequires: []\n"
         + expansion
         + "---\n# Guide\n",
         encoding="utf-8",
@@ -60,6 +60,10 @@ class MigrationV2Tests(unittest.TestCase):
             self.assertEqual(first.manifest["status"], "planned")
             self.assertEqual(first.manifest["unresolved"], [])
             self.assertEqual(len(first.manifest["preserved_uids"]), 3)
+            self.assertEqual(
+                first.manifest["binding_candidates"],
+                [{"source": ".hydra-framework/repo/knowledge/knowledge-packages/demo/units/guide.md", "path": "scripts/demo.py", "confidence": "candidate-only"}],
+            )
             self.assertTrue(any(row["to"] == "hydra://knowledge-route/demo/use" for row in first.manifest["route_rewrites"]))
             self.assertTrue(any(row["path"] == "AGENTS.md" for row in first.manifest["reference_rewrites"]))
 
