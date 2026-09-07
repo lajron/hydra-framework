@@ -308,7 +308,6 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             rewritten = migration_templates.rewrite_references(rewritten)
         if rewritten != content:
             writes[rel] = rewritten
-            modes[rel] = migration_templates.executable_mode(path)
             originals[rel] = content
             reference_rewrites.append({"path": rel, "before": migration_format.text_digest(content), "after": migration_format.text_digest(rewritten)})
 
@@ -380,9 +379,11 @@ def apply_reviewed_plan(root: Path, reviewed_manifest: dict) -> MigrationPlan:
                 raise MigrationError(f"target changed before apply: {rel}")
     for rel, content in sorted(current.writes.items()):
         target = root / rel
+        created = not target.exists()
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
-        target.chmod(current.modes.get(rel, 0o644))
+        if created:
+            target.chmod(current.modes.get(rel, 0o644))
     for rel in current.deletes:
         path = root / rel
         if path.is_file():

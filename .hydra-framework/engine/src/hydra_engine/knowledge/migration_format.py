@@ -25,7 +25,7 @@ def write_rows(writes: dict[str, str], modes: dict[str, int], sources: dict[str,
         {
             "path": rel,
             "digest": text_digest(content),
-            "mode": f"{modes.get(rel, 0o644):04o}",
+            "mode": f"{modes[rel]:04o}" if rel in modes else "",
             "source": sources.get(rel, ""),
         }
         for rel, content in sorted(writes.items())

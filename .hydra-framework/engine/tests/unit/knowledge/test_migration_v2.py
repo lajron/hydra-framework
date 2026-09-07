@@ -226,6 +226,10 @@ class MigrationV2Tests(unittest.TestCase):
             _legacy(root)
             plan = migration_v2.build_plan(root, checkpoint_commit="abc")
             rows = {row["path"]: row["source"] for row in plan.manifest["writes"]}
+            modes = {row["path"]: row["mode"] for row in plan.manifest["writes"]}
+            # A file rewritten in place keeps whatever mode the checkout gave it.
+            self.assertEqual(modes["AGENTS.md"], "")
+            self.assertEqual(modes[".hydra-framework/repo/knowledge/spaces/demo/overview.md"], "0644")
             self.assertEqual(
                 rows[".hydra-framework/repo/knowledge/spaces/demo/overview.md"],
                 ".hydra-framework/repo/knowledge/knowledge-packages/demo/overview.md",
