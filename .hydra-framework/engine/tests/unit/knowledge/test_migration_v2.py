@@ -64,6 +64,25 @@ def _legacy(root: Path, *, expansion: str = "") -> None:
         "  path: .hydra-framework/repo/knowledge/knowledge-packages/templates/routing.yaml\n",
         encoding="utf-8",
     )
+    engine_source = root / ".hydra-framework/engine/src/hydra_engine/knowledge/reader.py"
+    engine_source.parent.mkdir(parents=True, exist_ok=True)
+    engine_source.write_text(
+        'LEGACY = ".hydra-framework/repo/knowledge/knowledge-packages/templates"\n'
+        'ROUTING = "routing.yaml"\n'
+        'PACKAGE = "hydra://knowledge-package/demo"\n',
+        encoding="utf-8",
+    )
+    golden = root / ".hydra-framework/engine/tests/contract/goldens/data/demo.json"
+    golden.parent.mkdir(parents=True, exist_ok=True)
+    golden.write_text('{"stdout": "hydra://knowledge-package/demo routing.yaml"}\n', encoding="utf-8")
+    registry = root / ".hydra-framework/cognition/graph/registry.yaml"
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    registry.write_text(
+        "objects:\n"
+        "  hydra://knowledge-package/demo:\n"
+        "    path: .hydra-framework/repo/knowledge/knowledge-packages/demo/overview.md\n",
+        encoding="utf-8",
+    )
 
 
 class MigrationV2Tests(unittest.TestCase):
@@ -163,6 +182,56 @@ class MigrationV2Tests(unittest.TestCase):
             }
             with self.assertRaisesRegex(migration_v2.MigrationError, "payload digest mismatch"):
                 migration_v2.apply_reviewed_plan(root, reviewed)
+
+
+    def test_engine_sources_goldens_and_derived_registry_are_never_rewritten(self):
+        """Engine code is the v2 reader; goldens encode v2 behaviour; the registry
+        is derived and rebuilt.  Rewriting any of them corrupts the toolchain."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _legacy(root)
+            plan = migration_v2.build_plan(root, checkpoint_commit="abc")
+            protected = [
+                ".hydra-framework/engine/src/hydra_engine/knowledge/reader.py",
+                ".hydra-framework/engine/tests/contract/goldens/data/demo.json",
+                ".hydra-framework/cognition/graph/registry.yaml",
+            ]
+            for rel in protected:
+                self.assertNotIn(rel, plan.writes)
+                self.assertNotIn(rel, plan.originals)
+            touched = {row["path"] for row in plan.manifest["reference_rewrites"]}
+            self.assertFalse(touched.intersection(protected))
+            # The pass still rewrites ordinary content files.
+            self.assertIn("AGENTS.md", plan.writes)
+
+    def test_plan_digest_is_independent_of_checkout_file_modes(self):
+        """The digest is the review contract; a reviewer's clone must reproduce it."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _legacy(root)
+            first = migration_v2.build_plan(root, checkpoint_commit="abc")
+            for path in root.rglob("*"):
+                if path.is_file():
+                    keep_exec = path.stat().st_mode & 0o100
+                    path.chmod(0o775 if keep_exec else 0o664)
+            second = migration_v2.build_plan(root, checkpoint_commit="abc")
+            self.assertEqual(first.manifest["plan_digest"], second.manifest["plan_digest"])
+            self.assertEqual(
+                second.modes[".hydra-framework/repo/knowledge/templates/space/scripts/check.sh"], 0o755
+            )
+
+    def test_write_rows_attribute_only_real_move_sources(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _legacy(root)
+            plan = migration_v2.build_plan(root, checkpoint_commit="abc")
+            rows = {row["path"]: row["source"] for row in plan.manifest["writes"]}
+            self.assertEqual(
+                rows[".hydra-framework/repo/knowledge/spaces/demo/overview.md"],
+                ".hydra-framework/repo/knowledge/knowledge-packages/demo/overview.md",
+            )
+            # A file changed only by reference rewriting has no move source.
+            self.assertEqual(rows["AGENTS.md"], "")
 
 
 if __name__ == "__main__":

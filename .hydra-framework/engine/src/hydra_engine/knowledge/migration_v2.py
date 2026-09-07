@@ -18,6 +18,23 @@ MIGRATION_SCHEMA = "hydra-framework.knowledge-migration.v1"
 SPACES_SCHEMA = "hydra-framework.knowledge-spaces.v1"
 NODE_SCHEMA = "hydra-framework.knowledge-node.v1"
 LEGACY_ROUTING_SCHEMA = "hydra-framework.package-routing.v2"
+SIDECAR_PATH = ".hydra-framework/repo/object-sidecars.yaml"
+
+# Reference rewriting must never touch these.  Engine sources and their fixtures
+# name v2 identifiers deliberately -- the migrator itself is the v2 reader, and
+# the goldens encode v2 behaviour.  The registry and local tier are derived and
+# are rebuilt after the last write.
+_NEVER_REWRITTEN = (
+    ".git/",
+    ".hydra-framework.local/",
+    ".hydra-framework/engine/",
+    ".hydra-framework/cognition/graph/registry.yaml",
+)
+
+
+def _rewritable(rel: str) -> bool:
+    return not any(rel == item.rstrip("/") or rel.startswith(item) for item in _NEVER_REWRITTEN)
+
 
 
 class MigrationError(ValueError):
@@ -199,9 +216,10 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
 
     writes: dict[str, str] = {}
     modes: dict[str, int] = {}
+    move_sources: dict[str, str] = {}
     originals: dict[str, str] = {}
     deletes: list[str] = []
-    migration_templates.plan(legacy, knowledge, root, writes, modes, originals, deletes)
+    migration_templates.plan(legacy, knowledge, root, writes, modes, move_sources, originals, deletes)
     package_rows: list[dict] = []
     package_routes: dict[str, tuple[str, ...]] = {}
     preserved_uids: list[dict] = []
@@ -235,6 +253,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             continue
         writes[space_rel] = _space_document(routing, package, additions)
         modes[space_rel] = 0o644
+        move_sources[space_rel] = _relative(routing_path, root)
         preserved_uids.append({"uid": yaml_str(routing.get("uid")), "from": yaml_str(routing.get("hydra_id")), "to": f"hydra://knowledge-space/{package}"})
         identity_rewrites.extend([
             {"from": f"hydra://knowledge-package/{package}", "to": f"hydra://knowledge-space/{package}", "use": "references"},
@@ -259,7 +278,8 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
                 overview=source.name == "overview.md",
             )
             writes[_relative(target, root)] = rewritten
-            modes[_relative(target, root)] = source.stat().st_mode & 0o777
+            modes[_relative(target, root)] = migration_templates.executable_mode(source)
+            move_sources[_relative(target, root)] = _relative(source, root)
             data, _body = _frontmatter(content, source, root)
             if data and yaml_str(data.get("uid")):
                 preserved_uids.append({"uid": yaml_str(data.get("uid")), "from": yaml_str(data.get("hydra_id")), "to": yaml_str(_frontmatter(rewritten, target, root)[0].get("hydra_id"))})
@@ -287,9 +307,9 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
 
     moved_sources = set(deletes)
     reference_rewrites: list[dict] = []
-    for path in sorted(item for item in root.rglob("*") if item.is_file() and ".git" not in item.parts and ".hydra-framework.local" not in item.parts):
+    for path in sorted(item for item in root.rglob("*") if item.is_file()):
         rel = _relative(path, root)
-        if rel in moved_sources or rel in writes:
+        if rel in moved_sources or rel in writes or not _rewritable(rel):
             continue
         try:
             content = path.read_text(encoding="utf-8")
@@ -299,21 +319,23 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
         for row in package_rows:
             package = row["package"]
             rewritten = _rewrite_refs(rewritten, package, package_routes[package])
-        rewritten = migration_templates.rewrite_references(rewritten)
+        if rel == SIDECAR_PATH:
+            rewritten = migration_templates.rewrite_sidecar(rewritten)
+        else:
+            rewritten = migration_templates.rewrite_references(rewritten)
         if rewritten != content:
             writes[rel] = rewritten
-            modes[rel] = path.stat().st_mode & 0o777
+            modes[rel] = migration_templates.executable_mode(path)
             originals[rel] = content
             reference_rewrites.append({"path": rel, "before": migration_format.text_digest(content), "after": migration_format.text_digest(rewritten)})
 
     write_rows = []
     for rel, content in sorted(writes.items()):
-        source_match = next((item for item in deletes if item.endswith("/" + Path(rel).name)), "")
         write_rows.append({
             "path": rel,
             "digest": migration_format.text_digest(content),
             "mode": f"{modes.get(rel, 0o644):04o}",
-            "source": source_match,
+            "source": move_sources.get(rel, ""),
         })
     payload = {
         "schema": MIGRATION_SCHEMA,

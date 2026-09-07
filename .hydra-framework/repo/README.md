@@ -14,4 +14,4 @@ Use `.hydra-framework.local/notes/` for lightweight unverified observations.
 There is no shared `repo/pending/`; only governed shared review queues with
 attribution and terminal outcomes are permitted.
 
-Use `knowledge-packages/` under `knowledge/` when a repository area needs local state, questions, risks, sources, and procedures while still following global placement rules.
+Use a knowledge space under `knowledge/spaces/`, listed in `knowledge/spaces.yaml`, when a repository area needs local state, questions, risks, sources, and procedures while still following global placement rules. See `core/knowledge-architecture.md`.

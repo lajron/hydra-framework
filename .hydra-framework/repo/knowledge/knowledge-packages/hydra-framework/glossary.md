@@ -37,10 +37,11 @@ Terms specific to Hydra's own machinery. Framework principles are defined in
 | **Adoption** | Wiring a freshly copied Hydra into a host repository. |
 | **Reclamation** | Promoting a hand-authored provider file into a canonical module. |
 | **Seed reconciliation** | Comparing a diverged copy against its base and deciding what flows back. |
-| **Knowledge package** | A directory under `repo/knowledge/knowledge-packages/` owning local state, sources, and units for one subject. |
-| **Knowledge unit** | One durable operational question, answered in `units/<slug>.md`, addressable by `hydra://knowledge-unit/<package>/<slug>` and compiled by `compile-context` via its `reads:`. |
-| **Route** | A `routing.yaml` entry naming which units (`priority_units`, budget-exempt `requires`) answer one task shape. |
-| **Package gate** | The deterministic per-package check run by `validate-package-docs` and the post-edit hook. |
+| **Knowledge space** | A directory under `repo/knowledge/spaces/` listed in `spaces.yaml`, owning local state, sources, and units for one accountability boundary. |
+| **Knowledge node** | A descendant directory of a space carrying its own `node.yaml`, bounded to three levels by default and four at most. |
+| **Knowledge unit** | One durable operational question, answered in `units/<slug>.md`, addressable by `hydra://knowledge-unit/<space>[/<node>]/<slug>` and compiled by `compile-context` via its `reads:`. |
+| **Route** | A `space.yaml` or `node.yaml` entry naming which units (`priority_units`, budget-exempt `requires`) answer one task shape. |
+| **Node-document gate** | The deterministic per-node check run by `validate-package-docs` and the post-edit hook. |
 
 ## Surface Classifications
 
