@@ -1,4 +1,4 @@
-"""Deterministic conversion of the inactive Knowledge v2 authoring templates."""
+"""Template conversion and the scope of migration reference rewriting."""
 
 import re
 from pathlib import Path
@@ -73,6 +73,24 @@ def _rewrite_text(text: str) -> str:
         "relations:\n  - hydra://knowledge-space/<space-slug>",
         "relations:\n  - type: relates-to\n    target: hydra://knowledge-space/<space-slug>",
     )
+
+
+SIDECAR_PATH = ".hydra-framework/repo/object-sidecars.yaml"
+
+# Reference rewriting must never touch these.  Engine sources and their fixtures
+# name v2 identifiers deliberately -- the migrator itself is the v2 reader, and
+# the goldens encode v2 behaviour.  The registry and local tier are derived and
+# are rebuilt after the last write.
+_NEVER_REWRITTEN = (
+    ".git/",
+    ".hydra-framework.local/",
+    ".hydra-framework/engine/",
+    ".hydra-framework/cognition/graph/registry.yaml",
+)
+
+
+def is_rewritable(rel: str) -> bool:
+    return not any(rel == item.rstrip("/") or rel.startswith(item) for item in _NEVER_REWRITTEN)
 
 
 LEGACY_CONCEPT_DOC = ".hydra-framework/repo/knowledge/knowledge-packages.md"

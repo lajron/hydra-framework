@@ -325,7 +325,7 @@ objects:
   hydra://engine-module/object-family-registry:
     uid: 1eb7694e-2810-4fbf-a0f2-f4f4f2ee284a
     path: .hydra-framework/engine/src/hydra_engine/identity/object_families.py
-    digest: sha256:44c1e577ec377d03e7cd9e3288de107d03b405fbd069c29c3a025ace57d3935d
+    digest: sha256:9411f398576af880114df68d56e74bf737cc7837ad2bf1020192f17c1f436fe2
     family: Runtime/Engine
     kind: engine-module
     status: active
@@ -357,7 +357,7 @@ objects:
   hydra://engine-module/validator-registry:
     uid: 031b520a-a7b1-41b3-bc3b-f2cd5291d01c
     path: .hydra-framework/engine/src/hydra_engine/checks/validator_registry.py
-    digest: sha256:ee38bacb753630dc82e0914a8aaacfd0c3801d68b9b4c7ee96ee306a14e68d63
+    digest: sha256:e0e70f09033c37d453afe1c6a8bcbbde7a0301a9d1a518256fc0dce33496c0b1
     family: Runtime/Engine
     kind: engine-module
     status: active
@@ -437,7 +437,7 @@ objects:
   hydra://knowledge-slice/hydra-framework/glossary:
     uid: 95311d29-a3ca-4ea4-b2c9-b9b3be46f55b
     path: .hydra-framework/repo/knowledge/knowledge-packages/hydra-framework/glossary.md
-    digest: sha256:25ec4f94dd01f5d6475853f10ff1afd2a420c28fe7a1fc2635fdc5c7eb81331b
+    digest: sha256:4c413fe4e437748cbfae80c7b9e09c9081946808a453172d6f1dd7843fb773ae
     family: Knowledge
     kind: knowledge-slice
     status: active

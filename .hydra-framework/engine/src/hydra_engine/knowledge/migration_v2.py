@@ -18,23 +18,6 @@ MIGRATION_SCHEMA = "hydra-framework.knowledge-migration.v1"
 SPACES_SCHEMA = "hydra-framework.knowledge-spaces.v1"
 NODE_SCHEMA = "hydra-framework.knowledge-node.v1"
 LEGACY_ROUTING_SCHEMA = "hydra-framework.package-routing.v2"
-SIDECAR_PATH = ".hydra-framework/repo/object-sidecars.yaml"
-
-# Reference rewriting must never touch these.  Engine sources and their fixtures
-# name v2 identifiers deliberately -- the migrator itself is the v2 reader, and
-# the goldens encode v2 behaviour.  The registry and local tier are derived and
-# are rebuilt after the last write.
-_NEVER_REWRITTEN = (
-    ".git/",
-    ".hydra-framework.local/",
-    ".hydra-framework/engine/",
-    ".hydra-framework/cognition/graph/registry.yaml",
-)
-
-
-def _rewritable(rel: str) -> bool:
-    return not any(rel == item.rstrip("/") or rel.startswith(item) for item in _NEVER_REWRITTEN)
-
 
 
 class MigrationError(ValueError):
@@ -309,7 +292,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
     reference_rewrites: list[dict] = []
     for path in sorted(item for item in root.rglob("*") if item.is_file()):
         rel = _relative(path, root)
-        if rel in moved_sources or rel in writes or not _rewritable(rel):
+        if rel in moved_sources or rel in writes or not migration_templates.is_rewritable(rel):
             continue
         try:
             content = path.read_text(encoding="utf-8")
@@ -319,7 +302,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
         for row in package_rows:
             package = row["package"]
             rewritten = _rewrite_refs(rewritten, package, package_routes[package])
-        if rel == SIDECAR_PATH:
+        if rel == migration_templates.SIDECAR_PATH:
             rewritten = migration_templates.rewrite_sidecar(rewritten)
         else:
             rewritten = migration_templates.rewrite_references(rewritten)
@@ -329,14 +312,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             originals[rel] = content
             reference_rewrites.append({"path": rel, "before": migration_format.text_digest(content), "after": migration_format.text_digest(rewritten)})
 
-    write_rows = []
-    for rel, content in sorted(writes.items()):
-        write_rows.append({
-            "path": rel,
-            "digest": migration_format.text_digest(content),
-            "mode": f"{modes.get(rel, 0o644):04o}",
-            "source": move_sources.get(rel, ""),
-        })
+    write_rows = migration_format.write_rows(writes, modes, move_sources)
     payload = {
         "schema": MIGRATION_SCHEMA,
         "source_version": 2,
