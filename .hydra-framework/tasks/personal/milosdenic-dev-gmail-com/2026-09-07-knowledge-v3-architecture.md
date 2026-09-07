@@ -33,7 +33,7 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 
 ## Current Stage
 
-Phase 4: independent review findings corrected; checkpoint and regenerate the live manifest.
+Phase 4: second live manifest rejected safely; correct sidecar-aware template migration.
 
 ## Readiness
 
@@ -48,8 +48,8 @@ Status: ready
 
 ## Step State
 
-- Active step: create the replacement Git checkpoint and regenerate the exact live migration manifest.
-- Next step: repeat the isolated apply plus `ref check`/`validate`/`selftest` review; approve/apply only if the replacement manifest passes.
+- Active step: prevent template metadata from being discovered as a live node and atomically rewrite the template object-sidecar identities and paths.
+- Next step: checkpoint the second correction, regenerate a third exact digest, and repeat isolated apply plus `ref check`/`validate`/`selftest` before approval.
 - Completed steps: read required contracts and authoritative code; created and validated the primary task; captured a 173-test v2 baseline; added and ran the 216-leaf enterprise fixture; selected global indexed routing and measured depth/scope policy; froze `core/knowledge-architecture.md`; implemented tested contract primitives for recursive nodes/inheritance, strict global graph closure and supersession, namespaced asserted bindings/freshness, reference-only view composition/conflict detection, shared distribution policy, and the registry-independent KnowledgeStore boundary; integrated recursive discovery, global validation/closure, inherited routes, two-phase path rerouting hooks, route-level `expand_when`, v3 context-packet fields, prompt pointers, search/adoption/hook consumers, and fail-closed node parsing into the active engine; removed the flat routing-collision runtime and flat package discovery; converted affected unit tests to v3 fixtures; restored the full 1,246-test unit suite to green.
 - Superseded or skipped steps: none.
 
@@ -99,15 +99,19 @@ Status: ready
 - Corrective tests now prove moved routing links target `space.yaml`, the legacy root/templates are fully removed after deterministic conversion into `repo/knowledge/templates/space`, route rewrites change consumer text, binding-candidate sources use migrated paths, and tampered manifest payloads are rejected even when the stored digest/approval fields are unchanged.
 - Runtime routing accepts canonical `hydra://knowledge-route/...` selectors (including inherited routes) while retaining the bounded deprecated `owner:name` CLI compatibility form.
 - Replacement corrective unit run: 1,262 tests passed with zero failures/errors. `hydra.py validate` again reports only the expected pre-migration stale registry entries and missing `spaces.yaml`; all module size, mirror, fan-out, and caller gates pass.
+- Second dry-run at checkpoint `24c4775aa789b772cded6a32cd72ee5dbdc7cecb` produced digest `sha256:da690c5044497bc1d228105947c047a50e4c0dcebfad4bf67c8f1eac4e43f010`: 36 writes, 30 deletes, 16 preserved UIDs, 36 advisory candidates on v3 paths, and zero declared unresolved decisions.
+- Independent isolated apply rejected the second digest because the new placeholder `templates/space/space.yaml` was discovered as an invalid live node and `repo/object-sidecars.yaml` retained all old template identities/paths, causing mandatory registry rebuild failure after file mutation. This checkout was not changed.
+- The correction now emits the node template as non-discoverable `space.yaml.template`, rewrites sidecar keys, v3 knowledge-template identities, titles, paths and flat provenance, and records/applies a deterministic mode for every write so the template check script stays executable. Focused tests cover the mappings and mode; the full unit suite is now 1,263 passing.
 
 ## Blockers
 
 - Real second-repository distribution evidence is not yet known to be available; deterministic fixture evidence can advance the implementation, but cannot silently satisfy that production gate.
 - Migration digest `sha256:a7efbdd3cbd4afa8275db1eb45b4cd56c80e9b249986f390df86e345e3ad29f2` is explicitly rejected and must never be approved or applied. Its known defects are corrected, but the replacement digest still requires isolated post-apply proof.
+- Replacement digest `sha256:da690c5044497bc1d228105947c047a50e4c0dcebfad4bf67c8f1eac4e43f010` is also rejected and must never be approved or applied; its sidecar/template discovery defects are corrected only in the subsequent uncommitted slice.
 
 ## Continuation Notes
 
 What another model or developer needs to continue safely.
 
 - Running state: none
-- Resume check: `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`; expect 1,262 passing tests. Then generate a replacement manifest from a clean checkpoint. Never approve or apply digest `sha256:a7efbdd3cbd4afa8275db1eb45b4cd56c80e9b249986f390df86e345e3ad29f2`.
+- Resume check: `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`; expect 1,263 passing tests. Then checkpoint and generate a third manifest. Never approve or apply either rejected digest recorded in Blockers.

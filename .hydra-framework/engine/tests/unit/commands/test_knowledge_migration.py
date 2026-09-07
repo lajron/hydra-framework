@@ -16,9 +16,9 @@ class KnowledgeMigrationCommandTests(unittest.TestCase):
         plan = SimpleNamespace(manifest={"status": "planned", "plan_digest": "sha256:test", "unresolved": []})
         ctx = SimpleNamespace(root=root)
         args = argparse.Namespace(apply=None, output="review.json")
-        with mock.patch("hydra_engine.commands.knowledge_migration.migration_v2.build_plan", return_value=plan), mock.patch("hydra_engine.commands.knowledge_migration.migration_v2.write_review_manifest") as write:
+        with mock.patch("hydra_engine.commands.knowledge_migration.migration_v2.build_plan", return_value=plan), mock.patch("hydra_engine.commands.knowledge_migration.migration_format.write_review_manifest") as write:
             self.assertEqual(command_migrate_v2(args, ctx), 0)
-        write.assert_called_once_with(plan, root / "review.json")
+        write.assert_called_once_with(plan.manifest, root / "review.json")
 
 
 if __name__ == "__main__":

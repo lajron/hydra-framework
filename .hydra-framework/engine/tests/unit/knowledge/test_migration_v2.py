@@ -51,7 +51,19 @@ def _legacy(root: Path, *, expansion: str = "") -> None:
     templates.mkdir()
     (templates / "routing.yaml").write_text("schema: hydra-framework.package-routing.v2\n", encoding="utf-8")
     (templates / "overview.md").write_text("[Routing](routing.yaml) for a package.\n", encoding="utf-8")
+    script = templates / "scripts/check.sh"
+    script.parent.mkdir()
+    script.write_text("#!/bin/sh\n", encoding="utf-8")
+    script.chmod(0o755)
     (templates.parent / "README.md").write_text("# Knowledge Packages\n", encoding="utf-8")
+    sidecar = root / ".hydra-framework/repo/object-sidecars.yaml"
+    sidecar.parent.mkdir(parents=True, exist_ok=True)
+    sidecar.write_text(
+        "package-template-routing:\n"
+        "  hydra_id: hydra://knowledge-template/package/routing\n"
+        "  path: .hydra-framework/repo/knowledge/knowledge-packages/templates/routing.yaml\n",
+        encoding="utf-8",
+    )
 
 
 class MigrationV2Tests(unittest.TestCase):
@@ -107,7 +119,14 @@ class MigrationV2Tests(unittest.TestCase):
             self.assertIn("knowledge/spaces/demo", (root / "AGENTS.md").read_text(encoding="utf-8"))
             self.assertIn("hydra://knowledge-route/demo/use", (root / "AGENTS.md").read_text(encoding="utf-8"))
             self.assertIn("[Routing](space.yaml)", (root / ".hydra-framework/repo/knowledge/spaces/demo/overview.md").read_text(encoding="utf-8"))
-            self.assertTrue((root / ".hydra-framework/repo/knowledge/templates/space/space.yaml").is_file())
+            self.assertTrue((root / ".hydra-framework/repo/knowledge/templates/space/space.yaml.template").is_file())
+            self.assertEqual(
+                (root / ".hydra-framework/repo/knowledge/templates/space/scripts/check.sh").stat().st_mode & 0o777,
+                0o755,
+            )
+            sidecar = (root / ".hydra-framework/repo/object-sidecars.yaml").read_text(encoding="utf-8")
+            self.assertIn("hydra://knowledge-template/space/routing", sidecar)
+            self.assertIn("knowledge/templates/space/space.yaml.template", sidecar)
             self.assertFalse((root / ".hydra-framework/repo/knowledge/knowledge-packages").exists())
             again = migration_v2.build_plan(root, checkpoint_commit="abc")
             self.assertEqual(again.manifest["status"], "already-v3")

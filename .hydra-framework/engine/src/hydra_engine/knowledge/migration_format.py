@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 
 
 def text_digest(text: str) -> str:
@@ -17,6 +18,18 @@ def manifest_payload(manifest: dict) -> dict:
 def payload_digest(payload: dict) -> str:
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return text_digest(canonical)
+
+
+def write_review_manifest(manifest: dict, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def load_review_manifest(path: Path) -> dict:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("migration review manifest must be a mapping")
+    return data
 
 
 def _quoted(value: object) -> str:

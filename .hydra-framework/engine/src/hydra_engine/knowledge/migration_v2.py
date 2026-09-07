@@ -9,7 +9,6 @@ the first write.  Git checkpoint commits are the rollback boundary.
 from __future__ import annotations
 
 import dataclasses
-import json
 from pathlib import Path
 
 from hydra_engine.documents.yaml_documents import parse_yaml, parse_yaml_text, yaml_list, yaml_map, yaml_str
@@ -29,6 +28,7 @@ class MigrationError(ValueError):
 class MigrationPlan:
     manifest: dict
     writes: dict[str, str]
+    modes: dict[str, int]
     deletes: tuple[str, ...]
     originals: dict[str, str]
 
@@ -195,12 +195,13 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             "confidence": "high",
         }
         digest = migration_format.payload_digest(payload)
-        return MigrationPlan({**payload, "plan_digest": digest, "review": {"approved": False, "approved_digest": "", "reviewer": "", "evidence": ""}}, {}, (), {})
+        return MigrationPlan({**payload, "plan_digest": digest, "review": {"approved": False, "approved_digest": "", "reviewer": "", "evidence": ""}}, {}, {}, (), {})
 
     writes: dict[str, str] = {}
+    modes: dict[str, int] = {}
     originals: dict[str, str] = {}
     deletes: list[str] = []
-    migration_templates.plan(legacy, knowledge, root, writes, originals, deletes)
+    migration_templates.plan(legacy, knowledge, root, writes, modes, originals, deletes)
     package_rows: list[dict] = []
     package_routes: dict[str, tuple[str, ...]] = {}
     preserved_uids: list[dict] = []
@@ -233,6 +234,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
             unresolved.append(f"target already exists: {space_rel}")
             continue
         writes[space_rel] = _space_document(routing, package, additions)
+        modes[space_rel] = 0o644
         preserved_uids.append({"uid": yaml_str(routing.get("uid")), "from": yaml_str(routing.get("hydra_id")), "to": f"hydra://knowledge-space/{package}"})
         identity_rewrites.extend([
             {"from": f"hydra://knowledge-package/{package}", "to": f"hydra://knowledge-space/{package}", "use": "references"},
@@ -257,6 +259,7 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
                 overview=source.name == "overview.md",
             )
             writes[_relative(target, root)] = rewritten
+            modes[_relative(target, root)] = source.stat().st_mode & 0o777
             data, _body = _frontmatter(content, source, root)
             if data and yaml_str(data.get("uid")):
                 preserved_uids.append({"uid": yaml_str(data.get("uid")), "from": yaml_str(data.get("hydra_id")), "to": yaml_str(_frontmatter(rewritten, target, root)[0].get("hydra_id"))})
@@ -276,9 +279,11 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
         "spaces": [row["space"] for row in package_rows],
     }
     writes[_relative(knowledge / "spaces.yaml", root)] = migration_format.emit_yaml(spaces_config)
+    modes[_relative(knowledge / "spaces.yaml", root)] = 0o644
     bindings_manifest = knowledge / "bindings/manifest.yaml"
     if not bindings_manifest.exists():
         writes[_relative(bindings_manifest, root)] = migration_format.emit_yaml({"schema": "hydra-framework.bindings-manifest.v1", "fragments": []})
+        modes[_relative(bindings_manifest, root)] = 0o644
 
     moved_sources = set(deletes)
     reference_rewrites: list[dict] = []
@@ -294,15 +299,22 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
         for row in package_rows:
             package = row["package"]
             rewritten = _rewrite_refs(rewritten, package, package_routes[package])
+        rewritten = migration_templates.rewrite_references(rewritten)
         if rewritten != content:
             writes[rel] = rewritten
+            modes[rel] = path.stat().st_mode & 0o777
             originals[rel] = content
             reference_rewrites.append({"path": rel, "before": migration_format.text_digest(content), "after": migration_format.text_digest(rewritten)})
 
     write_rows = []
     for rel, content in sorted(writes.items()):
         source_match = next((item for item in deletes if item.endswith("/" + Path(rel).name)), "")
-        write_rows.append({"path": rel, "digest": migration_format.text_digest(content), "source": source_match})
+        write_rows.append({
+            "path": rel,
+            "digest": migration_format.text_digest(content),
+            "mode": f"{modes.get(rel, 0o644):04o}",
+            "source": source_match,
+        })
     payload = {
         "schema": MIGRATION_SCHEMA,
         "source_version": 2,
@@ -329,25 +341,12 @@ def build_plan(root: Path, checkpoint_commit: str | None = None) -> MigrationPla
     }
     digest = migration_format.payload_digest(payload)
     manifest = {**payload, "plan_digest": digest, "review": {"approved": False, "approved_digest": "", "reviewer": "", "evidence": ""}}
-    return MigrationPlan(manifest, writes, tuple(sorted(set(deletes))), originals)
-
-
-def write_review_manifest(plan: MigrationPlan, path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(plan.manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
-
-def load_review_manifest(path: Path) -> dict:
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        raise MigrationError(f"cannot read review manifest `{path}`: {error}") from error
-    if not isinstance(data, dict) or data.get("schema") != MIGRATION_SCHEMA:
-        raise MigrationError(f"review manifest schema must be `{MIGRATION_SCHEMA}`")
-    return data
+    return MigrationPlan(manifest, writes, modes, tuple(sorted(set(deletes))), originals)
 
 
 def apply_reviewed_plan(root: Path, reviewed_manifest: dict) -> MigrationPlan:
+    if reviewed_manifest.get("schema") != MIGRATION_SCHEMA:
+        raise MigrationError(f"review manifest schema must be `{MIGRATION_SCHEMA}`")
     review = reviewed_manifest.get("review") if isinstance(reviewed_manifest.get("review"), dict) else {}
     plan_digest = str(reviewed_manifest.get("plan_digest") or "")
     if review.get("approved") is not True or review.get("approved_digest") != plan_digest:
@@ -385,6 +384,7 @@ def apply_reviewed_plan(root: Path, reviewed_manifest: dict) -> MigrationPlan:
         target = root / rel
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
+        target.chmod(current.modes.get(rel, 0o644))
     for rel in current.deletes:
         path = root / rel
         if path.is_file():

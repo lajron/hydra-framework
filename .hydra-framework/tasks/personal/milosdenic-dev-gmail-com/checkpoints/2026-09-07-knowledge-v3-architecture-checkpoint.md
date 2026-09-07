@@ -6,65 +6,66 @@ Status: paused
 
 ## Goal
 
-Migrate flat Knowledge v2 to Option D Knowledge v3 without a permanent dual
-runtime, with deterministic review-gated migration and Git commits as rollback.
+Complete Option D Knowledge v3 and migrate flat v2 without a permanent dual
+runtime. Use reviewed Git commits as rollback boundaries.
 
 ## Confirmed Decisions
 
-- `knowledge migrate-v2` is the sole v2 reader; v3 is the only runtime/write model.
-- Canonical routes use `hydra://knowledge-route/...`; `owner:name` is a bounded
-  deprecated CLI compatibility form.
-- Migration review binds approval to a recomputed payload digest and clean
-  checkpoint commit. The migrator creates no backup tree.
-- Rejected digest `sha256:a7efbdd3cbd4afa8275db1eb45b4cd56c80e9b249986f390df86e345e3ad29f2`
-  must never be approved or applied.
+- `knowledge migrate-v2` is the sole v2 reader; runtime/write behavior is v3-only.
+- Apply binds reviewer evidence to a recomputed exact manifest payload and a
+  clean recorded commit.
+- Canonical route IDs are executable; the legacy `owner:name` form is only a
+  deprecated CLI alias.
+- Template objects retain stable UIDs, move through sidecar rewrites, and use a
+  non-discoverable `.template` filename until copied into an active space.
 
 ## Approved Plan
 
-Checkpoint the corrected migrator, regenerate a live dry-run, repeat an
-independent isolated apply with `ref check`, `validate`, and `selftest`, then
-approve/apply only the exact digest that passes those gates.
+Checkpoint the second correction, generate a third live manifest, simulate it
+in an independent clean clone, and apply only if its registry/index rebuild,
+reference, validation, selftest, mode-preservation, and idempotence gates pass.
 
 ## Completed Work
 
-- Baseline gates, 216-leaf enterprise fixture, frozen contract, v3 primitives,
-  active recursive runtime integration, and first migrator are committed.
-- Independent review simulated the first live plan: apply/ref check succeeded,
-  but it found broken moved links, retained v2 root material, stale route and
-  binding evidence, unsupported canonical route selectors, and a digest guard gap.
-- Corrected all six findings and migrated real-repository context tests to v3.
-- Added deterministic v3 authoring-template conversion and full legacy-root removal.
+- Baseline/enterprise gates, frozen contracts, v3 primitives and active runtime,
+  and the review-gated migrator are committed.
+- First digest `a7efbdd3...` was rejected for broken links, incomplete legacy
+  cleanup, stale route/candidate behavior, consumer debt, and digest hardening.
+- Second digest `da690c50...` was rejected because templates were discovered as
+  live objects, sidecars remained v2, flat provenance became stale, and the
+  executable check script lost its mode.
+- Fixed sidecar identity/path/title rewrites, non-discoverable template naming,
+  flat template-reference rewriting, and deterministic target mode preservation.
 
 ## Current Stage
 
-Phase 4: corrected migration slice is ready for a Git checkpoint and replacement manifest.
+Phase 4: second corrective implementation passes locally and needs checkpoint/review.
 
 ## Changed Files
 
-- `knowledge/migration_v2.py`, `migration_format.py`, and new `migration_templates.py`
-- `knowledge/routing.py`, `context_providers.py`, and `checks.py`
-- migration/template/routing unit tests and repository context-compiler tests
-- primary task and this checkpoint
+- `knowledge/migration_v2.py`, `migration_templates.py`, `migration_format.py`
+- migration, template, and command tests
+- primary task and checkpoint
 
 ## Validation Performed
 
-- Migration/template/route focused tests pass.
-- Full unit discovery: 1,262 tests, zero failures/errors.
-- `hydra.py validate` has no architecture/mirror/caller findings; only the
-  expected pre-migration stale registry digests and missing `spaces.yaml` remain.
-- `git diff --check` passed before the prior checkpoint; rerun before this commit.
+- Focused migration/template/format/command tests pass.
+- Full unit discovery: 1,263 tests, zero failures/errors.
+- `hydra.py validate` has only expected pre-migration registry-digest and
+  missing-`spaces.yaml` findings; no module, mirror, caller, or reference debt.
+- The two rejected digests were never applied to this checkout.
 
 ## Remaining Work
 
-Commit; generate replacement manifest; independently simulate apply and full
-gates; approve/apply; verify idempotence; finish binding CLI, distribution and
-terminology/template cleanup; run full validation, benchmarks, and final review.
+Commit; third dry-run; independent isolated apply review; approve/apply if green;
+verify idempotence and live v3; finish binding CLI, distribution, terminology,
+golden snapshots, enterprise reruns, and final independent review.
 
 ## Blockers
 
-- The first digest is blocked permanently. Replacement digest is not yet reviewed.
-- Real second-repository distribution evidence remains pending; deterministic
-  two-repository fixture evidence passed but does not satisfy that production gate.
+- Never approve/apply `a7efbdd3...` or `da690c50...`.
+- A third digest is not yet generated or reviewed.
+- Real second-repository distribution evidence remains pending.
 
 ## Useful References
 
@@ -74,8 +75,7 @@ terminology/template cleanup; run full validation, benchmarks, and final review.
 
 ## Continuation Prompt
 
-Start by reading `AI_SYSTEM.md`, this checkpoint, and the task. Run
+Read `AI_SYSTEM.md`, this checkpoint, and the task. Run
 `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`
-and expect 1,262 passing. Confirm only this corrective slice is dirty, then
-create the Git checkpoint and regenerate the live manifest. Do not apply until
-the replacement digest passes independent isolated post-apply gates.
+and expect 1,263 passing. Inspect `git status`, create the Git checkpoint, and
+generate the third manifest. Do not apply until independent isolated gates pass.

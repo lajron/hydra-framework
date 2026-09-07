@@ -48,7 +48,7 @@ def _rewrite_text(text: str) -> str:
         .replace("knowledge-packages.md", "../../core/knowledge-architecture.md")
         .replace("<package-slug>", "<space-slug>")
         .replace("<Package Name>", "<Space Name>")
-        .replace("routing.yaml", "space.yaml")
+        .replace("routing.yaml", "space.yaml.template")
         .replace("package gate", "node-document gate")
         .replace("package documentation", "node documentation")
         .replace("a package", "a knowledge space")
@@ -60,11 +60,26 @@ def _rewrite_text(text: str) -> str:
     )
 
 
+def rewrite_references(text: str) -> str:
+    return (
+        text.replace(
+            ".hydra-framework/repo/knowledge/knowledge-packages/templates",
+            ".hydra-framework/repo/knowledge/templates/space",
+        )
+        .replace("knowledge-packages/templates", "knowledge/templates/space")
+        .replace("/routing.yaml", "/space.yaml.template")
+        .replace("package-template", "space-template")
+        .replace("hydra:/" + "/knowledge-template/package/", "hydra:/" + "/knowledge-template/space/")
+        .replace("Knowledge Package", "Knowledge Space")
+    )
+
+
 def plan(
     legacy: Path,
     knowledge: Path,
     root: Path,
     writes: dict[str, str],
+    modes: dict[str, int],
     originals: dict[str, str],
     deletes: list[str],
 ) -> None:
@@ -73,7 +88,7 @@ def plan(
         for source in sorted(path for path in templates.rglob("*") if path.is_file()):
             relative = source.relative_to(templates)
             if relative.as_posix() == "routing.yaml":
-                relative = Path("space.yaml")
+                relative = Path("space.yaml.template")
                 rewritten = _space_document()
             else:
                 rewritten = _rewrite_text(source.read_text(encoding="utf-8"))
@@ -81,6 +96,7 @@ def plan(
             target_rel = (knowledge / "templates/space" / relative).relative_to(root).as_posix()
             originals[source_rel] = source.read_text(encoding="utf-8")
             writes[target_rel] = rewritten
+            modes[target_rel] = source.stat().st_mode & 0o777
             deletes.append(source_rel)
     readme = legacy / "README.md"
     if readme.is_file():

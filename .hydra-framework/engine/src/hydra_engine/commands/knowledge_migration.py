@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from hydra_engine.commands import references
-from hydra_engine.knowledge import migration_v2, search_index
+from hydra_engine.knowledge import migration_format, migration_v2, search_index
 
 
 def command_migrate_v2(args, ctx) -> int:
@@ -16,7 +16,7 @@ def command_migrate_v2(args, ctx) -> int:
             output = Path(args.output)
             if not output.is_absolute():
                 output = ctx.root / output
-            migration_v2.write_review_manifest(plan, output)
+            migration_format.write_review_manifest(plan.manifest, output)
         except (migration_v2.MigrationError, OSError, ValueError) as error:
             print(f"Hydra Knowledge v2 migration dry-run failed: {error}", file=sys.stderr)
             return 1
@@ -30,7 +30,7 @@ def command_migrate_v2(args, ctx) -> int:
     if not manifest_path.is_absolute():
         manifest_path = ctx.root / manifest_path
     try:
-        reviewed = migration_v2.load_review_manifest(manifest_path)
+        reviewed = migration_format.load_review_manifest(manifest_path)
         plan = migration_v2.apply_reviewed_plan(ctx.root, reviewed)
     except (migration_v2.MigrationError, OSError, ValueError) as error:
         print(f"Hydra Knowledge v2 migration apply failed: {error}", file=sys.stderr)
