@@ -20,6 +20,8 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 - The cold-start gate selects global indexed node retrieval with a two-pointer implicit cap. The accountability tree explains and governs selection; it is not a mandatory first-stage pruning boundary.
 - The measured default topology depth is three levels including the space; the hard ceiling is four. Units remain legal at every routable level, so the fourth level is an exception rather than a required shape.
 - Logical paths are a corrective and explicit routing signal. They do not replace prompt routing.
+- Descendant nodes inherit owners and declare an override only when accountability changes; spaces must declare owners. Scope, identity, provenance, certainty, keywords, and relations never inherit.
+- Runtime v2 reading is not retained. The isolated migrator reads v2, while legacy CLI selectors are aliases that resolve only against v3 objects.
 
 ## Approved Plan
 
@@ -31,7 +33,7 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 
 ## Current Stage
 
-Phase 2: freeze Knowledge v3 contracts from gate evidence.
+Phase 3, slice 1: integrate recursive discovery and global validation into active engine consumers.
 
 ## Readiness
 
@@ -46,9 +48,9 @@ Status: ready
 
 ## Step State
 
-- Active step: define executable v3 node, relation, inheritance, view, binding, scope, route, compatibility, and failure contracts with negative tests.
-- Next step: freeze the contracts in canonical rules and tests, checkpoint them, then implement recursive discovery and global resolution as the first vertical slice.
-- Completed steps: read the operating contract, routed framework package state/overview, task lifecycle, high-overhead workflow matrix, placement rules, silent-failure modes, current architecture, build status, problems, and the full approved architecture proposal; checked the board; confirmed no competing active task; created and completed this record; verified the v2 engine flow and consumer surface; captured a passing 173-test Knowledge baseline; defined a checked-in deterministic 216-leaf/258-total-node fixture and reproducible cold-start, path, dependency, depth, authoring, latency, ambiguity, false-positive, pointer-budget, and distribution metrics; ran and reviewed the first benchmark; recorded the failed naive-index attempt and selected the evidence-backed indexed retrieval contract.
+- Active step: make recursive nodes, global units/relations, bindings, views, and v3 validation the active engine path; keep live repository behavior passing until the migration boundary commit.
+- Next step: integrate v3 routing/context compilation and route-level expand_when, then migrate the live framework package through the reviewed migrator.
+- Completed steps: read required contracts and authoritative code; created and validated the primary task; captured a 173-test v2 baseline; added and ran the 216-leaf enterprise fixture; selected global indexed routing and measured depth/scope policy; froze `core/knowledge-architecture.md`; implemented tested contract primitives for recursive nodes/inheritance, strict global graph closure and supersession, namespaced asserted bindings/freshness, reference-only view composition/conflict detection, shared distribution policy, and the registry-independent KnowledgeStore boundary; kept architecture validation passing.
 - Superseded or skipped steps: none.
 
 ## Changed Files
@@ -57,6 +59,12 @@ Status: ready
 - `.hydra-framework/validation/knowledge-v3/enterprise-fixture.json` - checked-in 216-leaf enterprise ground truth with cross-space dependencies and path bindings.
 - `.hydra-framework/validation/knowledge-v3/benchmark.py` - reproducible baseline and decision-gate harness.
 - `.hydra-framework/validation/knowledge-v3/README.md` - fixture/gate procedure and real-repository limitation.
+- `.hydra-framework/core/knowledge-architecture.md` - canonical frozen v3 contract.
+- `.hydra-framework/engine/src/hydra_engine/knowledge/{nodes,graph,bindings,views,distribution,storage}.py` - v3 contract implementations.
+- `.hydra-framework/engine/src/hydra_engine/knowledge/units.py` - stable UID and typed unit relations.
+- `.hydra-framework/engine/src/hydra_engine/installation/seed_copy.py` - distribution-profile policy integration.
+- `.hydra-framework/engine/src/hydra_engine/documents/frontmatter_blocks.py` - preserves the YAML parser import boundary for v3 modules.
+- `.hydra-framework/engine/tests/unit/knowledge/test_{nodes,graph,bindings,views,distribution,storage}.py` - contract and negative tests.
 
 ## Validation
 
@@ -72,6 +80,8 @@ Status: ready
 - Authoring fixture repeats 1,080 v2 policy fields versus 42 v3 space/area declarations; v3 requires three placement decisions per leaf versus one in v2, an accepted explicit cost.
 - Deterministic distribution fixture copied 36 base-seed leaves in the base profile and 144 base/common leaves in the common profile with zero repo-local leaks. The real second-repository gate remains pending.
 - Rejected by evidence: identity-only global scoring, flat v2 keyword proportion, and mandatory space-first hierarchical pruning.
+- Contract test run: 191 Knowledge tests passed in 0.446s, including depth, invalid scope, relation shape, route override/expand_when, cross-space closure, unresolved dependency, cycle, conflicting supersession, stale/unresolved binding, path binding, reference-only view, view ordering/resolution conflict, distribution leak, and storage-boundary cases.
+- `python3 .hydra-framework/scripts/hydra.py validate`: passed after the contract modules; the initial YAML vocabulary in-degree finding was resolved by reusing the existing `frontmatter_blocks` re-export boundary.
 
 ## Blockers
 

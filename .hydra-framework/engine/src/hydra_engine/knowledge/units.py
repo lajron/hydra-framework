@@ -44,6 +44,8 @@ class Unit:
     expand_when: tuple[dict, ...]
     sources: tuple[str, ...]
     source_digests: object = ()
+    relations: tuple[tuple[str, str], ...] = ()
+    uid: str = ""
 
 
 def units_root(package_root: Path) -> Path:
@@ -72,6 +74,12 @@ def read_unit(path: Path, repo_root: Path) -> Unit | None:
     if not data or yaml_str(data.get("kind")) != "knowledge-unit":
         return None
     provenance = yaml_map(data.get("provenance"))
+    relations_raw = data.get("relations")
+    relations = tuple(
+        (yaml_str(item.get("type")), yaml_str(item.get("target")).lower())
+        for item in relations_raw
+        if isinstance(item, dict)
+    ) if isinstance(relations_raw, list) else ()
     expand_when_raw = data.get("expand_when")
     expand_when = tuple(
         item for item in expand_when_raw if isinstance(item, dict)
@@ -92,6 +100,8 @@ def read_unit(path: Path, repo_root: Path) -> Unit | None:
         expand_when=expand_when,
         sources=tuple(yaml_list(provenance.get("sources"))),
         source_digests=provenance.get("source_digests", ()),
+        relations=relations,
+        uid=yaml_str(data.get("uid")),
     )
 
 

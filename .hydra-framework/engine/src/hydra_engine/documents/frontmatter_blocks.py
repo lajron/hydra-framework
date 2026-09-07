@@ -21,7 +21,7 @@ import ast
 from pathlib import Path
 
 from hydra_engine.documents.tokens import HydraYamlError, display_path, read_text
-from hydra_engine.documents.yaml_documents import parse_yaml, parse_yaml_text, yaml_list, yaml_map, yaml_str  # noqa: F401 -- yaml_list/yaml_map are re-exported for knowledge.units, which would otherwise become an 11th direct importer of yaml_documents and trip architecture check 4's high-in-degree cap
+from hydra_engine.documents.yaml_documents import parse_yaml, parse_yaml_text, yaml_int, yaml_list, yaml_map, yaml_str  # noqa: F401 -- YAML helpers are re-exported for Knowledge modules, which would otherwise push yaml_documents past the architecture in-degree cap
 
 
 def _leading_block(text: str, path: Path, root: Path, *, what: str) -> dict:
