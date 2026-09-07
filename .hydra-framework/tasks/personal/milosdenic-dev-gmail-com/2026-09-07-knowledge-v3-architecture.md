@@ -33,7 +33,7 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 
 ## Current Stage
 
-Phase 4: third manifest rejected safely; reviewed fourth manifest cleared every isolated gate and is ready to apply.
+Phase 5: live repository migrated to v3 and verified; closing the polish tail.
 
 ## Readiness
 
@@ -48,8 +48,8 @@ Status: ready
 
 ## Step State
 
-- Active step: apply the reviewed fourth manifest to this checkout and verify live v3 runtime end to end.
-- Next step: close the polish tail - binding CLI, distribution terminology, golden snapshots, enterprise fixture reruns - each scoped concretely before implementation.
+- Active step: close the polish tail - binding CLI, distribution terminology, golden snapshots, enterprise fixture reruns - each scoped concretely before implementation.
+- Next step: final independent review over the completed v3 system.
 - Completed steps: read required contracts and authoritative code; created and validated the primary task; captured a 173-test v2 baseline; added and ran the 216-leaf enterprise fixture; selected global indexed routing and measured depth/scope policy; froze `core/knowledge-architecture.md`; implemented tested contract primitives for recursive nodes/inheritance, strict global graph closure and supersession, namespaced asserted bindings/freshness, reference-only view composition/conflict detection, shared distribution policy, and the registry-independent KnowledgeStore boundary; integrated recursive discovery, global validation/closure, inherited routes, two-phase path rerouting hooks, route-level `expand_when`, v3 context-packet fields, prompt pointers, search/adoption/hook consumers, and fail-closed node parsing into the active engine; removed the flat routing-collision runtime and flat package discovery; converted affected unit tests to v3 fixtures; restored the full 1,246-test unit suite to green.
 - Superseded or skipped steps: none.
 - Also completed: scoped migration reference rewriting away from engine sources, contract goldens, and the derived registry; made the plan digest reproducible across checkouts; anchored template path rewriting; confined identity/title rewriting to the object sidecar; recorded real move sources in the manifest; redirected the superseded v2 concept doc to the frozen v3 contract; removed v2 authoring guidance from `repo/README.md` and the framework glossary.
@@ -115,6 +115,10 @@ Status: ready
 - Independent isolated apply of the fourth digest passed every gate: `ref check` ok on 56 objects; `validate` ok; 1,270 unit tests green; `selftest` gained zero failures and cleared the four real-repository context-compiler failures; `check.sh` landed executable while in-place rewrites kept their existing modes; the legacy tree was fully removed; the node-document gate passed; a repeat dry-run reported `already-v3` with zero writes and a committed second apply was a clean no-op.
 - Live v3 runtime verified in the migrated clone: `route-prompt` emits v3 node pointers on v3 paths, `compile-context` produces a `hydra-framework.context-packet.v2` packet selecting v3 nodes and routes, `knowledge-search` returns v3-path snippets with preserved UIDs, and `explain-path` resolves ownership.
 - Ten `selftest` golden-snapshot failures remain. They are present at the pre-apply baseline as well, are not apply regressions, and are the golden-snapshot item in the polish tail.
+
+- Applied digest `sha256:19e4e37fa75af5778412b42f6b0c030a9a812db722539cfe3ab1cabf92f0aa58` to this checkout at rollback boundary `793c435027cbcff8673d0be384735a45f676b56d`, recorded as commit `bc257e4`. The plan was identical in writes and deletes to the fully reviewed fourth digest.
+- Post-apply on this repository: `ref check` ok on 56 objects, `validate` ok, 1,270 unit tests green, the legacy `knowledge-packages/` tree gone, `check.sh` executable, and in-place rewrites left at their existing modes.
+- Live v3 runtime on this repository: `route-prompt` emits v3 node pointers, `compile-context` produces a `hydra-framework.context-packet.v2` packet selecting the migrated space and its inherited routes, `knowledge-search` returns v3-path snippets with preserved UIDs, and the node-document gate passes.
 
 ## Blockers
 

@@ -30,8 +30,8 @@ runtime. Use reviewed Git commits as rollback boundaries.
 
 ## Approved Plan
 
-Apply the reviewed fourth manifest to this checkout, verify live v3 runtime,
-then scope and close the polish tail.
+Scope and close the polish tail: binding CLI, distribution terminology, golden
+snapshots, enterprise fixture reruns. Then obtain a final independent review.
 
 ## Completed Work
 
@@ -47,16 +47,18 @@ then scope and close the polish tail.
   the digest was also irreproducible across checkouts because it embedded raw
   `st_mode`; the unanchored `/routing.yaml` rule corrupted the real space's
   registry path and produced a duplicate registry key.
-- Fourth digest `17389e51...` cleared every isolated gate and is approved to
-  apply: reproduced byte-identically in a clean clone, `ref check` ok,
+- Fourth digest `17389e51...` cleared every isolated gate: reproduced byte-identically in a clean clone, `ref check` ok,
   `validate` ok, 1,270 unit tests green, zero new `selftest` failures with four
   pre-existing ones cleared, modes correct, legacy tree gone, dry-run and a
   second apply both no-ops, and live v3 routing, context compilation, search,
   and path explanation verified.
+- The migration is applied to this repository as commit `bc257e4` from digest
+  `19e4e37f...` at rollback boundary `793c435`, with reference, validation,
+  unit, mode, legacy-removal, and live-runtime gates all confirmed here.
 
 ## Current Stage
 
-Phase 4: reviewed manifest approved; applying to this checkout.
+Phase 5: live repository migrated and verified; closing the polish tail.
 
 ## Changed Files
 
@@ -72,9 +74,18 @@ the third-digest rejection and the fourth-digest approval.
 
 ## Remaining Work
 
-Apply to this checkout; verify live v3; then scope and close the polish tail:
-binding CLI, distribution terminology, golden snapshots, enterprise fixture
-reruns, and final independent review.
+Scope each tail item concretely before implementing:
+
+- Binding CLI: `bindings verify --accept` and the resolution surface exist as
+  contract primitives but have no command wiring.
+- Distribution terminology: residual v2 vocabulary in the wiki page that still
+  describes the removed tree, and one stale keyword in the knowledge-unit skill
+  metadata.
+- Golden snapshots: ten `selftest` golden failures, all pre-existing and all
+  now describing v2 output that the v3 runtime no longer produces.
+- Enterprise fixture reruns: re-measure the 216-leaf gates against the shipped
+  v3 runtime rather than the contract prototypes.
+- Final independent review over the completed system.
 
 ## Blockers
 
