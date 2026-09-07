@@ -17,6 +17,9 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 - V3 is the only write architecture after migration. Any dual-read support is bounded to the migration window and must be removed after the repository and enterprise fixture migrate.
 - Ambiguity, unresolved references/bindings, dependency cycles, supersession conflicts, view-order conflicts, invalid scopes, and depth violations fail closed.
 - Rollback is provided by focused Hydra checkpoints and Git commits at approved milestone boundaries; do not create a duplicate backup/restore architecture in the migrator.
+- The cold-start gate selects global indexed node retrieval with a two-pointer implicit cap. The accountability tree explains and governs selection; it is not a mandatory first-stage pruning boundary.
+- The measured default topology depth is three levels including the space; the hard ceiling is four. Units remain legal at every routable level, so the fourth level is an exception rather than a required shape.
+- Logical paths are a corrective and explicit routing signal. They do not replace prompt routing.
 
 ## Approved Plan
 
@@ -28,7 +31,7 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 
 ## Current Stage
 
-Phase 1: first benchmark evidence and decision-gate evaluation.
+Phase 2: freeze Knowledge v3 contracts from gate evidence.
 
 ## Readiness
 
@@ -43,9 +46,9 @@ Status: ready
 
 ## Step State
 
-- Active step: review the first enterprise benchmark result, promote reproducible conclusions, and freeze only contracts supported by the gates.
-- Next step: record the first benchmark evidence and rejected alternatives, checkpoint it, then define executable v3 schemas and negative contract tests.
-- Completed steps: read the operating contract, routed framework package state/overview, task lifecycle, high-overhead workflow matrix, placement rules, and the full approved architecture proposal; checked the board; confirmed no competing active task; created and completed this record; verified the v2 engine flow and consumer surface; captured a passing 173-test Knowledge baseline; defined a checked-in deterministic 216-leaf/258-total-node fixture and reproducible cold-start, path, dependency, depth, authoring, latency, ambiguity, false-positive, pointer-budget, and distribution metrics.
+- Active step: define executable v3 node, relation, inheritance, view, binding, scope, route, compatibility, and failure contracts with negative tests.
+- Next step: freeze the contracts in canonical rules and tests, checkpoint them, then implement recursive discovery and global resolution as the first vertical slice.
+- Completed steps: read the operating contract, routed framework package state/overview, task lifecycle, high-overhead workflow matrix, placement rules, silent-failure modes, current architecture, build status, problems, and the full approved architecture proposal; checked the board; confirmed no competing active task; created and completed this record; verified the v2 engine flow and consumer surface; captured a passing 173-test Knowledge baseline; defined a checked-in deterministic 216-leaf/258-total-node fixture and reproducible cold-start, path, dependency, depth, authoring, latency, ambiguity, false-positive, pointer-budget, and distribution metrics; ran and reviewed the first benchmark; recorded the failed naive-index attempt and selected the evidence-backed indexed retrieval contract.
 - Superseded or skipped steps: none.
 
 ## Changed Files
@@ -62,6 +65,13 @@ Status: ready
 - `PYTHONPATH=.hydra-framework/engine/src python3 -m unittest discover -s .hydra-framework/engine/tests/unit/knowledge -p 'test_*.py' -v`: 173 tests passed in 0.426s.
 - Direct code inspection confirmed v2 flat package/unit discovery, package-local `requires` closure, global keyword/route collisions, route-level `expand_when` not consumed, deterministic packet budget/omission behavior, and whole-tree seed copy.
 - `python3 .hydra-framework/scripts/hydra.py validate`: passed after task creation.
+- Initial naive global node scorer failed the cold-start gate: recall 0.4630 and mean pointer budget 25.56 versus v2 recall 0.4444 and 22.17. This disproved identity-only global scoring.
+- Reviewed indexed-hint run on 216 leaves and 21 workloads passed all deterministic gates: global-index recall@3 0.6746 versus v2 0.4921; precision@3 0.8333 versus 0.5397; mean pointer tokens 24.71 versus 28.33; ambiguity 0.1429 versus 0.5238; false positives 0.1538 versus 0.4444; median routing latency 0.1732 ms versus 0.0638 ms. The latency increase is accepted because it remains sub-millisecond in this fixture.
+- Path signal: useful bindings for 21/21 workloads, two cold misses corrected, mean/max one bound node. Global dependency fixture closure was complete (1.0).
+- Depth replay selected depth 3 with mean browse cost 5.807 versus 7.209 at depth 2, 8.307 at depth 4, and 10.807 at depth 5. Depth 4 remains the hard exception ceiling.
+- Authoring fixture repeats 1,080 v2 policy fields versus 42 v3 space/area declarations; v3 requires three placement decisions per leaf versus one in v2, an accepted explicit cost.
+- Deterministic distribution fixture copied 36 base-seed leaves in the base profile and 144 base/common leaves in the common profile with zero repo-local leaks. The real second-repository gate remains pending.
+- Rejected by evidence: identity-only global scoring, flat v2 keyword proportion, and mandatory space-first hierarchical pruning.
 
 ## Blockers
 
