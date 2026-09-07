@@ -33,7 +33,7 @@ Implement Knowledge v3 Option D end to end: bounded recursive policy/accountabil
 
 ## Current Stage
 
-Phase 4: second live manifest rejected safely; correct sidecar-aware template migration.
+Phase 4: third manifest rejected safely; reviewed fourth manifest cleared every isolated gate and is ready to apply.
 
 ## Readiness
 
@@ -48,10 +48,11 @@ Status: ready
 
 ## Step State
 
-- Active step: prevent template metadata from being discovered as a live node and atomically rewrite the template object-sidecar identities and paths.
-- Next step: checkpoint the second correction, regenerate a third exact digest, and repeat isolated apply plus `ref check`/`validate`/`selftest` before approval.
+- Active step: apply the reviewed fourth manifest to this checkout and verify live v3 runtime end to end.
+- Next step: close the polish tail - binding CLI, distribution terminology, golden snapshots, enterprise fixture reruns - each scoped concretely before implementation.
 - Completed steps: read required contracts and authoritative code; created and validated the primary task; captured a 173-test v2 baseline; added and ran the 216-leaf enterprise fixture; selected global indexed routing and measured depth/scope policy; froze `core/knowledge-architecture.md`; implemented tested contract primitives for recursive nodes/inheritance, strict global graph closure and supersession, namespaced asserted bindings/freshness, reference-only view composition/conflict detection, shared distribution policy, and the registry-independent KnowledgeStore boundary; integrated recursive discovery, global validation/closure, inherited routes, two-phase path rerouting hooks, route-level `expand_when`, v3 context-packet fields, prompt pointers, search/adoption/hook consumers, and fail-closed node parsing into the active engine; removed the flat routing-collision runtime and flat package discovery; converted affected unit tests to v3 fixtures; restored the full 1,246-test unit suite to green.
 - Superseded or skipped steps: none.
+- Also completed: scoped migration reference rewriting away from engine sources, contract goldens, and the derived registry; made the plan digest reproducible across checkouts; anchored template path rewriting; confined identity/title rewriting to the object sidecar; recorded real move sources in the manifest; redirected the superseded v2 concept doc to the frozen v3 contract; removed v2 authoring guidance from `repo/README.md` and the framework glossary.
 
 ## Changed Files
 
@@ -103,15 +104,28 @@ Status: ready
 - Independent isolated apply rejected the second digest because the new placeholder `templates/space/space.yaml` was discovered as an invalid live node and `repo/object-sidecars.yaml` retained all old template identities/paths, causing mandatory registry rebuild failure after file mutation. This checkout was not changed.
 - The correction now emits the node template as non-discoverable `space.yaml.template`, rewrites sidecar keys, v3 knowledge-template identities, titles, paths and flat provenance, and records/applies a deterministic mode for every write so the template check script stays executable. Focused tests cover the mappings and mode; the full unit suite is now 1,263 passing.
 
+- Third dry-run at checkpoint `dd617b5ab835b91078d54768b6b6530ecb0fc3b5` produced digest `sha256:db1a5b58f255d884581e42edbf5ea55ab1e3ab92d37b3d205592c0694a0ab598`: 50 writes, 30 deletes, 19 reference rewrites.
+- Independent isolated apply rejected that third digest. `ref check` and `validate` both passed after apply, which is exactly why postconditions were checked harder: the unit suite gained seven failures and `selftest` gained the same seven. Blanket reference rewriting had mutated engine sources, the migrator's own tests, and contract goldens, including neutering `migration_templates.rewrite_references` into identity replacements.
+- The same review found the third digest irreproducible: the plan embedded raw `st_mode`, so a clean clone computed `sha256:f64c5ec2...` for identical content and no reviewer could ever approve the digest the target checkout would compute.
+- It also found the unanchored `/routing.yaml` rewrite corrupting the real space's registry path and producing a duplicate `hydra://knowledge-space/hydra-framework` registry key, the repository-wide `Knowledge Package` title rewrite half-renaming wiki and doc prose, and manifest write rows attributing basename-matched sources to unrelated files.
+- Corrections: reference rewriting now skips `engine/`, the derived registry, `.git`, and the private local tier; only the tracked executable bit is recorded, and modes apply only to files the migration creates; template path rewriting is anchored to the template directory; identity, key, and title rewriting is confined to `repo/object-sidecars.yaml`; write rows carry the real move source or none. The superseded `repo/knowledge/knowledge-packages.md` is deleted with references redirected to `core/knowledge-architecture.md`.
+- `hydra.py ref index` cleared the two long-standing stale registry digests, so `validate` before migration reports only the expected missing v3 `spaces.yaml`.
+- Full unit suite after the corrections: 1,270 tests, zero failures/errors, including new regression tests for rewrite scope, digest reproducibility under changed file modes, and write-row source/mode attribution.
+- Fourth dry-run at checkpoint `9ac790950fe41f99528171030b0ef373deb43a4d` produced digest `sha256:17389e512810e1baee777cbe7d0fc78110f7b154356bcc76bf9aa973e5ac7ce9`: 40 writes, 31 deletes, nine reference rewrites, zero unresolved decisions. A clean clone reproduced the manifest byte-identically.
+- Independent isolated apply of the fourth digest passed every gate: `ref check` ok on 56 objects; `validate` ok; 1,270 unit tests green; `selftest` gained zero failures and cleared the four real-repository context-compiler failures; `check.sh` landed executable while in-place rewrites kept their existing modes; the legacy tree was fully removed; the node-document gate passed; a repeat dry-run reported `already-v3` with zero writes and a committed second apply was a clean no-op.
+- Live v3 runtime verified in the migrated clone: `route-prompt` emits v3 node pointers on v3 paths, `compile-context` produces a `hydra-framework.context-packet.v2` packet selecting v3 nodes and routes, `knowledge-search` returns v3-path snippets with preserved UIDs, and `explain-path` resolves ownership.
+- Ten `selftest` golden-snapshot failures remain. They are present at the pre-apply baseline as well, are not apply regressions, and are the golden-snapshot item in the polish tail.
+
 ## Blockers
 
 - Real second-repository distribution evidence is not yet known to be available; deterministic fixture evidence can advance the implementation, but cannot silently satisfy that production gate.
 - Migration digest `sha256:a7efbdd3cbd4afa8275db1eb45b4cd56c80e9b249986f390df86e345e3ad29f2` is explicitly rejected and must never be approved or applied. Its known defects are corrected, but the replacement digest still requires isolated post-apply proof.
-- Replacement digest `sha256:da690c5044497bc1d228105947c047a50e4c0dcebfad4bf67c8f1eac4e43f010` is also rejected and must never be approved or applied; its sidecar/template discovery defects are corrected only in the subsequent uncommitted slice.
+- Replacement digest `sha256:da690c5044497bc1d228105947c047a50e4c0dcebfad4bf67c8f1eac4e43f010` is also rejected and must never be approved or applied; its sidecar/template discovery defects are corrected in a later slice.
+- Third digest `sha256:db1a5b58f255d884581e42edbf5ea55ab1e3ab92d37b3d205592c0694a0ab598` is rejected and must never be approved or applied; blanket reference rewriting corrupted engine sources, tests, and goldens, and the digest was not reproducible across checkouts.
 
 ## Continuation Notes
 
 What another model or developer needs to continue safely.
 
 - Running state: none
-- Resume check: `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`; expect 1,263 passing tests. Then checkpoint and generate a third manifest. Never approve or apply either rejected digest recorded in Blockers.
+- Resume check: `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`; expect 1,270 passing tests. Never approve or apply any rejected digest recorded in Blockers. Regenerate a manifest at the current checkpoint commit rather than reusing a recorded digest.

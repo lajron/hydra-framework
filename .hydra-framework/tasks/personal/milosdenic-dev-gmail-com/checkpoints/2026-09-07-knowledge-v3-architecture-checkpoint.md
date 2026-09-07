@@ -2,7 +2,7 @@
 
 Task: .hydra-framework/tasks/personal/milosdenic-dev-gmail-com/2026-09-07-knowledge-v3-architecture.md
 Created: 2026-09-07
-Status: paused
+Status: active
 
 ## Goal
 
@@ -18,54 +18,69 @@ runtime. Use reviewed Git commits as rollback boundaries.
   deprecated CLI alias.
 - Template objects retain stable UIDs, move through sidecar rewrites, and use a
   non-discoverable `.template` filename until copied into an active space.
+- Migration reference rewriting never touches engine sources, contract goldens,
+  the derived registry, or the private local tier. Engine code is the v2 reader
+  and the goldens encode v2 behavior, so rewriting them always corrupts them.
+- The plan digest is the review contract, so it must be reproducible from
+  content alone. Only the tracked executable bit is recorded, and a mode is
+  applied only to files the migration creates.
+- Identity, sidecar-key, and template-title rewriting is confined to
+  `repo/object-sidecars.yaml`, the only place outside the engine where that
+  vocabulary lives. Prose terminology is authored, never blanket-substituted.
 
 ## Approved Plan
 
-Checkpoint the second correction, generate a third live manifest, simulate it
-in an independent clean clone, and apply only if its registry/index rebuild,
-reference, validation, selftest, mode-preservation, and idempotence gates pass.
+Apply the reviewed fourth manifest to this checkout, verify live v3 runtime,
+then scope and close the polish tail.
 
 ## Completed Work
 
 - Baseline/enterprise gates, frozen contracts, v3 primitives and active runtime,
   and the review-gated migrator are committed.
-- First digest `a7efbdd3...` was rejected for broken links, incomplete legacy
-  cleanup, stale route/candidate behavior, consumer debt, and digest hardening.
-- Second digest `da690c50...` was rejected because templates were discovered as
-  live objects, sidecars remained v2, flat provenance became stale, and the
-  executable check script lost its mode.
-- Fixed sidecar identity/path/title rewrites, non-discoverable template naming,
-  flat template-reference rewriting, and deterministic target mode preservation.
+- First digest `a7efbdd3...` rejected: broken links, incomplete legacy cleanup,
+  stale route/candidate behavior, consumer debt, digest hardening.
+- Second digest `da690c50...` rejected: templates discovered as live objects,
+  sidecars left on v2 paths, stale flat provenance, lost executable mode.
+- Third digest `db1a5b58...` rejected: blanket reference rewriting corrupted
+  engine sources, the migrator's own tests, and contract goldens, adding seven
+  test failures after an apply whose `ref check` and `validate` both passed;
+  the digest was also irreproducible across checkouts because it embedded raw
+  `st_mode`; the unanchored `/routing.yaml` rule corrupted the real space's
+  registry path and produced a duplicate registry key.
+- Fourth digest `17389e51...` cleared every isolated gate and is approved to
+  apply: reproduced byte-identically in a clean clone, `ref check` ok,
+  `validate` ok, 1,270 unit tests green, zero new `selftest` failures with four
+  pre-existing ones cleared, modes correct, legacy tree gone, dry-run and a
+  second apply both no-ops, and live v3 routing, context compilation, search,
+  and path explanation verified.
 
 ## Current Stage
 
-Phase 4: second corrective implementation passes locally and needs checkpoint/review.
+Phase 4: reviewed manifest approved; applying to this checkout.
 
 ## Changed Files
 
 - `knowledge/migration_v2.py`, `migration_templates.py`, `migration_format.py`
 - migration, template, and command tests
+- `repo/README.md` and the framework glossary
 - primary task and checkpoint
 
 ## Validation Performed
 
-- Focused migration/template/format/command tests pass.
-- Full unit discovery: 1,263 tests, zero failures/errors.
-- `hydra.py validate` has only expected pre-migration registry-digest and
-  missing-`spaces.yaml` findings; no module, mirror, caller, or reference debt.
-- The two rejected digests were never applied to this checkout.
+See the primary task record's Validation section for the full gate results of
+the third-digest rejection and the fourth-digest approval.
 
 ## Remaining Work
 
-Commit; third dry-run; independent isolated apply review; approve/apply if green;
-verify idempotence and live v3; finish binding CLI, distribution, terminology,
-golden snapshots, enterprise reruns, and final independent review.
+Apply to this checkout; verify live v3; then scope and close the polish tail:
+binding CLI, distribution terminology, golden snapshots, enterprise fixture
+reruns, and final independent review.
 
 ## Blockers
 
-- Never approve/apply `a7efbdd3...` or `da690c50...`.
-- A third digest is not yet generated or reviewed.
-- Real second-repository distribution evidence remains pending.
+- Never approve/apply `a7efbdd3...`, `da690c50...`, or `db1a5b58...`.
+- Real second-repository distribution evidence remains pending, and the
+  readiness assumptions allow it to stay pending.
 
 ## Useful References
 
@@ -77,5 +92,5 @@ golden snapshots, enterprise reruns, and final independent review.
 
 Read `AI_SYSTEM.md`, this checkpoint, and the task. Run
 `PYTHONPATH=.hydra-framework/engine/src:.hydra-framework/engine/tests/unit python3 -m unittest discover -s .hydra-framework/engine/tests/unit -p 'test_*.py'`
-and expect 1,263 passing. Inspect `git status`, create the Git checkpoint, and
-generate the third manifest. Do not apply until independent isolated gates pass.
+and expect 1,270 passing. Regenerate a manifest at the current checkpoint
+commit; never reuse a recorded digest and never approve a rejected one.
