@@ -5,7 +5,6 @@ from __future__ import annotations
 import dataclasses
 from typing import Callable
 
-from hydra_engine.documents.tokens import HydraYamlError
 from hydra_engine.identity.object_families import family_for
 from hydra_engine.knowledge.bindings import BindingResolutionError, bound_nodes_for_paths, bindings_root, load_bindings
 from hydra_engine.knowledge import context_support
@@ -45,6 +44,7 @@ class ProviderRequest:
     path_values: tuple[str, ...] = ()
     view_values: tuple[str, ...] = ()
     command_ids: tuple[str, ...] = ()
+    knowledge_snapshot: object | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -68,12 +68,29 @@ class ContextProvider:
 def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
     warnings: list[str] = []
     try:
-        nodes = discover_knowledge_nodes(request.paths)
-    except (HydraYamlError, OSError, ValueError) as error:
+        snapshot = request.knowledge_snapshot
+        if snapshot is None:
+            nodes = discover_knowledge_nodes(request.paths)
+        else:
+            route_owners = tuple(
+                value.rpartition(":")[0]
+                for value in request.route_values
+                if ":" in value and not value.startswith("hydra://")
+            )
+            nodes = list(snapshot.routing_nodes(request.search_results, (*request.node_values, *route_owners), request.space))
+            # Bound paths are explicit authoritative requests.  The compact
+            # locator schema intentionally does not duplicate node bindings,
+            # so use the one canonical snapshot rather than guessing.
+            if snapshot.cached and request.path_values:
+                mismatch = __import__("hydra_engine.knowledge.storage", fromlist=("HydrationMismatch",)).HydrationMismatch
+                raise mismatch("path routing requires canonical binding snapshot")
+    except (OSError, ValueError) as error:
+        if error.__class__.__name__ == "HydrationMismatch":
+            raise
         return ProviderOutput(warnings=[f"Knowledge v3 discovery failed: {error}"])
     by_node_id = {node.logical_id: node for node in nodes}
     try:
-        bindings = load_bindings(request.paths) if (bindings_root(request.paths) / "manifest.yaml").is_file() else {}
+        bindings = snapshot.bindings() if snapshot is not None else (load_bindings(request.paths) if (bindings_root(request.paths) / "manifest.yaml").is_file() else {})
         path_matches = bound_nodes_for_paths(list(request.path_values), nodes, bindings, request.paths) if request.path_values else {}
     except (BindingResolutionError, OSError, ValueError) as error:
         return ProviderOutput(warnings=[f"Knowledge binding error: {error}"])
@@ -84,6 +101,7 @@ def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
         request.space,
         request.paths,
         search_results=request.search_results,
+        nodes=nodes,
     )
     warnings.extend(route_warnings)
     explicit_routing = bool(request.node_values or request.space)
@@ -106,8 +124,9 @@ def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
             warnings.append(f"Route node not selected: {value}")
 
     try:
+        cached_views = snapshot.views_for_request(request.search_results, request.view_values) if snapshot is not None else None
         selected_view_ids, composed = view_routing.select_and_compose_views(
-            request.task, request.view_values, request.paths, set(path_matches.values()), warnings,
+            request.task, request.view_values, request.paths, set(path_matches.values()), warnings, views=cached_views,
         )
     except view_routing.ViewConflictError as error:
         return ProviderOutput(warnings=[*warnings, f"Knowledge view error: {error}"])
@@ -119,13 +138,14 @@ def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
                 if ref.startswith(prefix):
                     logical = ref.removeprefix(prefix)
                     matches = [node for node in nodes if node.logical_id == logical or node.logical_id.startswith(logical + "/")]
+                    if snapshot is not None and not matches:
+                        matches = [snapshot.node_for_reference(ref)]
                     for node in matches:
                         selected_by_id[node.logical_id] = NodeSelection(node, f"view {','.join(composed.sources)}", float("inf"))
             if ref.startswith("hydra://knowledge-unit/"):
                 view_unit_seeds.add(ref)
         selections = [selected_by_id[key] for key in sorted(selected_by_id)]
 
-    units, unit_owners = unit_selection.collect_all_units(nodes, request.paths.root)
     required_seeds = {value.lower() for value in request.object_seed_ids if value.lower().startswith("hydra://knowledge-unit/")}
     required_seeds.update(view_unit_seeds)
     priority_ids: set[str] = set()
@@ -157,6 +177,10 @@ def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
             for value in route.verify:
                 if value not in verify_commands:
                     verify_commands.append(value)
+    units, unit_owners = (
+        snapshot.units_for_selection(nodes, request.search_results, required_seeds | priority_ids)
+        if snapshot is not None else unit_selection.collect_all_units(nodes, request.paths.root)
+    )
     try:
         required_ids, _required_by, selected_ids, superseded = unit_selection.resolve_selected_graph(units, required_seeds, priority_ids)
     except unit_selection.KnowledgeGraphError as error:
@@ -267,13 +291,26 @@ def run_context_providers(
         family for family in PROVIDERS_BY_FAMILY
         if (family in included if include_families else True) and family not in excluded
     ]
-    if active:
+    if active and request.knowledge_snapshot is None:
         results, _features, _source = context_support.search(
             request.task, paths=request.paths, resolver_paths=request.resolver_paths,
             local=request.resolver_paths.local, command_ids=request.command_ids,
             path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT,
         )
-        request = dataclasses.replace(request, search_results=tuple(results))
+        from hydra_engine.knowledge.search_index import default_db_path
+        open_knowledge_snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot
+        try:
+            snapshot = open_knowledge_snapshot(request.paths, default_db_path(request.resolver_paths.local), _source)
+        except ValueError as error:
+            if error.__class__.__name__ != "HydrationMismatch":
+                raise
+            results, _features, _source = context_support.search(
+                request.task, paths=request.paths, resolver_paths=request.resolver_paths,
+                local=request.resolver_paths.local, command_ids=request.command_ids,
+                path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT, force_source=True,
+            )
+            snapshot = open_knowledge_snapshot(request.paths, default_db_path(request.resolver_paths.local), _source)
+        request = dataclasses.replace(request, search_results=tuple(results), knowledge_snapshot=snapshot)
 
     candidates: list[dict] = []
     seen: set[str] = set()
@@ -284,7 +321,25 @@ def run_context_providers(
     avoid: list[str] = []
     verify: list[str] = []
     for family in active:
-        output = PROVIDERS_BY_FAMILY[family].collect(request)
+        try:
+            output = PROVIDERS_BY_FAMILY[family].collect(request)
+        except HydrationMismatch:
+            # Never combine a partially hydrated cache graph with source
+            # values.  Re-run the complete provider operation from one
+            # canonical snapshot, including shared search candidates.
+            from hydra_engine.knowledge.search_index import search
+            results, _features, _source = search(
+                request.task, paths=request.paths, resolver_paths=request.resolver_paths,
+                local=request.resolver_paths.local, command_ids=request.command_ids,
+                path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT, force_source=True,
+            )
+            from hydra_engine.knowledge.search_index import default_db_path
+            open_knowledge_snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot
+            source_request = dataclasses.replace(
+                request, search_results=tuple(results),
+                knowledge_snapshot=open_knowledge_snapshot(request.paths, default_db_path(request.resolver_paths.local), "source"),
+            )
+            return run_context_providers(source_request, include_families=include_families, exclude_families=exclude_families)
         for candidate in output.candidates:
             context_support.add_candidate(candidates, seen, candidate)
         nodes.extend(output.nodes)

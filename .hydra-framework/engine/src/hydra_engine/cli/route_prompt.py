@@ -21,7 +21,6 @@ import time
 from hydra_engine.cli.rendering import render_route_prompt
 from hydra_engine.commands.context import prompt_payload_from_stdin_or_arg
 from hydra_engine.knowledge import search_index
-from hydra_engine.knowledge.bindings import bindings_root, load_bindings
 from hydra_engine.knowledge.routing import route_prompt_node_pointers
 from hydra_engine.knowledge.routing_diagnostics import route_prompt_match_diagnostics
 from hydra_engine.ports import fs
@@ -39,14 +38,6 @@ def command_route_prompt(args, ctx) -> int:
     started = time.perf_counter()
     as_json = bool(getattr(args, "json", False))
     max_routed_nodes = ctx.threshold_value("hydra_engine.knowledge.routing.MAX_ROUTED_NODES")
-    exact_references = search_index.exact_matches(
-        prompt,
-        search_index.collect_search_documents(
-            ctx.context_compiler_paths(),
-            ctx.resolver_paths(),
-            command_ids=ctx.command_ids,
-        ),
-    )
     results, _features, _source = search_index.search(
         prompt,
         paths=ctx.context_compiler_paths(),
@@ -55,15 +46,40 @@ def command_route_prompt(args, ctx) -> int:
         command_ids=ctx.command_ids,
         limit=20,
     )
-    binding_manifest = bindings_root(ctx.context_compiler_paths()) / "manifest.yaml"
-    bindings = load_bindings(ctx.context_compiler_paths()) if binding_manifest.is_file() else {}
+    snapshot_warnings: list[str] = []
+    try:
+        snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot(
+            ctx.context_compiler_paths(), search_index.default_db_path(ctx.local), _source,
+        )
+        nodes = list(snapshot.routing_nodes(results))
+        bindings = snapshot.bindings()
+    except ValueError as error:
+        if error.__class__.__name__ != "HydrationMismatch":
+            # Exact references remain useful if optional v3 routing fails.
+            nodes, bindings = [], {}
+            snapshot_warnings.append(f"Knowledge v3 routing unavailable: {error}")
+        else:
+            # A single source rerun prevents cache/source graph mixing.
+            results, _features, _source = search_index.search(
+                prompt, paths=ctx.context_compiler_paths(), resolver_paths=ctx.resolver_paths(), local=ctx.local,
+                command_ids=ctx.command_ids, limit=20, force_source=True,
+            )
+            snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot(
+                ctx.context_compiler_paths(), search_index.default_db_path(ctx.local), _source,
+            )
+            nodes, bindings = list(snapshot.routing_nodes(results)), snapshot.bindings()
+    # `search` already resolves exact ids and paths before ranking.  Reusing
+    # that one result set avoids a second whole-corpus collection per hook.
+    exact_references = [result for result in results if result.channel == "exact"]
     matches, warnings = route_prompt_node_pointers(
         prompt,
         ctx.context_compiler_paths(),
         search_results=tuple(results),
         max_routed_nodes=max_routed_nodes,
         bindings=bindings,
+        nodes=nodes,
     )
+    warnings = [*snapshot_warnings, *warnings]
     match_reason = "global index" if matches else "none"
     reflections_dir = ctx.hydra / "evolution" / "reflections"
     telemetry_packages_dir = ctx.hydra / "repo" / "telemetry" / "packages"

@@ -248,10 +248,12 @@ passed.
 ## Storage Boundary
 
 Knowledge discovery and resolution depend on a `KnowledgeStore` interface, not
-on `cognition/graph/registry.yaml` or a shard path. The first implementation may
-adapt the current tracked registry plus unified local SQLite store. Registry
-sharding must preserve identities, edges, packets, and routing results and is a
-separate workstream.
+on `cognition/graph/registry.yaml` or a shard path. The private unified SQLite
+`knowledge.db` holds the rebuildable search corpus plus typed Knowledge-object
+locators and relation edges. Its freshness check compares a governed stat-only
+inventory; an absent, corrupt, disabled, or stale store falls back to canonical
+discovery. Rebuild is atomic. Registry sharding must preserve identities, edges,
+packets, and routing results and is a separate workstream.
 
 The interface exposes objects by id/UID, typed outgoing and incoming relations,
 node/path lookup, and deterministic iteration. Canonical files remain the source

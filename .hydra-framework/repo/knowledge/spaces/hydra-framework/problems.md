@@ -18,19 +18,19 @@ provenance:
 # Problems
 
 Status: active
-Updated: 2026-09-07
+Updated: 2026-09-09
 
 Concrete unresolved concerns for Hydra's own machinery. Each needs evidence, not
 opinion. Resolve or close with a reason; do not let entries rot.
 
 ## Open
 
-### P4: Routing re-reads the whole knowledge tree on every call
+### P5: The warm KnowledgeStore read path is still repo-linear per invocation (file-stat pass)
 
-- Evidence: `validation/knowledge-v3/engine_gates.py` over the checked-in 216-leaf fixture. `discover_knowledge_nodes` costs about 25 ms for the 258-node materialized tree, and `route_nodes` calls it per invocation, so routing cost scales with tree size rather than with the number of selected nodes.
-- Impact: negligible in a repository with one space, and a per-prompt cost in a repository with hundreds of nodes, where every `route-prompt` and `compile-context` call pays a full parse of canonical files.
-- Resolution: unresolved. The `KnowledgeStore` interface in `core/knowledge-architecture.md` exists for this: canonical files stay the source of truth while a derived, rebuildable index serves discovery. Implementing that cache is a separate workstream from Knowledge v3 itself, and a stale index must still be unable to authorize an invalid reference or a stale binding. Do not add a cache that selected content is not re-read against.
-- Certainty: confirmed
+- Evidence: phase-instrumented on this repository's real tree (1 space, 7 units), not the synthetic fixture. `_source_manifest` -> `_search_files` rglobs and stats every governed file, 24.3ms of ~45ms warm retrieval at 316 files. `_load_fresh_documents` does `SELECT *` over all documents including body text (2.9ms), then `substring_search` scans them all in Python (5.6ms).
+- Impact: negligible at today's scale. Warm retrieval cost grows with the size of the governed file set regardless of how many nodes a query actually selects. Would surface as real latency once the governed corpus grows.
+- Resolution: unresolved and deliberately deferred. The index-build half of this problem (`_package_for`/`_routing_fields` re-parsing the node tree once per document) is fixed; see R9. The remaining file-stat pass would need a cheaper freshness signal than statting every governed file per invocation. Revisit when the governed corpus passes roughly 2k files, or when `route-prompt` p50 passes 0.3s, whichever comes first.
+- Certainty: inferred
 
 ### P1: Codex capability classes resolve to no model
 
@@ -92,3 +92,38 @@ future agents likely to call provider model catalogs just to refresh volatile
 IDs the exporter did not use. Resolved by deleting that reference field and documenting an
 alias-only policy. Concrete IDs should be added only for a provider surface that
 cannot use aliases.
+
+### R8: Routing re-read the whole knowledge tree on every call (2026-09-09)
+
+`discover_knowledge_nodes` cost about 25ms on the 258-node fixture and
+`route_nodes` called it per invocation, so routing cost scaled with tree size
+rather than with the number of selected nodes. Resolved by the KnowledgeStore
+redesign: a warm SQLite cache nominates candidates, and only the selected
+node's ancestry, required units, views, and bindings are hydrated canonically.
+The 258-locator structural gate proves a warm cache-hit bounds hydration to a
+handful of calls rather than a full-tree parse. The missing/stale/disabled
+cache fallback still parses the whole tree by design — canonical files must
+remain able to answer correctly on their own — but that is now the explicit
+exception path, not the per-call default P4 described. The read path's
+remaining repo-linear costs (a per-invocation file-stat pass, and an
+O(documents x nodes) index build) are a separate, smaller concern; see P5
+and R9.
+
+### R9: Index build re-parsed the knowledge node tree twice per document (2026-09-09)
+
+`_package_for` and `_routing_fields` in `search_index.py` each called
+`discover_knowledge_nodes(paths)` independently, once per document, so
+`collect_search_documents` cost O(2 x docs x nodes) rather than
+O(docs + nodes). Invisible on this repository's real tree (1 space, 7 units)
+but would be measurable past roughly 2k governed files. Resolved by
+discovering nodes once per `collect_search_documents` call (and once per
+`_with_explicit_path_docs` call) and threading the node list through
+`_document_for_path`/`_document_for_registry_entry` into `_package_for` and
+`_routing_fields`, which now take `nodes` as a parameter instead of
+discovering it themselves. The per-document `try/except Exception` fallback
+moved to the single call site, so a discovery failure still degrades every
+document's package/routing fields the same way a per-document failure did
+before. Confirmed byte-identical `engine_gates.py` output with the query
+store on and off, and identical `route-prompt`/`compile-context --json`
+output before and after. The read path's remaining repo-linear cost (the
+per-invocation file-stat pass in `_source_manifest`) is unresolved; see P5.

@@ -11,8 +11,8 @@ def normalized_token(value: str) -> str:
     return slugify(value)
 
 
-def select_and_compose_views(task: str, requested: tuple[str, ...], paths, bound_node_ids: set[str], warnings: list[str]):
-    views = discover_views(paths)
+def select_and_compose_views(task: str, requested: tuple[str, ...], paths, bound_node_ids: set[str], warnings: list[str], *, views=None):
+    views = discover_views(paths) if views is None else list(views)
     by_id = {view.hydra_id: view for view in views}
     by_slug = {view.view_id: view.hydra_id for view in views}
     if requested:

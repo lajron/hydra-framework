@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import sys
-import unittest
 from pathlib import Path
 
 _HYDRA = Path(__file__).resolve().parents[1]
@@ -39,6 +38,7 @@ def _module_metadata_entries(ctx: RepoContext) -> list[module_metadata_engine.Mo
     return entries
 
 def command_selftest(args) -> int:
+    import unittest
     tests_dir = _HYDRA / "engine" / "tests"
     loader = unittest.TestLoader()
     suite = loader.discover(str(tests_dir), pattern="test_*.py", top_level_dir=str(tests_dir))

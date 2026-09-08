@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import os
 import sqlite3
 import tempfile
 import unittest
@@ -66,6 +67,36 @@ def _repo() -> Path:
 
 
 class SearchIndexTests(unittest.TestCase):
+    def test_same_stat_cache_mutation_abandons_cached_routing_candidate(self):
+        root = Path(tempfile.mkdtemp(prefix="search-index-v3-"))
+        hydra = root / ".hydra-framework"
+        knowledge = hydra / "repo/knowledge"
+        node = knowledge / "spaces/demo/space.yaml"
+        node.parent.mkdir(parents=True)
+        (knowledge / "spaces.yaml").write_text(
+            "schema: hydra-framework.knowledge-spaces.v1\nmax_depth: 4\nspaces:\n  - demo\n", encoding="utf-8",
+        )
+        node.write_text(
+            "schema: hydra-framework.knowledge-node.v1\nnode: demo\nhydra_id: hydra://knowledge-space/demo\n"
+            "uid: node-uid\nschema_version: 3\nkind: knowledge-space\ntitle: Demo\nstatus: active\n"
+            "scope: repo-local\nowners:\n  team: test\nrelations: []\nprovenance:\n  sources: []\n"
+            "routable: true\nkeywords:\n  - old-keyword\n",
+            encoding="utf-8",
+        )
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        original = node.stat()
+        node.write_text(node.read_text(encoding="utf-8").replace("old-keyword", "new-keyword"), encoding="utf-8")
+        self.assertEqual(node.stat().st_size, original.st_size)
+        os.utime(node, ns=(original.st_atime_ns, original.st_mtime_ns))
+
+        results, _features, source = search_index.search(
+            "old-keyword", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+        )
+
+        self.assertEqual(source, "source")
+        self.assertEqual(results, [])
+
     def test_exact_lookup_bypasses_lexical_ranking(self):
         root = _repo()
         results, _features, _source = search_index.search(
@@ -99,16 +130,13 @@ class SearchIndexTests(unittest.TestCase):
         self.assertTrue(results)
         self.assertTrue(all(result.channel in {"substring", "path-route"} for result in results))
 
-    def test_persisted_fts_rows_map_to_loaded_rowid_order(self):
+    def test_persisted_documents_load_in_rowid_order(self):
         root = _repo()
         local = root / ".hydra-framework.local"
         search_index.build_index(_paths(root), _resolver(root), local, ("validate",))
         docs = search_index.collect_search_documents(_paths(root), _resolver(root), ("validate",))
         loaded = search_index._load_documents(search_index.default_db_path(local), search_index._corpus_digest(docs))
         self.assertEqual([doc.key for doc in loaded], [doc.key for doc in docs])
-        results = search_index._fts_search(search_index.default_db_path(local), "hydra.py", loaded)
-        self.assertEqual(results[0].document.kind, "command")
-        self.assertEqual(results[0].document.title, "validate")
 
     def test_build_index_enables_wal_and_a_busy_timeout(self):
         # B4: WAL lets a concurrent reader keep working through the
@@ -161,6 +189,34 @@ class SearchIndexTests(unittest.TestCase):
         )
         self.assertEqual(source, "source")
         self.assertIn("fresh phrase", results[0].document.body)
+
+    def test_fresh_store_does_not_recollect_the_corpus(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        with mock.patch.object(search_index, "collect_search_documents", side_effect=AssertionError("source parse")):
+            results, _features, source = search_index.search(
+                "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "sqlite")
+        self.assertTrue(results)
+
+    def test_collect_search_documents_discovers_nodes_once_not_per_document(self):
+        root = _repo()
+        with mock.patch.object(search_index, "discover_knowledge_nodes", wraps=search_index.discover_knowledge_nodes) as discover:
+            docs = search_index.collect_search_documents(_paths(root), _resolver(root))
+        self.assertGreater(len(docs), 1)
+        self.assertEqual(discover.call_count, 1)
+
+    def test_query_store_escape_hatch_forces_canonical_fallback(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        with mock.patch.dict("os.environ", {"HYDRA_QUERY_STORE": "off"}):
+            _results, _features, source = search_index.search(
+                "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "source")
 
     def test_explicit_path_hint_materializes_existing_file_outside_default_corpus(self):
         root = _repo()

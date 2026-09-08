@@ -37,6 +37,18 @@ from hydra_engine.knowledge.routing import route_nodes  # noqa: E402
 
 FIXTURE = Path(__file__).with_name("enterprise-fixture.json")
 
+# Recorded quality floor for the checked-in fixture. The fixture is
+# deterministic, so these are exact baselines, not thresholds: a regression
+# fails the gate, and an improvement requires updating this dict deliberately
+# rather than being silently accepted.
+RETRIEVAL_BASELINE = {
+    "recall_at_3": 0.5952,
+    "precision_at_3": 0.6905,
+    "false_positive_rate": 0.3095,
+    "ambiguity_rate": 0.0,
+}
+NODE_VALIDATION_FINDINGS_BASELINE = 0
+
 
 @dataclass(frozen=True)
 class _Document:
@@ -241,6 +253,33 @@ def path_gate(fixture: dict, paths: ContextCompilerPaths) -> dict:
     }
 
 
+def _check_quality_floor(report: dict) -> None:
+    """Fail loudly on any deviation from the recorded baselines.
+
+    The fixture is deterministic, so an exact mismatch in either direction is
+    a signal: a regression must fail the gate, and an improvement must be
+    reviewed and folded into the baseline deliberately rather than drifting in
+    unnoticed.
+    """
+    mismatches = []
+    if report["node_validation_findings"] != NODE_VALIDATION_FINDINGS_BASELINE:
+        mismatches.append(
+            f"node_validation_findings: baseline {NODE_VALIDATION_FINDINGS_BASELINE}, "
+            f"measured {report['node_validation_findings']}"
+        )
+    retrieval = report["retrieval"]
+    for key, expected in RETRIEVAL_BASELINE.items():
+        measured = retrieval[key]
+        if measured != expected:
+            mismatches.append(f"retrieval.{key}: baseline {expected}, measured {measured}")
+    if mismatches:
+        raise SystemExit(
+            "quality floor deviated from recorded baseline (update RETRIEVAL_BASELINE "
+            "deliberately if this is an intended improvement):\n"
+            + "\n".join(f"- {mismatch}" for mismatch in mismatches)
+        )
+
+
 def run(path: Path = FIXTURE, *, timings: bool = False) -> dict:
     fixture = json.loads(path.read_text(encoding="utf-8"))
     with tempfile.TemporaryDirectory() as tmp:
@@ -251,7 +290,7 @@ def run(path: Path = FIXTURE, *, timings: bool = False) -> dict:
                 "materialised fixture is not a valid v3 tree:\n"
                 + "\n".join(f"- {finding}" for finding in findings[:20])
             )
-        return {
+        report = {
             "schema": "hydra-framework.knowledge-v3-engine-gates.v1",
             "measured": "shipped hydra_engine.knowledge runtime",
             "fixture": path.name,
@@ -263,6 +302,8 @@ def run(path: Path = FIXTURE, *, timings: bool = False) -> dict:
             "path_rerouting": path_gate(fixture, paths),
             "real_second_repository_gate": "pending",
         }
+        _check_quality_floor(report)
+        return report
 
 
 def main() -> int:

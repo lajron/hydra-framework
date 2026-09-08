@@ -111,8 +111,9 @@ def route_nodes(
     *,
     search_results: tuple = (),
     max_routed_nodes: int = MAX_ROUTED_NODES,
+    nodes: list[KnowledgeNode] | None = None,
 ) -> tuple[list[NodeSelection], list[str]]:
-    nodes = discover_knowledge_nodes(paths)
+    nodes = discover_knowledge_nodes(paths) if nodes is None else nodes
     warnings: list[str] = []
     selected: dict[str, NodeSelection] = {}
     for value in node_values:
@@ -255,15 +256,16 @@ def route_prompt_node_pointers(
     node_values: tuple[str, ...] = (),
     max_routed_nodes: int = MAX_ROUTED_NODES,
     bindings: dict[str, Binding] | None = None,
+    nodes: list[KnowledgeNode] | None = None,
 ) -> tuple[list[RoutePromptPointer], list[str]]:
     try:
+        nodes = discover_knowledge_nodes(paths) if nodes is None else nodes
         selections, warnings = route_nodes(
-            prompt, list(node_values), "", paths, search_results=search_results, max_routed_nodes=max_routed_nodes,
+            prompt, list(node_values), "", paths, search_results=search_results, max_routed_nodes=max_routed_nodes, nodes=nodes,
         )
     except HydraYamlError as error:
         return [], [f"Knowledge v3 routing unavailable: {error}"]
     loaded_bindings = bindings or {}
-    nodes = discover_knowledge_nodes(paths)
     by_id = {node.logical_id: node for node in nodes}
     pointers: list[RoutePromptPointer] = []
     for selection in selections:

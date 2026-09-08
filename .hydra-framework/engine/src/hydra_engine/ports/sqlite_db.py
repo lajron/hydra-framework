@@ -9,10 +9,9 @@ needs atomic writes.
 `rebuild_atomically` is this store's write-safety chokepoint (mirroring
 `documents/tokens.py.write_text`'s temp-file-then-`os.replace` discipline):
 a concurrent reader always sees a complete old or new
-store, never a half-populated one. `knowledge/search_index.py`'s
-`knowledge.db` instead rebuilds in place under `DROP TABLE`, which is fine
-for a store nothing else depends on mid-rebuild; this store backs `ref
-check`-adjacent queries where a torn read would be worse to debug.
+store, never a half-populated one. `knowledge/search_index.py` now uses this
+same boundary for its private `knowledge.db`; the store is disposable, but
+its cache readers must still never observe a torn rebuild.
 """
 
 from __future__ import annotations
@@ -93,3 +92,17 @@ def rebuild_atomically(db_path: Path, populate: Callable[[sqlite3.Connection], N
         raise
     finally:
         _remove_with_wal_sidecars(tmp_path)
+
+
+def source_manifest(root: Path, files: list[Path]) -> list[tuple[str, int, int]]:
+    """Stable stat-only inventory for a derived store's governed inputs."""
+    manifest: list[tuple[str, int, int]] = []
+    for path in sorted(set(files)):
+        try:
+            stat = path.stat()
+            relative = path.relative_to(root).as_posix()
+        except (OSError, ValueError):
+            continue
+        if path.is_file():
+            manifest.append((relative, stat.st_mtime_ns, stat.st_size))
+    return manifest

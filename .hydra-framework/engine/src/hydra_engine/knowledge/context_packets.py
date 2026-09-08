@@ -46,7 +46,8 @@ def compile_context_packet(
     exclude_families: list[str] | None = None,
     command_ids: tuple[str, ...] = (),
 ) -> dict:
-    objects, object_errors = collect_hydra_objects(resolver_paths)
+    objects_result = collect_hydra_objects(resolver_paths)
+    objects, object_errors = objects_result
     by_ref = object_lookup(objects)
     by_path = {obj["path"]: obj for obj in objects}
 
@@ -167,7 +168,14 @@ def compile_context_packet(
     # returns `Finding`, and this packet's `--json` path
     # feeds `registry_freshness_errors` straight into `json.dumps`, which a
     # `Finding` dataclass cannot satisfy the way a plain string can.
-    freshness_errors = [str(finding) for finding in validate_object_registry_freshness(resolver_paths)]
+    # `objects_result` is this function's own scan of the same `resolver_paths`,
+    # passed through rather than rescanned: the second full-tree object walk was
+    # the single largest cost in `compile-context`, in cache and source modes
+    # alike, and it produced a byte-identical packet either way.
+    freshness_errors = [
+        str(finding)
+        for finding in validate_object_registry_freshness(resolver_paths, objects_result=objects_result)
+    ]
     return {
         "schema": "hydra-framework.context-packet.v2",
         "date": today(),

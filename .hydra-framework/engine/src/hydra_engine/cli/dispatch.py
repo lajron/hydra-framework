@@ -14,7 +14,6 @@ from pathlib import Path
 
 from hydra_engine.agent_hooks import retry_state
 from hydra_engine.agent_hooks.paths import AgentHooksPaths
-from hydra_engine.checks import validator_registry
 from hydra_engine.checks.aggregation import Check
 from hydra_engine.cli import command_metadata
 from hydra_engine.cli import parser as cli_parser
@@ -127,6 +126,7 @@ def _yaml_map(value: object) -> dict:
 
 def _validate_checks(ctx: RepoContext) -> list[Check]:
     # Order is `checks.validator_registry.VALIDATORS`'s to own and explain.
+    from hydra_engine.checks import validator_registry
     return validator_registry.checks_for(ctx)
 
 
