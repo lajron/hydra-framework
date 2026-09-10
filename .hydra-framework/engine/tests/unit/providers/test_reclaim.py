@@ -117,6 +117,7 @@ class PromoteSurfaceTests(unittest.TestCase):
         metadata = (paths.hydra / "capabilities/skills/deploy/metadata.yaml").read_text(encoding="utf-8")
         self.assertIn("description: Deploy the thing", metadata)
         self.assertIn("promoted_from: .claude/skills/deploy/SKILL.md", metadata)
+        self.assertFalse((paths.root / item["path"]).exists())
 
     def test_promotes_codex_toml_agent(self):
         paths = _paths()
@@ -131,6 +132,21 @@ class PromoteSurfaceTests(unittest.TestCase):
         self.assertEqual(target.read_text(encoding="utf-8"), "Do the thing.\n")
         metadata = (paths.hydra / "capabilities/agents/demo/metadata.yaml").read_text(encoding="utf-8")
         self.assertIn("capability_class: fast-default", metadata)
+        self.assertFalse((paths.root / item["path"]).exists())
+
+    def test_retry_removes_source_only_when_metadata_matches(self):
+        paths = _paths()
+        _write(paths.root, ".claude/skills/deploy/SKILL.md", "content\n")
+        _write(paths.root, ".hydra-framework/capabilities/skills/deploy/skill.md", "content\n")
+        _write(
+            paths.root,
+            ".hydra-framework/capabilities/skills/deploy/metadata.yaml",
+            "name: deploy\npromoted_from: .claude/skills/deploy/SKILL.md\n",
+        )
+        item = {"path": ".claude/skills/deploy/SKILL.md", "kind": "skill", "detail": ""}
+        target = reclaim.promote_surface(paths, item)
+        self.assertEqual(target, paths.hydra / "capabilities/skills/deploy/skill.md")
+        self.assertFalse((paths.root / item["path"]).exists())
 
     def test_skips_when_canonical_target_already_exists(self):
         paths = _paths()
@@ -138,6 +154,7 @@ class PromoteSurfaceTests(unittest.TestCase):
         _write(paths.root, ".hydra-framework/capabilities/skills/deploy/skill.md", "already here\n")
         item = {"path": ".claude/skills/deploy/SKILL.md", "kind": "skill", "detail": ""}
         self.assertIsNone(reclaim.promote_surface(paths, item))
+        self.assertTrue((paths.root / item["path"]).exists())
 
 
 class ProviderSurfaceNoticeTests(unittest.TestCase):

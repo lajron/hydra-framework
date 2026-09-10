@@ -129,3 +129,5 @@ def reject_unsupported_yaml(path: Path, number: int, value: str, root: Path) -> 
         raise HydraYamlError(f"{display_path(path, root)}:{number}: block scalars (`|`, `>`) are not supported")
     if value[:1] in "\"'" and not (len(value) >= 2 and value[-1] == value[0]):
         raise HydraYamlError(f"{display_path(path, root)}:{number}: unterminated quoted value")
+    if (value.startswith("[") and value.endswith("]")) or (value.startswith("{") and value.endswith("}")):
+        raise HydraYamlError(f"{display_path(path, root)}:{number}: non-empty YAML flow collections are not supported")

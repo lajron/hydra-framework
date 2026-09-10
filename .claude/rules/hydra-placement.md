@@ -29,7 +29,8 @@ exporter turns that into `disable-model-invocation: true`.
 
 ## If a provider-native file is already here
 
-Someone added it the way their runtime expects. Reclaim it rather than deleting it:
+For one isolated skill or agent added where its runtime expects it, reclaim it
+rather than deleting it:
 
 ```bash
 python3 .hydra-framework/scripts/hydra.py reclaim            # classify and plan
@@ -40,6 +41,11 @@ python3 .hydra-framework/scripts/hydra.py export-adapters    # regenerate wrappe
 Promoted metadata is marked `scope: repo-local` and `certainty: inferred`. Review
 it: set a real capability class and effort, and decide whether the module belongs
 in the shared seed or stays repository-local.
+
+If provider-native modules are part of a broader legacy agentic setup, use the
+framework-takeover skill and `capabilities/workflows/material-migration.md`.
+That workflow preserves the setup's relationships and source history; reclaim
+is only the mechanical route for isolated modules.
 
 ## Not generated
 

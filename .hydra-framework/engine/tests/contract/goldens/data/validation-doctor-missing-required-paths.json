@@ -4,5 +4,5 @@
     "AI_SYSTEM.md": "4f558b1864ba492621b084283692f4c37561673e3d2e3cde7f15fc90be286437"
   },
   "stderr": "",
-  "stdout": "Hydra doctor: missing required paths\n- AGENTS.md\n- .hydra-framework/README.md\n- .hydra-framework/manifest.yaml\n- .hydra-framework/core/placement-rules.md\n- .hydra-framework/tasks/templates/task.md\n- .hydra-framework/tasks/templates/checkpoint.md\n- .hydra-framework/tasks/personal\n- .hydra-framework/capabilities/skills\n- .hydra-framework/capabilities/agents\n"
+  "stdout": "Hydra doctor: missing required paths\n- AGENTS.md\n- .claude/rules/hydra-placement.md\n- .claude/settings.json\n- .codex/hooks.json\n- .hydra-framework/README.md\n- .hydra-framework/manifest.yaml\n- .hydra-framework/core/placement-rules.md\n- .hydra-framework/tasks/templates/task.md\n- .hydra-framework/tasks/templates/checkpoint.md\n- .hydra-framework/tasks/personal\n- .hydra-framework/capabilities/skills\n- .hydra-framework/capabilities/agents\n"
 }

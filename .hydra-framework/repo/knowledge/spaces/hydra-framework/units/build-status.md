@@ -20,20 +20,20 @@ provenance:
     - ".hydra-framework/engine/src/hydra_engine/cli/command_metadata.py"
     - ".hydra-framework/engine/src/hydra_engine/knowledge/context_providers.py"
   source_digests:
-    - source: ".hydra-framework/scripts/hydra.py"
-      digest: "sha256:b15fd376ec9ef5287fa4fd27e946d682fc73abf57e74b3c7bd3d058be7c795ed"
-    - source: ".hydra-framework/core/placement-rules.md"
-      digest: "sha256:88eeb340d945e3fbc85be7a291becd87a1f64f4d26b4fa9e37d1bb1a38613f43"
-    - source: ".hydra-framework/repo/telemetry/README.md"
-      digest: "sha256:b7ccc03875de6ebcd7b1dee48e59d804eaee3043b8840085aa6eee5e9a71c97c"
-    - source: ".hydra-framework/engine/src/hydra_engine/cli/command_metadata.py"
-      digest: "sha256:125719f126770bbcb6d7517cb7c45ed32f8986c8eb772ceb5b0d0f8bc9153349"
-    - source: ".hydra-framework/engine/src/hydra_engine/knowledge/context_providers.py"
-      digest: "sha256:f8a2e2f80283f039bc2dc38ab61ade4a94c17703ee161d3c9108457760fda7f1"
+    - source: .hydra-framework/scripts/hydra.py
+      digest: sha256:e64104dc58d71b6e34bb9855ed201b1bf4b7d1fe3ab74408662607984954f2e4
+    - source: .hydra-framework/core/placement-rules.md
+      digest: sha256:79c93753c06bc23c7a76e2e650dc5c77e8dc74b20adee8fd4f58c3a47f043256
+    - source: .hydra-framework/repo/telemetry/README.md
+      digest: sha256:b7ccc03875de6ebcd7b1dee48e59d804eaee3043b8840085aa6eee5e9a71c97c
+    - source: .hydra-framework/engine/src/hydra_engine/cli/command_metadata.py
+      digest: sha256:7045a3aaded2dd70eeb76254cce0b22675674f443cec7395bb5da6ed3016e04d
+    - source: .hydra-framework/engine/src/hydra_engine/knowledge/context_providers.py
+      digest: sha256:3c720338f9eef6312bb9ddc5e3028d1a251ae44434baa25c4c0153cf011d1fb8
 question: "What is actually built in this framework, per capability?"
 group: "framework-state"
 certainty: "confirmed"
-checked_on: "2026-08-30"
+checked_on: "2026-09-10"
 verify:
   - "python3 .hydra-framework/scripts/hydra.py selftest"
   - "python3 .hydra-framework/scripts/hydra.py ref check"
@@ -49,7 +49,7 @@ describes the build. Verify a row with its own command before relying on it.
 
 ## Status
 
-Verified against the tree and the CLI on 2026-08-30. Trust this table over any
+Verified against the tree and the CLI on 2026-09-10. Trust this table over any
 plan document: the base upgrade plan describes intent, this describes the build.
 
 | Capability | Status | How to verify |
@@ -79,7 +79,7 @@ plan document: the base upgrade plan describes intent, this describes the build.
 | Telemetry object family | built, registered | `hydra_engine/identity/object_families.py`'s `telemetry-evidence` prefix and kind resolve to `Telemetry` |
 | Takeover scan and `integrate` | built | `hydra.py takeover scan`; `hydra.py integrate scan/identify/map/status` |
 | `explain-path` | built | `hydra.py explain-path <path> [--json]`; composed from object lookup, provider-surface classification, and reverse citations, no hand-authored path-ownership file |
-| Context compiler across all object families | built | `hydra_engine/knowledge/context_providers.py`'s `CONTEXT_PROVIDERS` registry (Knowledge, Capability, Work, Source, Runtime/Engine, Telemetry), each filtering the shared search index by family; `hydra.py compile-context --include-family/--exclude-family/--family-cap` |
+| Context compiler across all object families | built | `hydra_engine/knowledge/context_providers.py`'s `CONTEXT_PROVIDERS` registry (Knowledge, Capability, Work, Source, Runtime/Engine, Telemetry), each filtering the shared search index by family; a warm-cache path-routing mismatch restarts the whole provider operation from one source snapshot; `hydra.py compile-context --include-family/--exclude-family/--family-cap/--path` |
 
 Telemetry's provider-neutral redaction contract, local append-only capture,
 Claude command-output capture, transcript-derived session aggregate capture,

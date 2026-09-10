@@ -3,9 +3,9 @@
 Every golden test in this package builds a small synthetic Hydra tree via
 `harness.run_command`'s `fixture=` dict — never a clone of the live
 repository — so a golden only changes when the command's own logic changes,
-not when someone edits `AI_SYSTEM.md` next week. `BASE_FIXTURE` is the
-minimal tree that satisfies `REQUIRED_PATHS` (see `scripts/hydra.py`); most
-goldens layer a few extra files on top of it.
+not when someone edits `AI_SYSTEM.md` next week. `BASE_FIXTURE` stays small;
+commands that require a complete installation layer in the portable provider
+support fixture below.
 """
 
 from __future__ import annotations
@@ -381,6 +381,12 @@ BASE_FIXTURE: dict[str, str] = {
         "verified: fixture\n"
         "certainty: fixture\n"
     ),
+}
+
+PORTABLE_PROVIDER_SUPPORT_FIXTURE: dict[str, str] = {
+    ".claude/rules/hydra-placement.md": "# Provider Directories Are Generated\n",
+    ".claude/settings.json": "{}\n",
+    ".codex/hooks.json": "{}\n",
 }
 
 

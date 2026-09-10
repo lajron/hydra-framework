@@ -25,6 +25,7 @@ TAKEOVER_MARKERS: tuple[tuple[str, str], ...] = (
     (".windsurf", "windsurf"),
     (".windsurfrules", "windsurf"),
     (".github/copilot-instructions.md", "copilot"),
+    ("prompts", "prompts"),
     ("docs/ai", "docs"),
     ("docs/agents", "docs"),
 )
@@ -59,9 +60,15 @@ def _candidate_files(path: Path) -> list[Path]:
 def _is_hydra_entrypoint(path: Path) -> bool:
     text = read_migration_file_peek(path).lower()
     if path.name == "CLAUDE.md":
-        return "@agents.md" in text and "thin provider adapter" in text
+        return "@agents.md" in text and ("thin provider adapter" in text or ".hydra-framework/" in text)
     if path.name == "AGENTS.md":
-        return "this repository uses hydra" in text and ".hydra-framework/" in text
+        if "this repository uses hydra" in text and ".hydra-framework/" in text:
+            return True
+        system = path.parent / "AI_SYSTEM.md"
+        if "ai_system.md" not in text or not system.is_file():
+            return False
+        system_text = read_migration_file_peek(system).lower()
+        return "hydra operating contract" in system_text and ".hydra-framework/" in system_text
     return False
 
 
@@ -113,6 +120,8 @@ def _candidate_classification(
         return "foreign-entrypoint", ["root AI rule file is not a thin Hydra adapter"]
     if marker in {".cursorrules", ".windsurfrules", ".github/copilot-instructions.md", "docs/ai", "docs/agents"}:
         return "foreign-entrypoint", ["foreign AI instruction or documentation marker"]
+    if marker == "prompts":
+        return "needs-owner-decision", ["top-level prompt library needs owner review"]
     if marker in PROVIDER_ROOTS and _needs_owner_decision(marker, files, root):
         return "needs-owner-decision", ["settings, hooks, rules, or local config need owner review"]
     if surface_counts.get("generated", 0):

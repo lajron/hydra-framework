@@ -23,6 +23,11 @@ Use the argument to pick the action:
    - `python3 .hydra-framework/scripts/hydra.py task complete <name-or-path> --outcome <path|none>`
 
    Check `--help` on any of them before guessing flags.
+   An absolute path or path-shaped repository-relative value is resolved
+   exactly. A bare name is slugified, then resolves first to one matching task
+   under the caller's owner directory and otherwise to one unique global
+   match. Multiple matches are refused with their candidate paths; pass one of
+   those paths explicitly instead of relying on task dates.
 4. The helper writes the skeleton; it does not know the work. Immediately fill in the fields it left blank: readiness, step state, changed files, validation evidence, continuation notes.
 5. Before `complete`, make sure the durable outcome exists somewhere else. `--outcome` must name a file that exists, or `none`. The record is about to be deleted; whatever it taught has to be in a knowledge file by then.
 6. Run `python3 .hydra-framework/scripts/hydra.py validate` to confirm the record has every required field.

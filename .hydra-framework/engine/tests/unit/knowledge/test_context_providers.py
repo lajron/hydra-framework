@@ -242,6 +242,36 @@ class KnowledgeCollectorTests(unittest.TestCase):
             )
             self.assertEqual(output.nodes[0]["node"], "demo")
 
+    def test_warm_cache_path_routing_matches_source_only_selection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths = paths_for(root)
+            write_node(paths, "demo", keywords=("demo",))
+            unit = write_unit(paths, "demo", "guide")
+            local = root / ".hydra-framework.local"
+            request = _request(
+                root,
+                paths=paths,
+                task="demo",
+                path_values=(unit.relative_to(root).as_posix(),),
+            )
+
+            with mock.patch("hydra_engine.knowledge.search_index.query_store_disabled", return_value=True):
+                source_output = context_providers.run_context_providers(request, include_families=("Knowledge",))
+
+            search_index.build_index(paths, _resolver_paths(root), local)
+            with mock.patch(
+                "hydra_engine.knowledge.context_support.search",
+                wraps=context_providers.context_support.search,
+            ) as search:
+                cached_output = context_providers.run_context_providers(request, include_families=("Knowledge",))
+
+            self.assertEqual(cached_output.nodes, source_output.nodes)
+            self.assertEqual(cached_output.candidates, source_output.candidates)
+            self.assertEqual(len(search.call_args_list), 2)
+            self.assertFalse(search.call_args_list[0].kwargs.get("force_source", False))
+            self.assertTrue(search.call_args_list[1].kwargs["force_source"])
+
 
 class RunContextProvidersTests(unittest.TestCase):
     def test_shared_search_runs_once_for_multiple_families(self):
@@ -256,6 +286,17 @@ class RunContextProvidersTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             output = context_providers.run_context_providers(_request(Path(tmp)), include_families=("not-real",))
             self.assertIn("Unknown context-provider family: not-real", output.warnings)
+
+    def test_unrelated_value_error_is_not_treated_as_cache_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            provider = context_providers.ContextProvider(
+                "Knowledge", lambda _request: (_ for _ in ()).throw(ValueError("unrelated"))
+            )
+            with mock.patch.dict(context_providers.PROVIDERS_BY_FAMILY, {"Knowledge": provider}):
+                with self.assertRaisesRegex(ValueError, "unrelated"):
+                    context_providers.run_context_providers(
+                        _request(Path(tmp), knowledge_snapshot=object()), include_families=("Knowledge",)
+                    )
 
 
 if __name__ == "__main__":

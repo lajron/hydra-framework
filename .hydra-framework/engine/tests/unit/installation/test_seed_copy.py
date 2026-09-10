@@ -32,6 +32,10 @@ def _source_root() -> Path:
     root = Path(tempfile.mkdtemp(prefix="seed-copy-source-"))
     _seed(root, "AI_SYSTEM.md", "# AI System\n")
     _seed(root, "AGENTS.md", "# AGENTS\n")
+    _seed(root, ".claude/rules/hydra-placement.md", "# Placement rule\n")
+    _seed(root, ".claude/settings.json", "{}\n")
+    _seed(root, ".codex/hooks.json", "{}\n")
+    _seed(root, ".github/CODEOWNERS", "* @local-reviewer\n")
     _seed(root, ".hydra-framework/core/placement-rules.md", "# Placement Rules\n")
     _seed(root, ".hydra-framework/tasks/templates/task.md", "# Task template\n")
     _seed(root, ".hydra-framework/tasks/templates/checkpoint.md", "# Checkpoint template\n")
@@ -69,6 +73,14 @@ class PlannedInitFilesTests(unittest.TestCase):
     def test_top_level_files_travel(self):
         self.assertIn("AI_SYSTEM.md", self.destinations)
         self.assertIn("AGENTS.md", self.destinations)
+
+    def test_portable_provider_support_files_travel(self):
+        self.assertIn(".claude/rules/hydra-placement.md", self.destinations)
+        self.assertIn(".claude/settings.json", self.destinations)
+        self.assertIn(".codex/hooks.json", self.destinations)
+
+    def test_repository_local_codeowners_does_not_travel(self):
+        self.assertNotIn(".github/CODEOWNERS", self.destinations)
 
     def test_task_templates_travel(self):
         self.assertIn(".hydra-framework/tasks/templates/task.md", self.destinations)

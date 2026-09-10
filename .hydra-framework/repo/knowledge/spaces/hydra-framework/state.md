@@ -20,7 +20,7 @@ provenance:
 
 # Hydra Framework Itself State
 
-Status: active. Updated: 2026-08-30.
+Status: active. Updated: 2026-09-10.
 
 ## Current Focus
 
@@ -29,6 +29,7 @@ build focus is recorded in this pointer.
 
 ## Last Handoff
 
-Revalidated the seven units reported by `hydra.py knowledge stale` after the
-legacy cleanup, corrected build-status counts, and aligned the adoption unit
-with its current validation procedure. Watch: routing v2 remains.
+Revalidated the seven affected framework units after reproducibility repairs to
+context routing, task resolution, restricted YAML handling, provider takeover,
+reclaim, installation, and export provenance. The current source fingerprints
+and clean knowledge-stale result are the handoff.

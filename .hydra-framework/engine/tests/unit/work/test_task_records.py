@@ -74,6 +74,46 @@ class TaskNameFromPathTests(unittest.TestCase):
         self.assertEqual(task_records.task_name_from_path(path), "token-efficiency-hooks")
 
 
+class ResolveTaskRecordTests(unittest.TestCase):
+    def _write(self, paths: WorkPaths, owner: str, filename: str) -> Path:
+        path = paths.owner_task_dir(owner) / filename
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("x\n", encoding="utf-8")
+        return path
+
+    def test_prefers_a_unique_caller_owned_name_match(self) -> None:
+        paths = _paths()
+        own = self._write(paths, "dana", "2026-01-01-example-task.md")
+        self._write(paths, "reed", "2026-01-02-example-task.md")
+        resolved, errors = task_records.resolve_task_record("Example Task!", paths, "dana")
+        self.assertEqual(resolved, own)
+        self.assertEqual(errors, [])
+
+    def test_allows_one_unique_global_match(self) -> None:
+        paths = _paths()
+        other = self._write(paths, "reed", "2026-01-01-example.md")
+        resolved, errors = task_records.resolve_task_record("example", paths, "dana")
+        self.assertEqual(resolved, other)
+        self.assertEqual(errors, [])
+
+    def test_multiple_matches_fail_with_candidate_paths(self) -> None:
+        paths = _paths()
+        first = self._write(paths, "dana", "2026-01-01-example.md")
+        second = self._write(paths, "dana", "2026-02-01-example.md")
+        resolved, errors = task_records.resolve_task_record("example", paths, "dana")
+        self.assertIsNone(resolved)
+        self.assertIn(task_records.display_path(first, paths.root), "\n".join(errors))
+        self.assertIn(task_records.display_path(second, paths.root), "\n".join(errors))
+        self.assertIn("Use an explicit task record path", errors[-1])
+
+    def test_explicit_repository_path_wins_over_name_fallback(self) -> None:
+        paths = _paths()
+        self._write(paths, "dana", "2026-01-01-example.md")
+        resolved, errors = task_records.resolve_task_record("example.md", paths, "dana")
+        self.assertIsNone(resolved)
+        self.assertEqual(errors, [f"Task not found: {paths.root / 'example.md'}"])
+
+
 class TaskSummaryTests(unittest.TestCase):
     def test_summarizes_status_updated_owner_and_goal(self) -> None:
         paths = _paths()

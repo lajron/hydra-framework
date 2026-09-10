@@ -1,7 +1,7 @@
 {
   "exit_code": 0,
   "manifest": {
-    ".claude/skills/deploy/SKILL.md": "29869ea1aa42a0e36a227046cd9b50e330afe44dcbec05965e474d8cd5cb5639",
+    ".claude/skills/deploy/SKILL.md": null,
     ".hydra-framework/README.md": "0de5f42b131305a48c4775ac871045712943998891b583e4381784801df42f4b",
     ".hydra-framework/adapters/providers/claude/capability-map.yaml": "b003af671c56a0420ad81e7ad9b88a94b6f78d330e086a7d8fd61f6e1b9e23b6",
     ".hydra-framework/adapters/providers/codex/capability-map.yaml": "b7477930e8b873de520503637055733760efabf4afe99e83739eda30ea03b632",

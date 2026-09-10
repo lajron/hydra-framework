@@ -111,7 +111,7 @@ class CommandTaskCheckpointTests(unittest.TestCase):
         task.parent.mkdir(parents=True)
         task.write_text("Status: active\n", encoding="utf-8")
         _git_add(paths, task)
-        args = _task_args(task)
+        args = _task_args(Path("x"))
         with mock.patch("hydra_engine.ports.clock.today", return_value="2026-01-02"):
             result, out = _run(work.command_task_checkpoint, args, paths, "dana", "")
         self.assertEqual(result.exit_code, 0)
@@ -160,7 +160,7 @@ class CommandTaskHandoffTests(unittest.TestCase):
         checkpoint = task.parent / "checkpoints" / "2026-01-02-x-checkpoint.md"
         checkpoint.parent.mkdir(parents=True)
         checkpoint.write_text("x\n", encoding="utf-8")
-        args = _task_args(task, to="reed")
+        args = _task_args(Path("x"), to="reed")
         with mock.patch("hydra_engine.ports.clock.today", return_value="2026-01-03"):
             result, out = _run(work.command_task_handoff, args, paths, "dana", "")
         self.assertEqual(result.exit_code, 0)
@@ -270,7 +270,7 @@ class CommandTaskCompleteTests(unittest.TestCase):
         task.parent.mkdir(parents=True)
         task.write_text("Owner: dana\n", encoding="utf-8")
         _git_add(paths, task)
-        args = _task_args(task, outcome="none")
+        args = _task_args(Path("x"), outcome="none")
         result, out = _run(work.command_task_complete, args, paths, "dana", "")
         self.assertEqual(result.exit_code, 0)
         self.assertFalse(task.exists())

@@ -41,7 +41,7 @@ def _all_paths() -> tuple[InstallationPaths, ProvidersPaths, ContextCompilerPath
 
 def _seed_required_paths(root: Path) -> None:
     for rel in adopt.REQUIRED_PATHS:
-        if rel.endswith((".md", ".yaml")):
+        if rel.endswith((".md", ".yaml", ".json")):
             _write(root, rel, "placeholder\n")
         else:
             (root / rel).mkdir(parents=True, exist_ok=True)

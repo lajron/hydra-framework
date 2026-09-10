@@ -12,8 +12,11 @@
     ".hydra-framework/tasks/templates/checkpoint.md": "25f014f86a8490b4c636b360b343e8d2a8cc818c68948a3d4d243d928b7c0d99",
     ".hydra-framework/tasks/templates/task.md": "32dd805b125370ccb27117f3984a894c773d0685fcd378aa6cbce3da715dba10",
     "AGENTS.md": "a52ae73fc0a471d277c57a8c65af99c0b3e814f984b2ead607c36d5115eb12bb",
-    "AI_SYSTEM.md": "5a1cc2ad0944ad277aa08fe46d44c654ef5fa0256d6ca91925a2af23d6dfa5d6"
+    "AI_SYSTEM.md": "5a1cc2ad0944ad277aa08fe46d44c654ef5fa0256d6ca91925a2af23d6dfa5d6",
+    ".claude/rules/hydra-placement.md": "1461a0ae466b8ce4b29ebfcbd2da77704306861dcf1d683b370e8104eb35b55e",
+    ".claude/settings.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+    ".codex/hooks.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
   },
   "stderr": "",
-  "stdout": "Hydra init: would copy 12 file(s) into <INIT_TARGET>\n- AI_SYSTEM.md\n- AGENTS.md\n- .hydra-framework/README.md\n- .hydra-framework/adapters/providers/claude/capability-map.yaml\n- .hydra-framework/adapters/providers/codex/capability-map.yaml\n- .hydra-framework/capabilities/agents/.gitkeep\n- .hydra-framework/capabilities/skills/.gitkeep\n- .hydra-framework/core/placement-rules.md\n- .hydra-framework/manifest.yaml\n- .hydra-framework/tasks/personal/.gitkeep\n- .hydra-framework/tasks/templates/checkpoint.md\n- .hydra-framework/tasks/templates/task.md\n"
+  "stdout": "Hydra init: would copy 15 file(s) into <INIT_TARGET>\n- AI_SYSTEM.md\n- AGENTS.md\n- .claude/rules/hydra-placement.md\n- .claude/settings.json\n- .codex/hooks.json\n- .hydra-framework/README.md\n- .hydra-framework/adapters/providers/claude/capability-map.yaml\n- .hydra-framework/adapters/providers/codex/capability-map.yaml\n- .hydra-framework/capabilities/agents/.gitkeep\n- .hydra-framework/capabilities/skills/.gitkeep\n- .hydra-framework/core/placement-rules.md\n- .hydra-framework/manifest.yaml\n- .hydra-framework/tasks/personal/.gitkeep\n- .hydra-framework/tasks/templates/checkpoint.md\n- .hydra-framework/tasks/templates/task.md\n"
 }

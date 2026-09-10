@@ -21,18 +21,18 @@ provenance:
     - ".hydra-framework/engine/src/hydra_engine/providers/capabilities.py"
     - ".hydra-framework/engine/src/hydra_engine/providers/adapter_plan.py"
   source_digests:
-    - source: ".hydra-framework/capabilities/skills/knowledge-unit/metadata.yaml"
-      digest: "sha256:38a2a5de779f73079ed7e782e1ce007188b27f04b7d377f63936993aa4302852"
-    - source: ".hydra-framework/adapters/providers/claude/README.md"
-      digest: "sha256:5d030b55f7a8859f7cfdd0f1447c367728f50a82102acbd10087f86a2e92c17e"
-    - source: ".hydra-framework/engine/src/hydra_engine/providers/capabilities.py"
-      digest: "sha256:56e3df1c20e6b5317dfadc964e614aa0818d1e639dee210b195e98e2789d33a6"
-    - source: ".hydra-framework/engine/src/hydra_engine/providers/adapter_plan.py"
-      digest: "sha256:da961602934435c1c19c1249d23a02e2f4bdb713359ba17ed1f9c19294ca2000"
+    - source: .hydra-framework/capabilities/skills/knowledge-unit/metadata.yaml
+      digest: sha256:7b8ef22df1d5d2fe6a0451bfc8196efaa1a7331e6ab8621d70f1894f1871b59c
+    - source: .hydra-framework/adapters/providers/claude/README.md
+      digest: sha256:1fe35b06c85cd4a1d576dd8cce94b5d649e421628c1924b1e82d5bbd28dd5677
+    - source: .hydra-framework/engine/src/hydra_engine/providers/capabilities.py
+      digest: sha256:56e3df1c20e6b5317dfadc964e614aa0818d1e639dee210b195e98e2789d33a6
+    - source: .hydra-framework/engine/src/hydra_engine/providers/adapter_plan.py
+      digest: sha256:da961602934435c1c19c1249d23a02e2f4bdb713359ba17ed1f9c19294ca2000
 question: "What must be true before a new Hydra skill or subagent ships?"
 group: "add-module"
 certainty: "confirmed"
-checked_on: "2026-08-30"
+checked_on: "2026-09-10"
 reads:
   - ".hydra-framework/capabilities/skills/knowledge-unit/metadata.yaml"
   - ".hydra-framework/adapters/providers/claude/README.md"

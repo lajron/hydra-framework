@@ -43,6 +43,25 @@ class TakeoverScanTests(unittest.TestCase):
         self.assertEqual(candidate["classification"], "hydra-owned")
         self.assertEqual(candidate["staging"]["route"], "do-not-stage")
 
+    def test_classifies_current_agents_entrypoint_through_hydra_system_target(self):
+        root = _root()
+        _write(root, "AGENTS.md", "# Shared Agent Instructions\n\nRead [`AI_SYSTEM.md`](AI_SYSTEM.md) first.\n")
+        _write(root, "AI_SYSTEM.md", "# Hydra Operating Contract\n\nUse `.hydra-framework/`.\n")
+        with mock.patch("hydra_engine.ports.git.tracked_files", return_value=["AGENTS.md"]):
+            with mock.patch("hydra_engine.ports.git.ignore_match", return_value=""):
+                result = takeover_scan.takeover_scan(root)
+        agents = next(item for item in result["candidates"] if item["path"] == "AGENTS.md")
+        self.assertEqual(agents["classification"], "hydra-owned")
+
+    def test_classifies_current_claude_entrypoint_through_agents_import_and_hydra_reference(self):
+        root = _root()
+        _write(root, "CLAUDE.md", "@AGENTS.md\n\nGenerated skills come from `.hydra-framework/capabilities/`.\n")
+        with mock.patch("hydra_engine.ports.git.tracked_files", return_value=["CLAUDE.md"]):
+            with mock.patch("hydra_engine.ports.git.ignore_match", return_value=""):
+                result = takeover_scan.takeover_scan(root)
+        candidate = result["candidates"][0]
+        self.assertEqual(candidate["classification"], "hydra-owned")
+
     def test_reuses_provider_reclaim_for_orphaned_surface(self):
         root = _root()
         _write(root, ".claude/skills/deploy/SKILL.md", "---\nname: deploy\n---\nBody.\n")
@@ -73,6 +92,17 @@ class TakeoverScanTests(unittest.TestCase):
             with mock.patch("hydra_engine.ports.git.ignore_match", return_value=""):
                 result = takeover_scan.takeover_scan(root)
         candidate = result["candidates"][0]
+        self.assertEqual(candidate["classification"], "needs-owner-decision")
+        self.assertEqual(candidate["staging"]["route"], "confirm-owner")
+
+    def test_top_level_prompts_need_owner_decision(self):
+        root = _root()
+        _write(root, "prompts/review.md", "Review this change.\n")
+        with mock.patch("hydra_engine.ports.git.tracked_files", return_value=["prompts/review.md"]):
+            with mock.patch("hydra_engine.ports.git.ignore_match", return_value=""):
+                result = takeover_scan.takeover_scan(root)
+        candidate = result["candidates"][0]
+        self.assertEqual(candidate["path"], "prompts")
         self.assertEqual(candidate["classification"], "needs-owner-decision")
         self.assertEqual(candidate["staging"]["route"], "confirm-owner")
 

@@ -17,14 +17,14 @@ provenance:
     - ".claude/rules/hydra-placement.md"
     - ".hydra-framework/engine/src/hydra_engine/providers/reclaim.py"
   source_digests:
-    - source: ".claude/rules/hydra-placement.md"
-      digest: "sha256:3522c1e540e2386350f08cf12041de6c273cf6f004dccd6757e9bf04e008c45e"
-    - source: ".hydra-framework/engine/src/hydra_engine/providers/reclaim.py"
-      digest: "sha256:baa75184a0117f85a7938581ca78a85a2ecb06261531f0c70b105ca4ce612a1a"
+    - source: .claude/rules/hydra-placement.md
+      digest: sha256:e8f71f3d481932d35cc2c4c6717431c8e1a2be43e47e17fb75c39b5ddc1c5236
+    - source: .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
+      digest: sha256:92c2c0e2af7afd6d566bb033f98e9e025b244a50d9cc8ceefcc42ae2b8df338d
 question: "How is an orphaned, drifted, or stale provider surface file fixed?"
 group: "fix-provider-surface"
 certainty: "confirmed"
-checked_on: "2026-08-30"
+checked_on: "2026-09-10"
 reads:
   - ".claude/rules/hydra-placement.md"
   - ".hydra-framework/engine/src/hydra_engine/providers/reclaim.py"
@@ -43,7 +43,11 @@ provenance sidecar -- promote it into the right canonical module directory),
 restore the source), or `drifted` (content no longer matches the plan --
 move the edit to the canonical source, never the generated wrapper). Fix in
 the canonical source, then confirm `hydra.py reclaim` and
-`export-adapters --check` are both clean.
+`export-adapters --check` are both clean. `reclaim --promote` is a safe move for
+an isolated provider-native module: after both canonical files are written it
+removes the original, and a retry only removes the original when canonical
+metadata names the same `promoted_from`. Use framework takeover and the material
+migration workflow for a broader legacy setup.
 
 ## Do Not Read By Default
 

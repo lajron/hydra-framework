@@ -52,6 +52,36 @@ def task_name_from_path(path: Path) -> str:
     return slugify(stem)
 
 
+def resolve_task_record(value: str, paths: WorkPaths, caller_owner: str) -> tuple[Path | None, list[str]]:
+    """Resolve the documented task `<name-or-path>` argument.
+
+    Path-shaped arguments retain exact path semantics. Bare names prefer one
+    caller-owned record before falling back to one unambiguous global match.
+    """
+    raw = value.strip()
+    candidate = Path(raw)
+    explicit_path = candidate.is_absolute() or len(candidate.parts) > 1 or candidate.suffix == ".md"
+    if explicit_path:
+        resolved = candidate if candidate.is_absolute() else paths.root / candidate
+        if resolved.exists():
+            return resolved, []
+        return None, [f"Task not found: {resolved}"]
+
+    slug = slugify(raw)
+    matches = [path for path in iter_personal_task_files(paths) if task_name_from_path(path) == slug]
+    owner_matches = [path for path in matches if personal_task_owner(path, paths) == caller_owner]
+    preferred = owner_matches if owner_matches else matches
+    if len(preferred) == 1:
+        return preferred[0], []
+    if len(preferred) > 1:
+        return None, [
+            f"Task name is ambiguous: {raw}",
+            *(f"- {display_path(path, paths.root)}" for path in preferred),
+            "Use an explicit task record path.",
+        ]
+    return None, [f"Task not found: {paths.root / candidate}"]
+
+
 def task_state_git_path(path: Path, paths: WorkPaths) -> str:
     return display_path(path, paths.root)
 

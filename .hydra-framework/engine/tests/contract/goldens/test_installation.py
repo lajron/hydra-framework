@@ -4,28 +4,38 @@ from __future__ import annotations
 
 import unittest
 
-from .fixtures import assert_golden, external_dir, git_init, run_golden
+from .fixtures import PORTABLE_PROVIDER_SUPPORT_FIXTURE, assert_golden, external_dir, git_init, run_golden
 
 
 class InstallationGoldenTests(unittest.TestCase):
     def test_init_happy_path(self):
         with external_dir() as target:
-            outcome = run_golden(["init", "--target", str(target)])
+            outcome = run_golden(
+                ["init", "--target", str(target)], extra_fixture=PORTABLE_PROVIDER_SUPPORT_FIXTURE
+            )
             assert_golden(self, "installation-init", outcome, stdout_replacements={str(target): "<INIT_TARGET>"})
 
     def test_init_dry_run(self):
         with external_dir() as target:
-            outcome = run_golden(["init", "--target", str(target), "--dry-run"])
+            outcome = run_golden(
+                ["init", "--target", str(target), "--dry-run"],
+                extra_fixture=PORTABLE_PROVIDER_SUPPORT_FIXTURE,
+            )
             assert_golden(self, "installation-init-dry-run", outcome, stdout_replacements={str(target): "<INIT_TARGET>"})
 
     def test_init_conflict_without_force_refuses(self):
         with external_dir({"AI_SYSTEM.md": "# Existing target copy\n"}) as target:
-            outcome = run_golden(["init", "--target", str(target)])
+            outcome = run_golden(
+                ["init", "--target", str(target)], extra_fixture=PORTABLE_PROVIDER_SUPPORT_FIXTURE
+            )
             assert_golden(self, "installation-init-conflict-refusal", outcome, stdout_replacements={str(target): "<INIT_TARGET>"})
 
     def test_init_force_overwrites_conflict(self):
         with external_dir({"AI_SYSTEM.md": "# Existing target copy\n"}) as target:
-            outcome = run_golden(["init", "--target", str(target), "--force"])
+            outcome = run_golden(
+                ["init", "--target", str(target), "--force"],
+                extra_fixture=PORTABLE_PROVIDER_SUPPORT_FIXTURE,
+            )
             assert_golden(self, "installation-init-force-overwrite", outcome, stdout_replacements={str(target): "<INIT_TARGET>"})
 
     def test_init_local_check(self):
@@ -47,13 +57,17 @@ class InstallationGoldenTests(unittest.TestCase):
     # / `test_missing_paths_reports_incomplete_copy`.
 
     def test_adopt_record_happy_path(self):
-        outcome = run_golden(["adopt", "--record", "--repo", "fixture-repo"])
+        outcome = run_golden(
+            ["adopt", "--record", "--repo", "fixture-repo"],
+            extra_fixture=PORTABLE_PROVIDER_SUPPORT_FIXTURE,
+        )
         assert_golden(self, "installation-adopt-record", outcome)
 
     def test_adopt_record_already_recorded(self):
         outcome = run_golden(
             ["adopt", "--record", "--repo", "fixture-repo"],
             extra_fixture={
+                **PORTABLE_PROVIDER_SUPPORT_FIXTURE,
                 ".hydra-framework/manifest.yaml": (
                     "schema: hydra-framework.manifest.v1\n"
                     "framework_name: hydra-framework\n"
@@ -71,11 +85,7 @@ class InstallationGoldenTests(unittest.TestCase):
         )
         assert_golden(self, "installation-adopt-record-already-recorded", outcome)
 
-    # `adopt --record`'s missing-required-paths refusal has no golden here:
-    # `BASE_FIXTURE` is deliberately the minimal tree that already satisfies
-    # every `REQUIRED_PATHS` entry (see `fixtures.py`'s own docstring), and
-    # `run_golden`'s `extra_fixture` can only add files, not remove one from
-    # underneath the base tree. Covered instead by
+    # `adopt --record`'s missing-required-paths refusal is covered by
     # `installation/test_adopt.py::RecordLineageTests.test_missing_required_paths_refuses`
     # and `commands/test_installation.py::CommandAdoptTests.test_record_missing_paths_refuses_on_stderr`.
 

@@ -15,17 +15,18 @@ Hydra spreads by copy: someone drops `.hydra-framework/` plus the entry files in
    - Run `hydra.py export-adapters` to generate skill and subagent wrappers.
    - Create or update the provider entry file (`CLAUDE.md`, `AGENTS.md`) so it imports `AGENTS.md` and stays small.
    - Add hook and permission wiring only for runtimes the team uses.
-5. Do not document the whole repository. Pick the one or two areas where AI work already repeats, and create a knowledge space for those only. Everything else stays undocumented until repeated use justifies it.
-6. Leave the host repository's existing docs in place. Treat them as source material to cite, not as content to migrate. Adoption is non-destructive. If the team later wants a source area cleared, that is a separate opt-in effort under `capabilities/workflows/material-migration.md`; name it as a follow-up rather than starting it here.
-7. Validate: `hydra.py doctor` and `hydra.py selftest`. Record the commands and results.
-8. Create a task record only if adoption will span more than one session.
+5. Create the host repository's own review mapping for `.hydra-framework/` and `project-wiki/` in `.github/CODEOWNERS` or the code host's equivalent. The seed does not copy reviewer identities between repositories.
+6. Do not document the whole repository. Pick the one or two areas where AI work already repeats, and create a knowledge space for those only. Everything else stays undocumented until repeated use justifies it.
+7. Leave the host repository's existing docs in place. Treat them as source material to cite, not as content to migrate. Adoption is non-destructive. If the team later wants a source area cleared, that is a separate opt-in effort under `capabilities/workflows/material-migration.md`; name it as a follow-up rather than starting it here.
+8. Validate: `hydra.py doctor` and `hydra.py selftest`. Record the commands and results.
+9. Create a task record only if adoption will span more than one session.
 
 ## Boundaries
 
 - Do not delete or rewrite the host repository's existing documentation, CI, or agent config.
 - Do not create knowledge spaces, wiki pages, or task records speculatively. Adoption should add the smallest working surface.
 - Do not copy provider secrets, machine paths, or personal settings into shared Hydra state.
-- If the host repository already has a different AI framework, report the overlap and ask before displacing anything.
+- If the host repository already has a different AI framework, report the overlap. Use the framework-takeover skill and material migration workflow only after the owner explicitly scopes the takeover.
 
 ## Output
 

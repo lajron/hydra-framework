@@ -500,7 +500,7 @@ objects:
   hydra://knowledge-slice/hydra-framework/state:
     uid: d67d16a2-0504-44a5-a1f9-5c6d435c355a
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/state.md
-    digest: sha256:3554ddddb71edfd21fe2189c41f08b76373da9a0c7abae05f94429879122fda3
+    digest: sha256:68f8a168d2ba30cfe06afc535c0fa304ef23f476e98729a1a94a665daca8ee17
     family: Knowledge
     kind: knowledge-slice
     status: active
@@ -728,7 +728,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/add-module:
     uid: 10219e6b-b5d9-43bc-9452-e77822d34184
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/add-module.md
-    digest: sha256:b7326effd7daa6117588c4d0b18be01ef0ef479787ae9e9e6e257142c19600b2
+    digest: sha256:694904bc2fd89bd9d8036d71e711424be33efac7ee6b307ba7829146cd53a0ab
     family: Knowledge
     kind: knowledge-unit
     status: active
@@ -748,7 +748,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/adopt-into-repo:
     uid: 24061c90-1f2c-496b-9bbf-6b7a8ddb1426
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/adopt-into-repo.md
-    digest: sha256:6ac0e4af37328f2cabdb253cb2aa5c28124fb75da286d281a32a487fc0eb31db
+    digest: sha256:bfc5a1cbb36705dee059e3b4de9404f3485d983ff3ed7ac91282ce8ef7002165
     family: Knowledge
     kind: knowledge-unit
     status: active
@@ -763,12 +763,13 @@ objects:
     provenance_sources:
       - .hydra-framework/capabilities/skills/adoption/skill.md
       - .hydra-framework/repo/knowledge/seed-reconciliation.md
+      - .hydra-framework/engine/src/hydra_engine/installation/seed_copy.py
       - .hydra-framework/engine/src/hydra_engine/installation/adopt.py
       - .hydra-framework/engine/src/hydra_engine/installation/host_detection.py
   hydra://knowledge-unit/hydra-framework/agent-export-trace:
     uid: 6261c72a-da1b-46f9-8474-dddc40b53430
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/agent-export-trace.md
-    digest: sha256:2e5d97446e4c0aca538fd4fda8caf5ebbadb40c56d1a57fe4f7a50bd84456564
+    digest: sha256:456c7f2868188a98d4e25b2950df073ffc2308d45ca316a0c38e57920f71785d
     family: Knowledge
     kind: knowledge-unit
     status: active
@@ -788,7 +789,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/build-status:
     uid: b01fff6c-38ac-4bde-92c3-98890aac83bb
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/build-status.md
-    digest: sha256:eca52b4fd34e1e183ecd1102790486f5612f1fb6cfd1b1eda8d7572bfdcd8085
+    digest: sha256:93523a8b87229524885a8904f0c15a8f590df6c4673917dcc2654b406c103819
     family: Knowledge
     kind: knowledge-unit
     status: active
@@ -808,7 +809,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/change-task-contract:
     uid: ef271cd9-2a76-4182-a180-5ee3d9f9d8aa
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/change-task-contract.md
-    digest: sha256:b20478227158104e2b5c7fec44128c66dfa9320232784e004604ac4924de5a93
+    digest: sha256:2fb21dc23dc7336c98a9e74c5cc50eddba8506500410ae216070230356f88d11
     family: Knowledge
     kind: knowledge-unit
     status: active
@@ -827,7 +828,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/fix-provider-surface:
     uid: dbde7a08-930b-4a00-a468-da79f87d2c9d
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/fix-provider-surface.md
-    digest: sha256:bc0e95606e1ee4249136148f37f240ce84bc9a24bc6998b3d6f015f7a4e8bd6b
+    digest: sha256:494f33bca71d4cd8257d480fa4bc3def8d243abc81eeb0b31cfd9ec7658b7a08
     family: Knowledge
     kind: knowledge-unit
     status: active
@@ -844,7 +845,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/reconcile-with-base:
     uid: d6ac00af-f26f-4a46-b189-284c6e91a910
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/reconcile-with-base.md
-    digest: sha256:9764fd903f918212c0e2628a22543cc953c01639fd794241ba4e57613d0dba17
+    digest: sha256:e93a1c324c967f0505a0caf4d1b3bfaa415a7d81ae303a09dde75169cfaa8f1e
     family: Knowledge
     kind: knowledge-unit
     status: active

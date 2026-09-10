@@ -21,18 +21,18 @@ provenance:
     - ".hydra-framework/engine/src/hydra_engine/providers/capabilities.py"
     - ".hydra-framework/engine/src/hydra_engine/providers/reclaim.py"
   source_digests:
-    - source: ".hydra-framework/capabilities/agents/orchestrator/metadata.yaml"
-      digest: "sha256:6578086c05679a94319cdd396d0e044cca011e87e8f0dd40999ed7534ef56357"
-    - source: ".hydra-framework/adapters/providers/claude/capability-map.yaml"
-      digest: "sha256:9b638dadb5c46bf962a95c06f22ea14c98ee43e014045ef41a837957df9c2324"
-    - source: ".hydra-framework/engine/src/hydra_engine/providers/capabilities.py"
-      digest: "sha256:56e3df1c20e6b5317dfadc964e614aa0818d1e639dee210b195e98e2789d33a6"
-    - source: ".hydra-framework/engine/src/hydra_engine/providers/reclaim.py"
-      digest: "sha256:baa75184a0117f85a7938581ca78a85a2ecb06261531f0c70b105ca4ce612a1a"
+    - source: .hydra-framework/capabilities/agents/orchestrator/metadata.yaml
+      digest: sha256:6578086c05679a94319cdd396d0e044cca011e87e8f0dd40999ed7534ef56357
+    - source: .hydra-framework/adapters/providers/claude/capability-map.yaml
+      digest: sha256:9b638dadb5c46bf962a95c06f22ea14c98ee43e014045ef41a837957df9c2324
+    - source: .hydra-framework/engine/src/hydra_engine/providers/capabilities.py
+      digest: sha256:56e3df1c20e6b5317dfadc964e614aa0818d1e639dee210b195e98e2789d33a6
+    - source: .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
+      digest: sha256:92c2c0e2af7afd6d566bb033f98e9e025b244a50d9cc8ceefcc42ae2b8df338d
 question: "How does one canonical agent's metadata become one generated Claude subagent, end to end?"
 group: "provider-export"
 certainty: "confirmed"
-checked_on: "2026-08-30"
+checked_on: "2026-09-10"
 reads:
   - ".hydra-framework/capabilities/agents/orchestrator/metadata.yaml"
   - ".hydra-framework/adapters/providers/claude/capability-map.yaml"

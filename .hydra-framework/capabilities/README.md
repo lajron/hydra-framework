@@ -32,8 +32,10 @@ model name in a canonical module.
 2. For a skill or agent, run `hydra.py export-adapters`.
 3. Run `hydra.py validate`.
 
-If you instead find a hand-authored file already sitting in a provider directory,
-run `hydra.py reclaim --promote` to bring it here, then review its metadata.
+If you instead find one isolated hand-authored skill or agent in a provider
+directory, run `hydra.py reclaim --promote` to move it here, then review its
+metadata. Route a broader legacy setup through the framework-takeover skill and
+`capabilities/workflows/material-migration.md`.
 
 ## Integrations And Plugins
 

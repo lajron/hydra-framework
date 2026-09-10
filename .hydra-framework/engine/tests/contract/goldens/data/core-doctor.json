@@ -21,7 +21,10 @@
     ".gitignore": "b8d575f5a84e89e0ec002e56cef7d962c894f7402366898d2ce5da21c769ac39",
     ".hydra-framework/repo/knowledge/state-tiers.md": "34b8a53d2362965b93aa3fed14b29c45afbea5ee1971c7a89af538b453f17228",
     ".hydra-framework/config/delegation-policy.yaml": "28800c8f9d533f1a6fb4204d29a7cfb626fe4a5e43bfdbe9fce851d3af894c48",
-    ".hydra-framework/config/engine-policy.yaml": "6c56f73ccae04ea41b26987594c8e3f9eed69be4496e64e5b7613e1c5fc5e3d0"
+    ".hydra-framework/config/engine-policy.yaml": "6c56f73ccae04ea41b26987594c8e3f9eed69be4496e64e5b7613e1c5fc5e3d0",
+    ".claude/rules/hydra-placement.md": "1461a0ae466b8ce4b29ebfcbd2da77704306861dcf1d683b370e8104eb35b55e",
+    ".claude/settings.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+    ".codex/hooks.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
   },
   "stderr": "",
   "stdout": "Hydra doctor: core paths present\nActive task records: none tracked\nOwner: UNRESOLVED. Set `git config user.email` or HYDRA_OWNER before `task start`.\nPrivate tier:\n- gitignore rule: present\n- ignored by Git: yes\n- directory: absent\n- seeded areas: 23 missing\nNote: private tier directory is absent; run `hydra.py init-local` to seed it.\nCache lifecycle:\n- git hooks installed: no\n  hint: run `hydra.py install-hooks` for optional per-clone refresh hooks.\n- knowledge.db: missing\n  hint: run `hydra.py hook-reindex-knowledge` to build or refresh it.\n- object-store.db: missing\n  hint: run `hydra.py ref store rebuild` to build or refresh it.\nNote: no provider surfaces found. Run `hydra.py export-adapters` when adapters are needed.\nNote: no lineage recorded. Run `hydra.py adopt --record` in an adopting repository.\nHydra validate: ok\nnote: provider `claude` cannot mechanically enforce delegation controls: generic-subagent-start-context, max-active-workers, max-depth\nnote: provider `codex` cannot mechanically enforce delegation controls: generic-subagent-start-context, max-active-workers, max-depth\n"

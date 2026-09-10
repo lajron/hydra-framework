@@ -29,6 +29,11 @@ NODE_STATE_PRIORITY = 10
 NODE_OVERVIEW_PRIORITY = 20
 
 
+def _hydration_mismatch_type():
+    """Load the cache-mismatch subtype without widening static fan-out."""
+    return __import__("hydra_engine.knowledge.storage", fromlist=("HydrationMismatch",)).HydrationMismatch
+
+
 @dataclasses.dataclass(frozen=True)
 class ProviderRequest:
     task: str
@@ -82,10 +87,9 @@ def _collect_knowledge(request: ProviderRequest) -> ProviderOutput:
             # locator schema intentionally does not duplicate node bindings,
             # so use the one canonical snapshot rather than guessing.
             if snapshot.cached and request.path_values:
-                mismatch = __import__("hydra_engine.knowledge.storage", fromlist=("HydrationMismatch",)).HydrationMismatch
-                raise mismatch("path routing requires canonical binding snapshot")
+                raise _hydration_mismatch_type()("path routing requires canonical binding snapshot")
     except (OSError, ValueError) as error:
-        if error.__class__.__name__ == "HydrationMismatch":
+        if isinstance(error, _hydration_mismatch_type()):
             raise
         return ProviderOutput(warnings=[f"Knowledge v3 discovery failed: {error}"])
     by_node_id = {node.logical_id: node for node in nodes}
@@ -283,6 +287,7 @@ def _matched_families(values: tuple[str, ...]) -> tuple[set[str], list[str]]:
 def run_context_providers(
     request: ProviderRequest, *, include_families: tuple[str, ...] = (), exclude_families: tuple[str, ...] = (),
 ) -> ProviderOutput:
+    hydration_mismatch = _hydration_mismatch_type()
     warnings: list[str] = []
     included, unknown_included = _matched_families(include_families)
     excluded, unknown_excluded = _matched_families(exclude_families)
@@ -302,7 +307,7 @@ def run_context_providers(
         try:
             snapshot = open_knowledge_snapshot(request.paths, default_db_path(request.resolver_paths.local), _source)
         except ValueError as error:
-            if error.__class__.__name__ != "HydrationMismatch":
+            if not isinstance(error, hydration_mismatch):
                 raise
             results, _features, _source = context_support.search(
                 request.task, paths=request.paths, resolver_paths=request.resolver_paths,
@@ -323,12 +328,11 @@ def run_context_providers(
     for family in active:
         try:
             output = PROVIDERS_BY_FAMILY[family].collect(request)
-        except HydrationMismatch:
+        except hydration_mismatch:
             # Never combine a partially hydrated cache graph with source
             # values.  Re-run the complete provider operation from one
             # canonical snapshot, including shared search candidates.
-            from hydra_engine.knowledge.search_index import search
-            results, _features, _source = search(
+            results, _features, _source = context_support.search(
                 request.task, paths=request.paths, resolver_paths=request.resolver_paths,
                 local=request.resolver_paths.local, command_ids=request.command_ids,
                 path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT, force_source=True,

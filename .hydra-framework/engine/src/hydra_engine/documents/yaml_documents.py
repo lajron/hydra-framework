@@ -84,6 +84,9 @@ def parse_yaml_text(text: str, path: Path, root: Path) -> dict:
             if text == "-":
                 raise HydraYamlError(f"{display_path(path, root)}:{number}: empty list items are not supported")
             value = text[2:].strip()
+            if value in {"[]", "{}"}:
+                container.append([] if value == "[]" else {})
+                continue
             match = LIST_ITEM_KEY_RE.match(value)
             if match:
                 item: dict = {}

@@ -21,18 +21,18 @@ provenance:
     - ".hydra-framework/engine/src/hydra_engine/commands/seed.py"
     - ".hydra-framework/engine/src/hydra_engine/seed/fingerprints.py"
   source_digests:
-    - source: ".hydra-framework/capabilities/skills/seed-reconciliation/skill.md"
-      digest: "sha256:ac1e1db96a1fe2b2dcd5ed2cbee8317a7d204966e7b2822f92e2591d8f641f92"
-    - source: ".hydra-framework/repo/knowledge/seed-reconciliation.md"
-      digest: "sha256:fd9145bb356e8733c62ecfcbf55c418add75794eb2f65768411bf849d05958b6"
-    - source: ".hydra-framework/engine/src/hydra_engine/commands/seed.py"
-      digest: "sha256:44273e680807679a3d1809917cd79252c0b73f3002918893dabde8b511870325"
-    - source: ".hydra-framework/engine/src/hydra_engine/seed/fingerprints.py"
-      digest: "sha256:c1f85e290f3f7a74eed545f816000476466538941ee0be673f6867c217faf2bf"
+    - source: .hydra-framework/capabilities/skills/seed-reconciliation/skill.md
+      digest: sha256:637cf16513cc36721dfb4dc3721c0bb8006e07de078ca3b05b95a2e8380f21f1
+    - source: .hydra-framework/repo/knowledge/seed-reconciliation.md
+      digest: sha256:1f1f42930cb7d7e8df659ef42ac4a2a84ae6f1b21ea33621c285a834026c937d
+    - source: .hydra-framework/engine/src/hydra_engine/commands/seed.py
+      digest: sha256:44273e680807679a3d1809917cd79252c0b73f3002918893dabde8b511870325
+    - source: .hydra-framework/engine/src/hydra_engine/seed/fingerprints.py
+      digest: sha256:c1f85e290f3f7a74eed545f816000476466538941ee0be673f6867c217faf2bf
 question: "How is a diverged Hydra copy compared against its base seed?"
 group: "reconcile-with-base"
 certainty: "confirmed"
-checked_on: "2026-08-30"
+checked_on: "2026-09-10"
 reads:
   - ".hydra-framework/capabilities/skills/seed-reconciliation/skill.md"
   - ".hydra-framework/engine/src/hydra_engine/commands/seed.py"

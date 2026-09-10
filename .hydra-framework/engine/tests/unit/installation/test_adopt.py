@@ -37,7 +37,7 @@ def _all_paths() -> tuple[InstallationPaths, ProvidersPaths, ContextCompilerPath
 
 def _seed_required_paths(root: Path) -> None:
     for rel in adopt.REQUIRED_PATHS:
-        if rel.endswith((".md", ".yaml")):
+        if rel.endswith((".md", ".yaml", ".json")):
             _write(root, rel, "placeholder\n")
         else:
             (root / rel).mkdir(parents=True, exist_ok=True)
@@ -59,7 +59,7 @@ class AdoptionReportTests(unittest.TestCase):
         self.assertIn("private_tier", report)
         self.assertEqual(report["host_stacks"], {})
         self.assertFalse(report["claude_md_present"])
-        self.assertFalse(report["settings_json_present"])
+        self.assertTrue(report["settings_json_present"])
         self.assertEqual(report["knowledge_nodes"], [])
         self.assertEqual(report["unmanaged_surfaces"], [])
 

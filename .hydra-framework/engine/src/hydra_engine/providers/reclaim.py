@@ -110,6 +110,14 @@ def promote_surface(paths: ProvidersPaths, item: dict[str, str]) -> Path | None:
     body_name = "agent.md" if kind == "agent" else "skill.md"
     target = target_dir / body_name
     if target.exists():
+        metadata_path = target_dir / "metadata.yaml"
+        try:
+            promoted_from = yaml_str(parse_yaml(metadata_path, paths.root).get("promoted_from"))
+        except HydraYamlError:
+            promoted_from = ""
+        if promoted_from == item["path"]:
+            source.unlink()
+            return target
         return None
 
     text = read_text(source)
@@ -154,6 +162,7 @@ def promote_surface(paths: ProvidersPaths, item: dict[str, str]) -> Path | None:
             metadata.extend(f"  - {part.strip()}" for part in tools.split(",") if part.strip())
     write_text(target, body if body.endswith("\n") else f"{body}\n")
     write_text(target_dir / "metadata.yaml", "\n".join(metadata) + "\n")
+    source.unlink()
     return target
 
 

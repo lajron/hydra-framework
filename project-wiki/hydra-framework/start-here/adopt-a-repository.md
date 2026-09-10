@@ -32,10 +32,12 @@ When the preview is correct, apply the copy:
 python3 .hydra-framework/scripts/hydra.py init --target /path/to/target-repository
 ```
 
-The copy includes the framework definition and entry files, but not the source
-repository's personal task records. It also seeds the target's ignored private
-tier. `--force` overwrites conflicting copied files, so use it only after the
-target and conflicts have been deliberately reviewed.
+The copy includes the framework definition, entry files, Claude placement rule
+and settings, and Codex hooks, but not the source repository's personal task
+records. It also seeds the target's ignored private tier. It deliberately does
+not copy `.github/CODEOWNERS`, because reviewer identities belong to the target
+repository. `--force` overwrites conflicting copied files, so use it only after
+the target and conflicts have been deliberately reviewed.
 
 ## 2. Inspect And Record The Adoption
 
@@ -57,6 +59,10 @@ python3 .hydra-framework/scripts/hydra.py adopt --record --repo <repository-slug
 The lineage stamp lets later seed comparison distinguish intentional local
 adaptation from unexplained drift. The command reports an existing lineage
 without rewriting it.
+
+Create a target-local `.github/CODEOWNERS` mapping (or the code host's
+equivalent) for `.hydra-framework/` and `project-wiki/` using reviewers who own
+those areas in the target repository.
 
 ## 3. Wire Only The Provider Surfaces In Use
 

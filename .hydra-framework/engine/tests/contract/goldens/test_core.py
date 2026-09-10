@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from .fixtures import CAPABILITY_CALLERS_FIXTURE, CONFIG_POLICY_FIXTURE, PRIVATE_TIER_SHAPE_FIXTURE, PROVIDER_CAPABILITY_MAPS_FIXTURE, assert_golden, git_init, run_golden
+from .fixtures import CAPABILITY_CALLERS_FIXTURE, CONFIG_POLICY_FIXTURE, PORTABLE_PROVIDER_SUPPORT_FIXTURE, PRIVATE_TIER_SHAPE_FIXTURE, PROVIDER_CAPABILITY_MAPS_FIXTURE, assert_golden, git_init, run_golden
 
 _SCRIPTS_DIR = Path(__file__).resolve().parents[3] / "scripts"
 if str(_SCRIPTS_DIR) not in sys.path:
@@ -25,6 +25,7 @@ class CoreGoldenTests(unittest.TestCase):
             ".gitignore": ".hydra-framework.local/\n",
             ".hydra-framework/repo/knowledge/state-tiers.md": PRIVATE_TIER_SHAPE_FIXTURE,
             ".hydra-framework/validation/capability-callers.yaml": CAPABILITY_CALLERS_FIXTURE,
+            **PORTABLE_PROVIDER_SUPPORT_FIXTURE,
             **CONFIG_POLICY_FIXTURE,
             **PROVIDER_CAPABILITY_MAPS_FIXTURE,
         }, pre_run=git_init)

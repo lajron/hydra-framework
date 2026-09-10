@@ -20,16 +20,16 @@ provenance:
     - ".hydra-framework/engine/src/hydra_engine/checks/task_contract_docs.py"
     - ".hydra-framework/tasks/templates/task.md"
   source_digests:
-    - source: ".hydra-framework/capabilities/workflows/task-lifecycle.md"
-      digest: "sha256:f940677c62f474a37a049353de60d2a953edf18e5d042c3f228da855a232dd26"
-    - source: ".hydra-framework/engine/src/hydra_engine/checks/task_contract_docs.py"
-      digest: "sha256:df0318e92911a167bb38d49ac9380c4ed51f937ce42b11190a783dc9971daed7"
-    - source: ".hydra-framework/tasks/templates/task.md"
-      digest: "sha256:32dd805b125370ccb27117f3984a894c773d0685fcd378aa6cbce3da715dba10"
+    - source: .hydra-framework/capabilities/workflows/task-lifecycle.md
+      digest: sha256:1c35730d9c438c2508d2d9a91cbefa268d02c862ac6188b40a307acf87cee672
+    - source: .hydra-framework/engine/src/hydra_engine/checks/task_contract_docs.py
+      digest: sha256:df0318e92911a167bb38d49ac9380c4ed51f937ce42b11190a783dc9971daed7
+    - source: .hydra-framework/tasks/templates/task.md
+      digest: sha256:32dd805b125370ccb27117f3984a894c773d0685fcd378aa6cbce3da715dba10
 question: "What three places must agree when a required task-record field changes?"
 group: "change-task-contract"
 certainty: "confirmed"
-checked_on: "2026-08-30"
+checked_on: "2026-09-10"
 reads:
   - ".hydra-framework/capabilities/workflows/task-lifecycle.md"
   - ".hydra-framework/engine/src/hydra_engine/checks/task_contract_docs.py"

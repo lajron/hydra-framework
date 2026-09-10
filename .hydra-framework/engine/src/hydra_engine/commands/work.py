@@ -16,6 +16,7 @@ from hydra_engine.work.owners import HydraOwnerError, resolve_owner
 from hydra_engine.work.task_records import (
     append_state_line,
     prune_empty_owner_dir,
+    resolve_task_record,
     stage_task_state_file,
     task_owner_write_refusal_lines,
     task_outcome_refusal_lines,
@@ -78,11 +79,10 @@ def command_task_start(args, paths: WorkPaths, env_owner: str, git_email: str) -
 
 def command_task_checkpoint(args, paths: WorkPaths, env_owner: str, git_email: str) -> CommandResult:
     caller_owner = resolve_owner(args.owner, env_owner, git_email)
-    task = Path(args.task)
-    if not task.is_absolute():
-        task = paths.root / task
-    if not task.exists():
-        print(f"Task not found: {task}")
+    task, resolution_lines = resolve_task_record(args.task, paths, caller_owner)
+    if task is None:
+        for line in resolution_lines:
+            print(line)
         return CommandResult(1)
     if not _task_owner_write_allowed(task, paths, caller_owner, args.force):
         return CommandResult(1)
@@ -111,11 +111,10 @@ def command_task_checkpoint(args, paths: WorkPaths, env_owner: str, git_email: s
 
 def command_task_handoff(args, paths: WorkPaths, env_owner: str, git_email: str) -> CommandResult:
     caller_owner = resolve_owner(args.owner, env_owner, git_email)
-    task = Path(args.task)
-    if not task.is_absolute():
-        task = paths.root / task
-    if not task.exists():
-        print(f"Task not found: {task}")
+    task, resolution_lines = resolve_task_record(args.task, paths, caller_owner)
+    if task is None:
+        for line in resolution_lines:
+            print(line)
         return CommandResult(1)
     if not _task_owner_write_allowed(task, paths, caller_owner, args.force):
         return CommandResult(1)
@@ -152,11 +151,10 @@ def command_task_handoff(args, paths: WorkPaths, env_owner: str, git_email: str)
 
 def command_task_complete(args, paths: WorkPaths, env_owner: str, git_email: str) -> CommandResult:
     caller_owner = resolve_owner(args.owner, env_owner, git_email)
-    task = Path(args.task)
-    if not task.is_absolute():
-        task = paths.root / task
-    if not task.exists():
-        print(f"Task not found: {task}")
+    task, resolution_lines = resolve_task_record(args.task, paths, caller_owner)
+    if task is None:
+        for line in resolution_lines:
+            print(line)
         return CommandResult(1)
     if not _task_owner_write_allowed(task, paths, caller_owner, args.force):
         return CommandResult(1)

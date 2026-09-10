@@ -83,6 +83,29 @@ class ParseYamlTests(unittest.TestCase):
         path = self.write("quoted.yaml", 'hint: "[start|stop] [name]"\n')
         self.assertEqual(yaml_documents.parse_yaml(path, root)["hint"], "[start|stop] [name]")
 
+    def test_empty_flow_collections_are_preserved(self):
+        root = Path(tempfile.mkdtemp(prefix="yaml-documents-root-"))
+        path = self.write("empty.yaml", "items: []\noptions: {}\nnested:\n  - []\n  - {}\n")
+        self.assertEqual(
+            yaml_documents.parse_yaml(path, root),
+            {"items": [], "options": {}, "nested": [[], {}]},
+        )
+
+    def test_rejects_non_empty_flow_collections(self):
+        root = Path(tempfile.mkdtemp(prefix="yaml-documents-root-"))
+        for content in ["items: [one, two]\n", "options: {one: two}\n", "items:\n  - [one, two]\n"]:
+            path = self.write("flow.yaml", content)
+            with self.assertRaisesRegex(yaml_documents.HydraYamlError, "non-empty YAML flow collections"):
+                yaml_documents.parse_yaml(path, root)
+
+    def test_quoted_flow_collection_text_remains_a_scalar(self):
+        root = Path(tempfile.mkdtemp(prefix="yaml-documents-root-"))
+        path = self.write("quoted-flow.yaml", 'list_text: "[one, two]"\nmap_text: "{one: two}"\n')
+        self.assertEqual(
+            yaml_documents.parse_yaml(path, root),
+            {"list_text": "[one, two]", "map_text": "{one: two}"},
+        )
+
     def test_glob_values_are_not_mistaken_for_aliases(self):
         root = Path(tempfile.mkdtemp(prefix="yaml-documents-root-"))
         path = self.write("glob.yaml", "allowed_tools: Bash(hydra.py task *)\npattern: '*.ts'\n")

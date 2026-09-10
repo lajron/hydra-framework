@@ -188,6 +188,12 @@ Records live in `tasks/personal/<owner>/`. The owner slug resolves from
 rather than a default, because a default owner is how several people end up
 writing into one directory.
 
+For checkpoint, handoff, and complete, a path-shaped argument is used exactly.
+A bare name is slugified and prefers one caller-owned task; when there is no
+caller-owned match, one unique global match is allowed and the normal ownership
+check still applies. Ambiguous names print every candidate and require an
+explicit path.
+
 `board` is computed from the records on each run and never stored, so it cannot
 disagree with them. `complete` deletes the record — Git history is the archive,
 and `--outcome` forces the question of where the durable meaning went.

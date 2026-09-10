@@ -41,6 +41,9 @@ from hydra_engine.providers.reclaim import classify_surfaces
 REQUIRED_PATHS = [
     "AI_SYSTEM.md",
     "AGENTS.md",
+    ".claude/rules/hydra-placement.md",
+    ".claude/settings.json",
+    ".codex/hooks.json",
     ".hydra-framework/README.md",
     ".hydra-framework/manifest.yaml",
     ".hydra-framework/core/placement-rules.md",

@@ -35,6 +35,7 @@ may name takeover as a follow-up, but it does not start one.
    | Cursor | `.cursor/`, `.cursorrules` |
    | Windsurf | `.windsurf/`, `.windsurfrules` |
    | Copilot | `.github/copilot-instructions.md` |
+   | Prompts | `prompts/` |
    | Docs | `docs/ai/`, `docs/agents/` |
 
    A raw marker is not enough. Hydra's generated adapter surfaces intentionally
@@ -47,7 +48,8 @@ may name takeover as a follow-up, but it does not start one.
    - `Foreign entrypoint`: `CLAUDE.md`, `AGENTS.md`, or similar root rule files
      that are not this repository's thin Hydra adapter shape.
    - `Needs owner decision`: settings, ignored files, local config, secrets-like
-     names, or anything whose ownership cannot be decided by shape alone.
+     names, top-level `prompts/`, or anything whose ownership cannot be decided
+     by shape alone.
 
    Report every candidate root and classification before proceeding.
 

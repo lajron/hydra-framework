@@ -79,6 +79,11 @@ writes no state.
 People add skills and subagents where their runtime expects them, not where
 Hydra wants them. That is the expected failure mode, not misuse.
 
+Use reclaim for an isolated provider-native skill or agent. If it belongs to a
+broader legacy agentic setup, use the framework-takeover skill and
+`capabilities/workflows/material-migration.md` so related material is drained
+together.
+
 ```bash
 python3 .hydra-framework/scripts/hydra.py reclaim            # classify
 python3 .hydra-framework/scripts/hydra.py reclaim --promote  # move into canonical Hydra
@@ -88,4 +93,5 @@ python3 .hydra-framework/scripts/hydra.py export-adapters    # regenerate
 Classification is `generated`, `drifted` (wrapper edited instead of its source),
 `orphaned` (hand-authored, no canonical source), or `stale` (canonical source
 gone). Promoted modules are marked `scope: repo-local` and `certainty: inferred`
-and need review.
+and need review. A successful promotion removes the provider-native source;
+`export-adapters` then recreates the generated wrapper from canonical Hydra.

@@ -6,7 +6,14 @@ from pathlib import Path
 
 from hydra_engine.knowledge.distribution import should_distribute_path
 
-INIT_SOURCES = ["AI_SYSTEM.md", "AGENTS.md", ".hydra-framework"]
+INIT_SOURCES = [
+    "AI_SYSTEM.md",
+    "AGENTS.md",
+    ".claude/rules/hydra-placement.md",
+    ".claude/settings.json",
+    ".codex/hooks.json",
+    ".hydra-framework",
+]
 
 
 def init_should_copy(rel: Path, source_root: Path | None = None, distribution_profile: str = "base") -> bool:
