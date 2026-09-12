@@ -66,7 +66,8 @@ Provider token names are mapped to canonical fields: `cached_input_tokens` to
 `cache_creation_tokens`. Transcript paths, rows, and raw hook payloads are not
 stored in telemetry rows.
 
-Verified against Codex CLI 0.149.1 documentation on 2026-08-26:
+The hook behavior was last verified against Codex CLI 0.149.1 documentation on
+2026-08-26:
 `PostToolUse` covers Bash and unified exec, runs for non-zero Bash exits, and
 supports `continue: false`, `stopReason`, `decision: "block"`, and
 `hookSpecificOutput.additionalContext` for feedback. Provider, model,
@@ -74,3 +75,10 @@ authentication, and personal runtime settings still belong in user-local config
 or `.hydra-framework.local/`. Local Codex CLI 0.150.1 session rows on
 2026-08-28 expose token counts through `token_count.info.last_token_usage`; Hydra
 uses that shape only as an aggregate input and never as a raw telemetry row.
+
+The local Codex runtime used for the current adapter check reports
+`codex-cli 0.154.0` on 2026-09-12. The capability map records that as
+`provider_version`, while its `verified` date remains the last compatibility
+check for the mapped behavior. A newer runtime version does not silently make
+older compatibility evidence current; `hydra.py doctor` and `hydra.py validate`
+flag evidence older than 30 days for rechecking.

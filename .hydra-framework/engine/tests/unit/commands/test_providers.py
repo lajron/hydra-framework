@@ -52,6 +52,39 @@ def _paths_with_profiles() -> ProvidersPaths:
     return paths
 
 
+class ProviderVerificationTests(unittest.TestCase):
+    def test_reports_runtime_and_flags_old_compatibility_evidence(self):
+        root = Path(tempfile.mkdtemp(prefix="commands-provider-verification-"))
+        _write(
+            root,
+            ".hydra-framework/adapters/providers/codex/capability-map.yaml",
+            "schema: hydra-framework.capability-map.v1\n"
+            "provider: codex\n"
+            "runtime: codex-cli\n"
+            "provider_version: 0.154.0\n"
+            "verified: 2026-07-30\n",
+        )
+        paths = ProvidersPaths(root=root, hydra=root / ".hydra-framework")
+
+        notes = providers.provider_verification_notes(paths, "2026-09-12")
+
+        self.assertEqual(len(notes), 1)
+        self.assertIn("codex-cli 0.154.0", notes[0])
+        self.assertIn("compatibility verified 2026-07-30", notes[0])
+        self.assertIn("44 days old; recheck provider compatibility", notes[0])
+
+    def test_invalid_verification_dates_do_not_break_health_reporting(self):
+        root = Path(tempfile.mkdtemp(prefix="commands-provider-verification-invalid-"))
+        _write(
+            root,
+            ".hydra-framework/adapters/providers/codex/capability-map.yaml",
+            "schema: hydra-framework.capability-map.v1\nprovider: codex\nverified: fixture\n",
+        )
+        paths = ProvidersPaths(root=root, hydra=root / ".hydra-framework")
+
+        self.assertEqual(providers.provider_verification_notes(paths, "2026-09-12"), [])
+
+
 class CommandExportAdaptersTests(unittest.TestCase):
     def test_dry_run_reports_creates_without_writing(self):
         paths = _paths_with_one_skill()

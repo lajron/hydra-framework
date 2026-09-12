@@ -1,6 +1,7 @@
 schema: hydra-framework.capability-map.v1
 provider: codex
-runtime: codex-cli 0.146.0
+runtime: codex-cli
+provider_version: 0.154.0
 verified: 2026-07-30
 certainty: confirmed
 source: https://learn.chatgpt.com/docs/agent-configuration/subagents.md
@@ -43,6 +44,7 @@ delegation_controls:
   max_depth: advisory
 
 notes:
-  - Reasoning levels low, medium, high, xhigh, max, and ultra were confirmed in the Codex 0.146.0 model catalog on 2026-07-30.
+  - Reasoning levels low, medium, high, xhigh, max, and ultra were confirmed in the Codex 0.146.0 model catalog on 2026-07-30; `provider_version` records the newer locally observed runtime separately.
+  - `verified` is the last compatibility verification date, not the framework build date. A newer `provider_version` makes this evidence due for recheck.
   - Do not copy the Claude map here. Provider runtimes differ.
   - Hydra treats `unresolved` as "no mapping"; exporters omit the field entirely.

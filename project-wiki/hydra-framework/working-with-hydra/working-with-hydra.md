@@ -67,5 +67,6 @@ python3 .hydra-framework/scripts/hydra.py validate
 ```
 
 Record the exact result in the task state when a task record exists. The
+[Task Lifecycle](/project-wiki/hydra-framework/working-with-hydra/task-lifecycle.md)
 defines continuation and completion; the [Documentation Authoring](/project-wiki/hydra-framework/reference/documentation-authoring.md)
 page defines the wiki's citation and validation boundary.

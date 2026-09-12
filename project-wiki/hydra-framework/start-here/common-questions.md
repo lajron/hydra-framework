@@ -30,9 +30,10 @@ surface. See the [Public Positioning Brief](/project-wiki/hydra-framework/refere
 ## Getting Started Today
 
 **I just cloned this repository. What do I run?**
-`python3 .hydra-framework/scripts/hydra.py init-local` to seed your private
-tier, then `hydra.py doctor` to check your clone is healthy. See the root
-[README.md](/README.md).
+Run the fresh-clone sequence from the root [README.md](/README.md):
+`init-local`, then `export-adapters`, then `doctor`. Generated provider
+adapters are ignored by Git, so exporting them is required before a provider
+session or `doctor` check. `install-hooks` is optional.
 
 **I'm new to the team. Where do I start reading?**
 [Working With Hydra](/project-wiki/hydra-framework/working-with-hydra/working-with-hydra.md) is the practical

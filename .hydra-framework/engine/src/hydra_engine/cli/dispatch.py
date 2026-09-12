@@ -137,6 +137,7 @@ def _advisory_notes(ctx: RepoContext) -> list[str]:
     notes += reflections.reflection_queue_notes(ctx.hydra / "evolution" / "reflections", ctx.root, today, t("hydra_engine.seed.reflections.STALE_REFLECTION_DAYS"), t("hydra_engine.seed.reflections.REFLECTION_QUEUE_DEPTH_NOTE"))
     notes += candidate_queue.candidate_queue_notes(ctx.hydra / "evolution" / "candidates", ctx.root, today, t("hydra_engine.seed.candidate_queue.STALE_PROPOSED_CANDIDATE_DAYS"))
     notes += telemetry_evidence.telemetry_evidence_notes(ctx.hydra / "repo" / "telemetry" / "packages", ctx.root, ctx.hydra, today, t("hydra_engine.telemetry.evidence.STALE_OPEN_TELEMETRY_EVIDENCE_DAYS"), t("hydra_engine.telemetry.evidence.TELEMETRY_EVIDENCE_QUEUE_DEPTH_NOTE"))
+    notes += providers.provider_verification_notes(ctx.providers_paths(), today)
     # Append-only state is
     # never compacted, so these are the only place its growth surfaces.
     notes += retry_state.retry_state_growth_notes(ctx.agent_hooks_paths(), t("hydra_engine.agent_hooks.retry_state.RETRY_STATE_GROWTH_ADVISORY_LINES"))

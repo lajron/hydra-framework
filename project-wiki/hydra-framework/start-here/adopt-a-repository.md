@@ -83,6 +83,11 @@ for the runtimes the team actually uses. Keep provider entry files small and
 leave existing provider configuration in place unless a separately scoped
 migration or takeover calls for a change.
 
+Before enabling the target's provider sessions, review the [Hydra trust
+boundary](/README.md#trust-model). Provider hooks execute the copied
+repository-owned `hydra.py`; this is an explicit trust decision, separate from
+the optional Git hooks installed in the next step.
+
 ## 4. Validate The Result
 
 Run both checks in the target repository:

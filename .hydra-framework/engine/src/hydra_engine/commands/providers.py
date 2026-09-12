@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 import json
 import sys
 
@@ -14,6 +15,43 @@ from hydra_engine.providers import reclaim
 from hydra_engine.providers.paths import ProvidersPaths
 from hydra_engine.providers.reclaim import classify_surfaces, promote_surface
 from hydra_engine.providers.selection import capability_profiles, resolve_capability_selection, write_active_selection
+
+_PROVIDER_VERIFICATION_MAX_AGE_DAYS = 30
+
+
+def provider_verification_notes(
+    paths: ProvidersPaths,
+    today: str,
+    max_age_days: int = _PROVIDER_VERIFICATION_MAX_AGE_DAYS,
+) -> list[str]:
+    """Report provider runtime evidence and flag old compatibility checks."""
+    notes: list[str] = []
+    try:
+        today_date = date.fromisoformat(today)
+    except ValueError:
+        return notes
+
+    for path in sorted((paths.hydra / "adapters/providers").glob("*/capability-map.yaml")):
+        try:
+            data = capabilities.parse_yaml(path, paths.root)
+        except HydraYamlError:
+            continue
+        provider = capabilities.yaml_str(data.get("provider"), path.parent.name)
+        runtime = capabilities.yaml_str(data.get("runtime"), "unknown runtime")
+        provider_version = capabilities.yaml_str(data.get("provider_version"))
+        verified = capabilities.yaml_str(data.get("verified"))
+        if not verified:
+            continue
+        try:
+            age_days = max((today_date - date.fromisoformat(verified)).days, 0)
+        except ValueError:
+            continue
+        runtime_label = runtime if not provider_version else f"{runtime} {provider_version}"
+        note = f"provider `{provider}`: {runtime_label}; compatibility verified {verified}"
+        if age_days > max_age_days:
+            note += f" ({age_days} days old; recheck provider compatibility)"
+        notes.append(note)
+    return notes
 
 
 def _report_pending(paths: ProvidersPaths, plan: reclaim.ReconcilePlan, verb_created: str, verb_changed: str, verb_removed: str) -> None:

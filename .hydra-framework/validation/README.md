@@ -65,8 +65,7 @@ Repositories can layer stricter package-local checks through
 ## Optional Token Guardrails
 
 These commands are manual guardrails, while provider Bash hooks wire the same
-command-output and retry behavior where the runtime supports it. Use
-Use `hydra.py hook-token pre-context --budget <tokens>` or `hydra.py
+command-output and retry behavior where the runtime supports it. Use `hydra.py hook-token pre-context --budget <tokens>` or `hydra.py
 measure-context --fail-over <tokens>` in CI or local checks when a repository
 wants adapter-size enforcement. Keep the threshold repository-specific and
 review growth with a short token-efficiency rationale before expanding

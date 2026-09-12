@@ -43,6 +43,12 @@ capability-caller evidence, and evolution or telemetry queue contracts. It
 does not replace human review of whether a page is useful or whether a claim is
 well scoped.
 
+`doctor` and `validate` also print provider verification notes. These show the
+provider runtime and, when known, its recorded version, alongside the date its
+compatibility evidence was last checked. Evidence older than 30 days is
+reported as an advisory to recheck, independently of Hydra's own framework
+build status.
+
 ## Review Boundary
 
 Validation owns deterministic checks with concrete remediation. The

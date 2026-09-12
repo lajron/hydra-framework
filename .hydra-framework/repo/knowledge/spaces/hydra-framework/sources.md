@@ -18,7 +18,7 @@ provenance:
 # Sources
 
 Status: active
-Updated: 2026-08-19
+Updated: 2026-09-12
 
 Source material behind this package's claims. Keep live state with its owner and
 link it from here rather than copying it.
@@ -49,7 +49,8 @@ the checked date; these pages change.
 | https://learn.chatgpt.com/docs/agent-configuration/subagents.md | 2026-07-30 | Codex custom agents live under `.codex/agents/` as TOML files; required `name`, `description`, `developer_instructions`; optional `model`, `model_reasoning_effort`, `sandbox_mode`, `mcp_servers`, `skills.config` |
 | https://learn.chatgpt.com/docs/build-skills.md | 2026-07-30 | Codex local skills are discovered from `.agents/skills`; `SKILL.md` requires `name` and `description`; progressive-disclosure context budget |
 | https://learn.chatgpt.com/docs/agent-configuration/agents-md.md | 2026-07-30 | Codex loads `AGENTS.md` / `AGENTS.override.md` instruction chains and applies closer files later |
-| `codex --version` (`codex-cli 0.146.0`) and the local Codex model catalog at `~/.codex/models_cache.json` | 2026-07-30 | Codex runtime version recorded in the capability map; the reasoning-level vocabulary `low`, `medium`, `high`, `xhigh`, `max`, `ultra` |
+| `codex --version` (`codex-cli 0.154.0`) | 2026-09-12 | Locally observed Codex runtime version; this is not compatibility verification |
+| The local Codex model catalog at `~/.codex/models_cache.json` | 2026-07-30 | The reasoning-level vocabulary `low`, `medium`, `high`, `xhigh`, `max`, `ultra` |
 
 ## Verification Notes
 

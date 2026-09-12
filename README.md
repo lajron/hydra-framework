@@ -22,6 +22,46 @@ work already in flight, create or continue a task, run checks, and improve the
 setup as they go. You can use the commands directly, but you do not need to
 learn a new command line workflow just to use Hydra.
 
+## Quick start
+
+For a fresh clone, bootstrap the private local tier and the ignored provider
+adapters before opening the repository in an agent:
+
+```bash
+git clone <repository-url>
+cd <repository-directory>
+python3 .hydra-framework/scripts/hydra.py init-local
+python3 .hydra-framework/scripts/hydra.py export-adapters
+python3 .hydra-framework/scripts/hydra.py doctor
+```
+
+`install-hooks` is optional. The adapter export is required for a new clone
+because generated `.claude/`, `.agents/`, and `.codex/` surfaces are ignored by
+Git. After bootstrapping, open the repository in Claude Code, Codex, or another
+supported agent and ask a normal repository question, such as:
+
+> Where does Hydra keep its canonical provider-adapter rules, and what should I read first?
+
+Configured provider hooks route the prompt to Hydra's knowledge packages. The
+agent can then use `knowledge-search` or `compile-context` for bounded context,
+and `validate` or `doctor` to check the resulting work.
+
+## Trust model
+
+Hydra is repository-owned code. If a provider loads this checkout's hook
+configuration, adopting Hydra allows that provider to execute Python from
+`.hydra-framework/scripts/hydra.py` at configured lifecycle events: prompt
+submission, edits, Bash output or failures, and provider subagent startup. The
+commands may read repository files and may write ignored local state such as
+logs, indexes, or generated adapters; they are not a security sandbox.
+
+Review [Claude's settings](/.claude/settings.json), [Codex's hooks](/.codex/hooks.json),
+and the [provider trust boundary](/.hydra-framework/adapters/providers/README.md#trust-boundary)
+before enabling a provider session. Claude's shared settings intentionally
+allow `Bash(python3 .hydra-framework/scripts/hydra.py:*)`, a wildcard covering
+all Hydra subcommands. Treat that as a broad trust choice and narrow it in
+local provider settings when needed.
+
 ## How you use it
 
 1. Open a repository with Hydra in Claude Code, Codex, or another coding agent.

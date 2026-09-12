@@ -32,6 +32,21 @@ The root adapter README states the separation rule: common adapter contracts
 belong under `.hydra-framework/adapters/`, while private executable mappings
 and credentials belong in `.hydra-framework.local/`.
 
+## Trust Model
+
+Provider hooks are executable repository integration, not a sandbox. When a
+provider loads the checked-in hook configuration, it invokes
+`.hydra-framework/scripts/hydra.py` on prompt submission, edits, Bash output or
+failures, and configured subagent starts. Review the [canonical trust
+boundary](/.hydra-framework/adapters/providers/README.md#trust-boundary),
+`.claude/settings.json`, and `.codex/hooks.json` before enabling a provider
+session. The commands may read repository files and write ignored local state.
+
+The Claude permission `Bash(python3 .hydra-framework/scripts/hydra.py:*)` is a
+deliberately broad allowlist for all Hydra subcommands. A repository that needs
+a narrower command surface should override that permission in local provider
+configuration and review future command additions explicitly.
+
 ## What Lives Here
 
 | Area | Owns | Does not own |
@@ -140,6 +155,12 @@ adapter outputs differ because their runtimes discover different file formats.
 | --- | --- | --- | --- |
 | Claude Code | `.claude/skills/<name>/SKILL.md` plus `.hydra-adapter.yaml` sidecar. | `.claude/agents/hydra-*.md` plus `.hydra-adapter-hydra-*.yaml` sidecar. | `capability-map.yaml` maps Hydra capability classes to Claude model aliases and effort budgets to Claude effort values. |
 | Codex | `.agents/skills/<name>/SKILL.md` plus `.hydra-adapter.yaml` sidecar. | `.codex/agents/hydra-*.toml` plus `.hydra-adapter-hydra-*.yaml` sidecar. | `capability-map.yaml` maps effort budgets to `model_reasoning_effort`; capability classes stay unresolved so agents inherit the local configured model. |
+
+Capability maps also record the provider version when it is known and the date
+of the last compatibility verification. Those fields describe provider
+evidence, not Hydra's own build status. `doctor` and `validate` report a
+verification note and flag evidence older than 30 days for rechecking; a stale
+note is advisory and does not claim that the integration is broken.
 
 ## Lifecycle Hooks
 

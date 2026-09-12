@@ -500,7 +500,7 @@ objects:
   hydra://knowledge-slice/hydra-framework/sources:
     uid: 318d1be3-bf03-4901-99c9-a2896d8bd0bc
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/sources.md
-    digest: sha256:b18408ef19852d9b1354dc47c4c94e024d2e140b6ccb0bc01ddbeda8293d2def
+    digest: sha256:4a36fa4af09f09858ade511f1c9f350eebc3477712aef85aeef5d07aefc52315
     family: Knowledge
     kind: knowledge-slice
     status: active
