@@ -20,7 +20,7 @@ inherit safety claims by implication.
 | Health and command discovery | `doctor`, `validate`, `selftest`, `command-metadata` |
 | Knowledge and context | `compile-context`, `delegation-brief`, `knowledge-search`, `knowledge fingerprint`, `knowledge stale`, `measure-context`, `route-prompt`, `validate-package-docs` |
 | Objects and references | `explain-path`, `move-object`, `ref resolve`, `ref check`, `ref index`, `ref rdeps`, `ref impact`, `ref store status`, `ref store rebuild`, `schema upgrade` |
-| Install and provider surfaces | `init`, `adopt`, `init-local`, `install-hooks`, `export-adapters`, `reclaim` |
+| Install and provider surfaces | `init`, `adopt`, `init-local`, `install-hooks`, `export-adapters`, `profile list`, `profile show`, `profile select`, `reclaim` |
 | Tasks and local work state | `board`, `note`, `migrate-state`, `task start`, `task checkpoint`, `task handoff`, `task complete` |
 | Seed evolution | `diff-base`, `evolution record` |
 | Intake and source integration | `migration inventory`, `migration ledger`, `migration request-stage`, `migration propose`, `migration validate-batch`, `migration request-close`, `migration decide`, `migration status`, `integrate scan`, `integrate identify`, `integrate map`, `integrate status`, `takeover scan` |
@@ -35,6 +35,9 @@ inherit safety claims by implication.
   annotations.
 - Treat `--check` and `--dry-run` as the preview forms where the command owner
   provides them. Read the owner module before assuming a preview is available.
+- `export-adapters --profile <name>` only previews; it requires `--dry-run`
+  and refuses to combine with `--check`. Materializing a profile for the
+  checkout is `profile select <name>`.
 - Treat `--json` as an output-format request, not as a guarantee that a command
   has no side effect.
 - For a failure, preserve the command, exit code, and finding path, then follow

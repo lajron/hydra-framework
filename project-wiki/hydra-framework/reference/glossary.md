@@ -10,6 +10,19 @@ A provider-specific surface that makes Hydra visible to a runtime. Examples incl
 
 Verified durable repository knowledge stored under `.hydra-framework/repo/knowledge/`, as described by the placement rules.
 
+## Baseline Tag
+
+A tag listed in a capability profile policy's `baseline_tags` that stays
+selected in every profile, regardless of which profile is active. See
+[Capability Profiles And Tags](/project-wiki/hydra-framework/extending-hydra/capabilities.md#capability-profiles-and-tags).
+
+## Capability Profile
+
+A named set of tags that narrows which canonical skills
+`hydra.py export-adapters` materializes as provider adapters for one
+checkout. Agents are never filtered by profile. See
+[Capability Profiles And Tags](/project-wiki/hydra-framework/extending-hydra/capabilities.md#capability-profiles-and-tags).
+
 ## Checkpoint
 
 A concise recovery record created when work pauses, blocks, or needs handoff.
@@ -76,6 +89,14 @@ three levels deep by default and four at most, counting the space.
 ## Operational Readiness
 
 The pre-execution check that records whether meaningful work can proceed safely.
+
+## Ownership Index
+
+The set of provider adapter paths derivable from currently existing canonical
+skills and agents. Hydra deletes a generated provider path only when it is a
+member of this index and passes every other ownership condition; membership
+alone is not enough. See
+[Ownership And Safe Deletion](/project-wiki/hydra-framework/extending-hydra/provider-adapters.md#ownership-and-safe-deletion).
 
 ## Provider Neutrality
 

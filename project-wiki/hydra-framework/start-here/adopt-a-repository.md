@@ -72,7 +72,13 @@ Generate the provider adapters from Hydra's canonical capabilities:
 python3 .hydra-framework/scripts/hydra.py export-adapters
 ```
 
-Then follow the [provider adapter procedure](/project-wiki/hydra-framework/extending-hydra/provider-adapters.md)
+Generated adapters are Git-ignored and untracked, so this step must be run in
+the target repository too, not only assumed from the source copy; every
+future fresh clone of the target needs it as well before a provider session
+starts. Optionally preview a narrower capability profile first with
+`hydra.py profile list` and `hydra.py export-adapters --profile <name>
+--dry-run` before materializing the full catalog. Then follow the
+[provider adapter procedure](/project-wiki/hydra-framework/extending-hydra/provider-adapters.md)
 for the runtimes the team actually uses. Keep provider entry files small and
 leave existing provider configuration in place unless a separately scoped
 migration or takeover calls for a change.

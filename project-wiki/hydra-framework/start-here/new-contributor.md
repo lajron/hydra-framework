@@ -10,14 +10,20 @@ Run:
 
 ```bash
 python3 .hydra-framework/scripts/hydra.py init-local
+python3 .hydra-framework/scripts/hydra.py export-adapters
 python3 .hydra-framework/scripts/hydra.py doctor
 python3 .hydra-framework/scripts/hydra.py install-hooks  # optional
 ```
 
 `init-local` creates missing machine-private state under
-`.hydra-framework.local/`. `doctor` checks the clone's required paths, owner,
-private tier, cache lifecycle, and generated provider surfaces. The hooks are
-optional per-clone convenience tooling.
+`.hydra-framework.local/`. Generated provider adapters
+(`.claude/skills/hydra-*`, `.codex/agents/hydra-*`, and similar) are
+Git-ignored and untracked, so a fresh clone has none of them until
+`export-adapters` runs; skipping this step is why a Hydra skill or subagent
+you expect can be missing from a new session. `doctor` checks the clone's
+required paths, owner, private tier, cache lifecycle, and generated provider
+surfaces, and fails outright if nothing is materialized but something should
+be. The hooks are optional per-clone convenience tooling.
 
 This is different from copying Hydra into another repository. Use the
 [new-repository adoption route](/project-wiki/hydra-framework/start-here/adopt-a-repository.md) for that path.

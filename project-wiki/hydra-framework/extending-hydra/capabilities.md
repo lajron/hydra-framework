@@ -72,7 +72,9 @@ maintain than to rediscover.
 
 Each canonical skill has `skill.md` plus `metadata.yaml`.
 `metadata.yaml` must include `name` and `description`; optional fields include
-`kind`, `argument_hint`, `allowed_tools`, and `user_invocable`.
+`kind`, `argument_hint`, `allowed_tools`, `user_invocable`, and `tags`. Tags
+feed capability profile selection; see
+[Capability Profiles And Tags](#capability-profiles-and-tags).
 
 ### Workflows
 
@@ -94,6 +96,50 @@ as a repository-wide recommendation.
 The current tool registry includes capabilities such as repository search, Git
 context, test execution, model routing, subagent spawn/message/collect, hook
 policy, adapter export, token measurement, and memory recall.
+
+## Capability Profiles And Tags
+
+A checkout can narrow which canonical skills get materialized as provider
+adapters, without touching the canonical skill catalog. A canonical skill may
+declare `tags` in its `metadata.yaml`; a capability profile is a named set of
+those tags. `export-adapters` renders every canonical skill whose tags match
+the active profile (the union of skills matching any selected tag), plus a
+small `baseline_tags` set that stays present in every profile. Agents are
+never filtered by profile: every canonical agent is exported regardless of
+which profile is active, and their dependency lines always print both the
+provider wrapper name and the canonical skill path, since the wrapper name
+alone may not be materialized under a narrow profile.
+
+Shared profile policy lives in `.hydra-framework/capabilities/profiles.yaml`:
+`baseline_tags`, `default_profile`, and named `profiles` presets. A checkout
+may layer its own presets in `.hydra-framework.local/capabilities/profiles.yaml`
+and records its selected profile in
+`.hydra-framework.local/capabilities/active.yaml`; both are untracked and
+private to the checkout, and Hydra never writes to the local `profiles.yaml`
+so a person's presets and comments survive every `profile select`. The
+reserved profile `full` selects every skill regardless of tags and needs no
+declaration.
+
+```bash
+python3 .hydra-framework/scripts/hydra.py profile list
+python3 .hydra-framework/scripts/hydra.py profile show [--profile <name>] [--untagged]
+python3 .hydra-framework/scripts/hydra.py profile select <name>
+python3 .hydra-framework/scripts/hydra.py export-adapters --profile <name> --dry-run
+```
+
+`profile list` shows shared and local profiles and which owns each name.
+`profile show` reports the effective tags, the selected skills with the
+reason each was selected, and, with `--untagged`, which canonical skills no
+tag reaches yet. `profile select` records the choice and reconciles the
+checkout's materialized adapters immediately, under a lock, because a
+selection that does not reconcile would let a checkout's recorded profile and
+its actual materialized skills silently diverge. `export-adapters --profile
+<name> --dry-run` previews any profile without writing anything or requiring
+it to be selected.
+
+Narrowing a profile can delete previously materialized skill wrappers. See
+[Ownership And Safe Deletion](/project-wiki/hydra-framework/extending-hydra/provider-adapters.md#ownership-and-safe-deletion)
+for the proof every deletion must satisfy.
 
 ## From Canonical Module To Provider Surface
 
@@ -154,8 +200,10 @@ python3 .hydra-framework/scripts/hydra.py export-adapters --check
 python3 .hydra-framework/scripts/hydra.py export-adapters --dry-run
 ```
 
-Use `--check` as the drift gate. Use `--dry-run` to see what would be created
-or changed without writing files.
+`--check` is a local drift check, not a CI gate; see
+[Provider Adapters](/project-wiki/hydra-framework/extending-hydra/provider-adapters.md#check-adapter-drift)
+for why. Use `--dry-run` to see what would be created, changed, or removed
+without writing files.
 
 ### Reclaim Provider-Native Files
 

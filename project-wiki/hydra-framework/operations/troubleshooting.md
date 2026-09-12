@@ -60,17 +60,41 @@ python3 .hydra-framework/scripts/hydra.py validate-package-docs --package hydra-
 Use this when a package link, routing entry, unit reference, or package-size
 finding is involved. The package gate is also included in full validation.
 
-## Provider-Surface Drift
+## No Provider Surfaces Are Materialized
 
-Run:
+Generated adapters (`.claude/skills/hydra-*`, `.codex/agents/hydra-*`, and
+similar) are Git-ignored and untracked, so this is expected right after a
+fresh clone. Run:
+
+```bash
+python3 .hydra-framework/scripts/hydra.py export-adapters
+```
+
+`doctor` fails, rather than warns, when nothing is materialized but the
+active capability profile expects something to be. Restart the Claude or
+Codex session afterward: it composed its skill list at session start and will
+not see newly materialized adapters until then.
+
+## Provider-Surface Drift Or Unmanaged Files
+
+For this checkout's local drift against the current plan:
 
 ```bash
 python3 .hydra-framework/scripts/hydra.py export-adapters --check
 ```
 
-If it reports drift, inspect the canonical capability or provider-map source
-named by the export plan. Generated provider files are outputs and are not the
-place to author a correction.
+For provider files Hydra cannot prove it generated (the check CI runs):
+
+```bash
+python3 .hydra-framework/scripts/hydra.py reclaim
+```
+
+`reclaim` classifies each provider-native file as `generated`, `orphaned`,
+`drifted`, or `stale`. Inspect the canonical capability or provider-map
+source it names for `drifted`; promote an `orphaned` file with
+`reclaim --promote`; remove a `stale` file by hand with the command the
+finding prints. Generated provider files are outputs and are not the place to
+author a correction.
 
 ## Cache Or Object-Store Health
 

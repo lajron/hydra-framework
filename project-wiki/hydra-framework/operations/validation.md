@@ -16,7 +16,8 @@ wiki link gate is separate from canonical Hydra validation because
 | Check one knowledge space's node document, links, units, and size | `python3 .hydra-framework/scripts/hydra.py validate-package-docs --node hydra-framework` | Node and document checks |
 | Check that logical bindings still resolve and their assertions hold | `python3 .hydra-framework/scripts/hydra.py bindings verify` | Binding resolution and assertions |
 | Check repository-wide Hydra state | `python3 .hydra-framework/scripts/hydra.py validate` | Validator registry and aggregation |
-| Check generated provider surfaces for drift | `python3 .hydra-framework/scripts/hydra.py export-adapters --check` | Provider export planner |
+| Check this checkout's generated provider surfaces for drift (local only) | `python3 .hydra-framework/scripts/hydra.py export-adapters --check` | Provider export planner |
+| Check for provider files Hydra does not own (the CI gate for provider surfaces) | `python3 .hydra-framework/scripts/hydra.py reclaim --fail-on-findings` | Reclaim classifier |
 | Check engine behavior and CLI contracts | `python3 .hydra-framework/scripts/hydra.py selftest` | Bundled unit, repository, and contract tests |
 | Inspect required paths and local health before validation | `python3 .hydra-framework/scripts/hydra.py doctor` | Doctor command, then the same validation aggregation |
 
@@ -24,6 +25,14 @@ wiki link gate is separate from canonical Hydra validation because
 link. `validate` prints every finding in validator order and returns a nonzero
 status when a check fails. A passing full gate prints `Hydra validate: ok`.
 The other commands are focused checks for the surfaces named in the table.
+
+Generated provider adapters are Git-ignored and untracked, so a clean clone
+has none materialized and `export-adapters --check` has nothing committed to
+compare against; it stays a local developer command. CI instead bootstraps
+adapters with a plain `export-adapters` run before any check that reads
+materialized provider surfaces (`selftest`, `doctor`), and gates on
+`reclaim --fail-on-findings` for orphaned, drifted, or stale files. See
+[Provider Adapters](/project-wiki/hydra-framework/extending-hydra/provider-adapters.md#bootstrap-a-fresh-clone).
 
 ## What Full Validation Demonstrates
 
