@@ -32,6 +32,16 @@ TAKEOVER_MARKERS: tuple[tuple[str, str], ...] = (
 
 PROVIDER_ROOTS = {".claude", ".codex", ".agents", ".cursor", ".windsurf"}
 HYDRA_ENTRYPOINTS = {"AGENTS.md", "CLAUDE.md"}
+HYDRA_ENTRYPOINT_CONTENTS = {
+    "AGENTS.md": {
+        "# shared agent instructions\n\nread [`ai_system.md`](ai_system.md) first.",
+        "this repository uses hydra.\nsee `.hydra-framework/`.",
+    },
+    "CLAUDE.md": {
+        "@agents.md\n\nclaude-specific path-scoped rules live in `.claude/rules/`; generated skills and\nagents come from `.hydra-framework/capabilities/`.",
+        "@agents.md\n\ngenerated skills come from `.hydra-framework/capabilities/`.",
+    },
+}
 RISK_TAGS = {"credential-or-private-risk", "machine-local-risk", "private-hydra-risk"}
 OWNER_DECISION_NAMES = {
     "settings.json",
@@ -58,17 +68,18 @@ def _candidate_files(path: Path) -> list[Path]:
 
 
 def _is_hydra_entrypoint(path: Path) -> bool:
+    text = read_migration_file_peek(path).replace("\r\n", "\n").strip().lower()
+    return text in HYDRA_ENTRYPOINT_CONTENTS.get(path.name, set())
+
+
+def _has_hydra_entrypoint_marker(path: Path) -> bool:
     text = read_migration_file_peek(path).lower()
-    if path.name == "CLAUDE.md":
-        return "@agents.md" in text and ("thin provider adapter" in text or ".hydra-framework/" in text)
     if path.name == "AGENTS.md":
-        if "this repository uses hydra" in text and ".hydra-framework/" in text:
-            return True
-        system = path.parent / "AI_SYSTEM.md"
-        if "ai_system.md" not in text or not system.is_file():
-            return False
-        system_text = read_migration_file_peek(system).lower()
-        return "hydra operating contract" in system_text and ".hydra-framework/" in system_text
+        return (
+            "this repository uses hydra" in text and ".hydra-framework/" in text
+        ) or "read [`ai_system.md`](ai_system.md) first." in text
+    if path.name == "CLAUDE.md":
+        return "@agents.md" in text and ".hydra-framework/" in text
     return False
 
 
@@ -117,6 +128,8 @@ def _candidate_classification(
         reasons.append("provider reclaim reports unmanaged surface files")
         return "provider-native", reasons
     if marker in HYDRA_ENTRYPOINTS:
+        if _has_hydra_entrypoint_marker(candidate):
+            return "needs-owner-decision", ["Hydra entrypoint markers are mixed with unrecognized instructions"]
         return "foreign-entrypoint", ["root AI rule file is not a thin Hydra adapter"]
     if marker in {".cursorrules", ".windsurfrules", ".github/copilot-instructions.md", "docs/ai", "docs/agents"}:
         return "foreign-entrypoint", ["foreign AI instruction or documentation marker"]

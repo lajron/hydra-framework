@@ -62,6 +62,51 @@ class TakeoverScanTests(unittest.TestCase):
         candidate = result["candidates"][0]
         self.assertEqual(candidate["classification"], "hydra-owned")
 
+    def test_classifies_shipped_claude_entrypoint_without_staging(self):
+        root = _root()
+        _write(
+            root,
+            "CLAUDE.md",
+            "@AGENTS.md\n\nClaude-specific path-scoped rules live in `.claude/rules/`; generated skills and\n"
+            "agents come from `.hydra-framework/capabilities/`.\n",
+        )
+        with mock.patch("hydra_engine.ports.git.tracked_files", return_value=["CLAUDE.md"]):
+            with mock.patch("hydra_engine.ports.git.ignore_match", return_value=""):
+                result = takeover_scan.takeover_scan(root)
+        candidate = result["candidates"][0]
+        self.assertEqual(candidate["classification"], "hydra-owned")
+        self.assertEqual(candidate["staging"]["route"], "do-not-stage")
+
+    def test_mixed_agents_entrypoint_needs_owner_decision(self):
+        root = _root()
+        _write(
+            root,
+            "AGENTS.md",
+            "This repository uses Hydra.\nSee `.hydra-framework/`.\n\n"
+            "Use the legacy release checklist before deploying.\n",
+        )
+        with mock.patch("hydra_engine.ports.git.tracked_files", return_value=["AGENTS.md"]):
+            with mock.patch("hydra_engine.ports.git.ignore_match", return_value=""):
+                result = takeover_scan.takeover_scan(root)
+        candidate = result["candidates"][0]
+        self.assertEqual(candidate["classification"], "needs-owner-decision")
+        self.assertEqual(candidate["staging"]["route"], "confirm-owner")
+
+    def test_mixed_claude_entrypoint_needs_owner_decision(self):
+        root = _root()
+        _write(
+            root,
+            "CLAUDE.md",
+            "@AGENTS.md\n\nGenerated skills come from `.hydra-framework/capabilities/`.\n\n"
+            "Keep the legacy deployment procedure unchanged.\n",
+        )
+        with mock.patch("hydra_engine.ports.git.tracked_files", return_value=["CLAUDE.md"]):
+            with mock.patch("hydra_engine.ports.git.ignore_match", return_value=""):
+                result = takeover_scan.takeover_scan(root)
+        candidate = result["candidates"][0]
+        self.assertEqual(candidate["classification"], "needs-owner-decision")
+        self.assertEqual(candidate["staging"]["route"], "confirm-owner")
+
     def test_reuses_provider_reclaim_for_orphaned_surface(self):
         root = _root()
         _write(root, ".claude/skills/deploy/SKILL.md", "---\nname: deploy\n---\nBody.\n")
