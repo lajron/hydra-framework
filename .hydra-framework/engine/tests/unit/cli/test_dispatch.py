@@ -110,6 +110,12 @@ def _real_ctx(**threshold_overrides: int) -> dispatch.RepoContext:
     shape = hydra / "repo/knowledge/state-tiers.md"
     shape.parent.mkdir(parents=True)
     shape.write_text(_private_tier_shape(), encoding="utf-8")
+    profiles = hydra / "capabilities/profiles.yaml"
+    profiles.parent.mkdir(parents=True, exist_ok=True)
+    profiles.write_text(
+        "schema: hydra-framework.capability-profiles.v1\nbaseline_tags: []\ndefault_profile: full\nprofiles: {}\n",
+        encoding="utf-8",
+    )
     return dispatch.RepoContext.for_root(root)
 
 
@@ -138,6 +144,7 @@ def _private_tier_shape() -> str:
         "migrations", "evolution/experiments", "scratch", "plans",
         "research", "prompts", "diagrams", "source-material", "tickets",
         "bug-reports", "developer", "machine", "repo-overrides", "secrets",
+        "locks", "capabilities",
     ]
     rows = "\n".join(f"| `{path}/` | fixture | fixture |" for path in paths)
     return f"""---
@@ -161,7 +168,7 @@ class ValidateAndDoctorCompositionTests(unittest.TestCase):
 
     def test_validate_checks_composes_repo_and_package_task_findings(self) -> None:
         checks = dispatch._validate_checks(_real_ctx())
-        self.assertEqual(len(checks), 18)
+        self.assertEqual(len(checks), 19)
         for check in checks:
             self.assertEqual(check(), [])
 

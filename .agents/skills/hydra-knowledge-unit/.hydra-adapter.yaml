@@ -1,5 +1,0 @@
-schema: hydra-framework.adapter.v2
-provider: codex
-kind: skill
-canonical_source: .hydra-framework/capabilities/skills/knowledge-unit/skill.md
-generated_file: SKILL.md

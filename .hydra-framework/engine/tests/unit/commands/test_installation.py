@@ -58,6 +58,7 @@ class CommandAdoptTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertIn("Framework integrity: required paths present", out.getvalue())
         self.assertIn("not recorded. Run `hydra.py adopt --record --repo <slug>`.", out.getvalue())
+        self.assertIn("Preview a capability profile", out.getvalue())
 
     def test_missing_paths_reports_incomplete_copy(self):
         paths, providers_paths, context_compiler_paths = _all_paths()

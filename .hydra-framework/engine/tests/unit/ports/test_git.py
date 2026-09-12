@@ -48,6 +48,23 @@ class GitTests(unittest.TestCase):
         self.assertEqual(git.ignore_match(self.root, "tracked.txt"), "")
         self.assertEqual(git.ignore_match(self.root / "does-not-exist", "tracked.txt"), "")
 
+    def test_ignore_match_treats_a_tracked_path_as_not_ignored_by_default(self):
+        (self.root / ".gitignore").write_text("tracked.txt\n", encoding="utf-8")
+        self.assertEqual(git.ignore_match(self.root, "tracked.txt"), "")
+
+    def test_ignore_match_no_index_reports_the_pattern_even_for_a_tracked_path(self):
+        (self.root / ".gitignore").write_text("tracked.txt\n", encoding="utf-8")
+        self.assertIn(".gitignore:1:tracked.txt", git.ignore_match(self.root, "tracked.txt", no_index=True))
+
+    def test_ignored_files_lists_untracked_ignored_paths_under_a_prefix(self):
+        (self.root / ".gitignore").write_text("dir/hydra-*/\n", encoding="utf-8")
+        (self.root / "dir/hydra-demo").mkdir(parents=True)
+        (self.root / "dir/hydra-demo/SKILL.md").write_text("x\n", encoding="utf-8")
+        self.assertEqual(git.ignored_files(self.root, "dir"), ["dir/hydra-demo/SKILL.md"])
+
+    def test_ignored_files_returns_empty_list_on_failure(self):
+        self.assertEqual(git.ignored_files(self.root / "does-not-exist", "dir"), [])
+
     def test_stage_file_adds_a_path_to_the_index(self):
         (self.root / "new.txt").write_text("new\n")
         self.assertTrue(git.stage_file(self.root, "new.txt"))

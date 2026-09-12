@@ -167,6 +167,7 @@ def _dispatch_doctor(args, ctx: RepoContext) -> int:
         ),
         object_store_status=references.store_status(ctx.resolver_paths()),
         surfaces=reclaim.classify_surfaces(ctx.providers_paths()),
+        desired_plan_nonempty=bool(providers.resolve_active_plan(ctx.providers_paths())),
         lineage=_yaml_map(ctx.manifest.get("lineage")),
         checks=_validate_checks(ctx),
         notes=_advisory_notes(ctx),

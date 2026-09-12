@@ -49,6 +49,8 @@ guide.
 | `machine/` | config | Operating system, capabilities, and local tool mappings. |
 | `repo-overrides/` | config | Repository-specific private overrides. |
 | `secrets/` | config | Credentials or secret references. |
+| `locks/` | machine | The per-checkout export lock guarding `export-adapters`/`profile select`. |
+| `capabilities/` | config | The local capability-profile policy (`profiles.yaml`) and machine-owned selection (`active.yaml`). |
 
 ## What Does Not Belong Here
 
@@ -239,6 +241,25 @@ tracked framework; local exceptions stay private.
 Store secret references here, not secret values. Prefer a password manager,
 credential helper, vault, or environment-specific reference that can be rotated
 outside the repository.
+""",
+    "locks": """# Locks
+
+The per-checkout export lock lives here (`locks/export.lock`), guarding every
+`hydra.py export-adapters` and `hydra.py profile select` mutation so two
+processes can never interleave writes and removals. The file itself carries no
+state -- it exists only to be locked -- and is safe to delete when nothing
+holds it.
+""",
+    "capabilities": """# Capabilities
+
+Two files, deliberately separate:
+
+- `profiles.yaml` is hand-authored. It declares local capability profiles as
+  named groups of tags, and is never rewritten by Hydra.
+- `active.yaml` is machine-owned. `hydra.py profile select <name>` rewrites it
+  wholesale; do not hand-edit it.
+
+See `hydra.py profile list`/`show`/`select`.
 """,
 }
 

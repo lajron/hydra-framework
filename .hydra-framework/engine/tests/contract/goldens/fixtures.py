@@ -174,6 +174,8 @@ provenance:
 | `machine/` | config | fixture |
 | `repo-overrides/` | config | fixture |
 | `secrets/` | config | fixture |
+| `locks/` | machine | fixture |
+| `capabilities/` | config | fixture |
 """
 
 

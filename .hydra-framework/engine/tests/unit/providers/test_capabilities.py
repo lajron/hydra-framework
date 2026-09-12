@@ -183,6 +183,7 @@ class WrapperRenderingTests(unittest.TestCase):
         self.assertIn("effort: high", body)
         self.assertIn("`.hydra-framework/overview.md`", body)
         self.assertIn("`hydra-other-skill`", body)
+        self.assertIn("`.hydra-framework/capabilities/skills/other-skill/skill.md`", body)
         self.assertIn("## Delegation Policy", body)
 
     def test_build_agent_wrapper_applies_role_capability_fallback_and_effort_ceiling(self):
@@ -262,6 +263,7 @@ class RegistryConsistencyTests(unittest.TestCase):
         for provider in capabilities.PROVIDERS:
             self.assertTrue(provider.slug)
             self.assertTrue(provider.skills_target)
+            self.assertTrue(provider.agent_extension)
             self.assertTrue(callable(provider.build_agent_wrapper))
 
     def test_each_providers_wrapper_builder_is_the_one_it_used_to_be_branched_to(self):

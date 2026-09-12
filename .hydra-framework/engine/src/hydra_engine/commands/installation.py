@@ -122,7 +122,7 @@ def command_adopt(args, paths, providers_paths, context_compiler_paths, manifest
         steps.append("Run `hydra.py init-local`.")
     if unmanaged:
         steps.append("Reclaim unmanaged provider files: `hydra.py reclaim`.")
-    steps.append("Generate provider surfaces: `hydra.py export-adapters`.")
+    steps.append("Generate provider surfaces with `hydra.py export-adapters` -- required every fresh clone, since generated adapters are Git-ignored, not tracked. Preview a capability profile first if needed: `hydra.py profile list`, then `hydra.py export-adapters --profile <name> --dry-run`.")
     if not report["claude_md_present"]:
         steps.append("Add a small CLAUDE.md that imports AGENTS.md.")
     steps.append("Validate: `hydra.py doctor` and `hydra.py selftest`.")

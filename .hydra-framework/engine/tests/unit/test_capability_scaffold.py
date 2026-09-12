@@ -18,6 +18,7 @@ class CapabilityScaffoldTests(unittest.TestCase):
         metadata = capability_scaffold.skill_metadata_text("demo-skill", "Demo skill.", "uid", "procedure")
         body = capability_scaffold.skill_body_text("Demo Skill")
         self.assertIn("hydra_id: hydra://capability/skill/demo-skill", metadata)
+        self.assertIn("tags: []", metadata)
         for section in ("## Capability", "## Procedure", "## Output", "## Boundaries"):
             self.assertIn(section, body)
 

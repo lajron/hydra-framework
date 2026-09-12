@@ -20,14 +20,23 @@ jobs:
           python-version: "3.11"
 
       # No dependencies to install: hydra.py is deliberately stdlib-only.
+      #
+      # Generated adapters are Git-ignored, not tracked (Phase 5): a clean
+      # clone starts with none materialized, exactly like any other fresh
+      # clone. Bootstrap the full profile here the same way a developer
+      # would, before any check that reads materialized provider surfaces.
+      # This replaces the old tracked-output drift gate
+      # (`export-adapters --check`), which is meaningless once nothing is
+      # committed to check drift against; `--check` remains a local
+      # developer command, not a CI gate.
+      - name: Bootstrap capability adapters
+        run: python3 .hydra-framework/scripts/hydra.py export-adapters
+
       - name: Selftest
         run: python3 .hydra-framework/scripts/hydra.py selftest
 
       - name: Doctor
         run: python3 .hydra-framework/scripts/hydra.py doctor
-
-      - name: Adapter drift
-        run: python3 .hydra-framework/scripts/hydra.py export-adapters --check
 
       # `doctor` already fails on this through validate_tier_boundaries. This
       # step repeats it directly so a violation names itself, and so the check

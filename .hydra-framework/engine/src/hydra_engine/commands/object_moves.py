@@ -24,6 +24,8 @@ from hydra_engine.objects.discovery import collect_hydra_objects, object_metadat
 from hydra_engine.objects.envelopes import object_display_path, object_state_tier, resolved_envelope_path
 from hydra_engine.objects.references import validate_object_references
 from hydra_engine.objects.registry import write_object_registry
+from hydra_engine.providers import reclaim
+from hydra_engine.providers.paths import ProvidersPaths
 
 
 def stale_path_citations(old_display_path: str, resolver_paths) -> list[str]:
@@ -153,6 +155,15 @@ def command_move_object(args, resolver_paths) -> CommandResult:
         print(f"Indexed {count} objects: {display_path(resolver_paths.object_registry, resolver_paths.root)}")
     for note in stale_path_citations(source_display, resolver_paths):
         print(f"note: {note} still cites {source_display}")
+    if obj["kind"] in ("skill", "agent") and source.parent.name != destination.parent.name:
+        # A canonical skill/agent rename leaves its old wrapper's canonical
+        # source gone, so nothing can ever prove ownership of it again (see
+        # `providers.reclaim`'s report-only stale contract). Print the same
+        # removal line `reclaim`/`validate` would surface on their next run,
+        # rather than waiting for one.
+        providers_paths = ProvidersPaths(root=resolver_paths.root, hydra=resolver_paths.hydra)
+        for line in reclaim.stale_wrapper_notices(providers_paths, source.parent.name, obj["kind"]):
+            print(line)
     return CommandResult(0)
 
 

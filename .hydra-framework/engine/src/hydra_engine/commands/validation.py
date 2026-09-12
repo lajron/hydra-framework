@@ -47,6 +47,7 @@ def command_doctor(
     knowledge_index_status: str,
     object_store_status: str,
     surfaces: list[dict[str, str]],
+    desired_plan_nonempty: bool,
     lineage: dict,
     checks: list[Check],
     notes: list[str],
@@ -97,7 +98,13 @@ def command_doctor(
     generated = sum(1 for item in surfaces if item["status"] == "generated")
     unmanaged = [item for item in surfaces if item["status"] != "generated"]
     if not surfaces:
+        if desired_plan_nonempty:
+            print("Hydra doctor: no provider surfaces are materialized")
+            print("  Generated adapters are untracked and must be regenerated after every fresh clone.")
+            print("  Run `python3 .hydra-framework/scripts/hydra.py export-adapters` first.")
+            return CommandResult(1)
         print("Note: no provider surfaces found. Run `hydra.py export-adapters` when adapters are needed.")
+        print("  Preview a capability profile first with `hydra.py profile list` and `hydra.py export-adapters --profile <name> --dry-run`.")
     else:
         print(f"Provider surfaces: {generated} generated, {len(unmanaged)} unmanaged")
     for item in unmanaged:

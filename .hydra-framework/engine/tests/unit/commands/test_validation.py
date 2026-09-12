@@ -64,6 +64,7 @@ class CommandDoctorTests(unittest.TestCase):
             knowledge_index_status="fresh",
             object_store_status="fresh",
             surfaces=[],
+            desired_plan_nonempty=False,
             lineage={},
             checks=[],
             notes=[],
@@ -89,6 +90,17 @@ class CommandDoctorTests(unittest.TestCase):
         self.assertIn("Provider surfaces: 0 generated, 1 unmanaged", output)
         self.assertIn("- orphaned: x", output)
         self.assertIn("Run `hydra.py reclaim` for the promotion plan.", output)
+
+    def test_no_surfaces_and_nothing_desired_is_only_a_note(self) -> None:
+        result, output = self._doctor(surfaces=[], desired_plan_nonempty=False)
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("Note: no provider surfaces found.", output)
+
+    def test_no_surfaces_but_something_desired_fails_closed(self) -> None:
+        result, output = self._doctor(surfaces=[], desired_plan_nonempty=True)
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("Hydra doctor: no provider surfaces are materialized", output)
+        self.assertIn("hydra.py export-adapters", output)
 
     def test_private_tier_ignore_failure_short_circuits(self) -> None:
         result, output = self._doctor(private_tier={

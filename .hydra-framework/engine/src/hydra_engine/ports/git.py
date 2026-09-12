@@ -70,15 +70,44 @@ def tracked_files(root: Path, prefix: str) -> list[str]:
     return [line for line in result.stdout.splitlines() if line.strip()]
 
 
-def ignore_match(root: Path, path: str) -> str:
+def ignored_files(root: Path, prefix: str) -> list[str]:
+    """Untracked files beneath `prefix` that Git's ignore rules currently
+    exclude. Used to check that everything a provider directory ignores is a
+    verified Hydra ownership member -- narrower than `ignore_match` per path,
+    since it reports only what actually exists on disk, not every path a
+    glob could ever match."""
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "--others", "--ignored", "--exclude-standard", "--", prefix],
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=GIT_LS_FILES_TIMEOUT_SECONDS,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if result.returncode != 0:
+        return []
+    return [line for line in result.stdout.splitlines() if line.strip()]
+
+
+def ignore_match(root: Path, path: str, *, no_index: bool = False) -> str:
     """Verbose `git check-ignore` match for `path`, or `""` when not ignored.
 
     The verbose line is useful evidence for migration/takeover routing, but a
     missing Git repository or a non-ignored path is not an error for callers.
+
+    `no_index=True` evaluates ignore patterns alone, ignoring whether `path`
+    is currently tracked. Plain `check-ignore` treats an already-tracked path
+    as never-ignored (verified against real Git), which is right for "is
+    this untracked path safe to leave out" but wrong for "would this pattern
+    also swallow a file that happens to be tracked right now" -- the check
+    Git ownership validation needs when confirming a stable tracked file
+    does not collide with a generated-adapter ignore pattern.
     """
     try:
         result = subprocess.run(
-            ["git", "check-ignore", "-v", "--", path],
+            ["git", "check-ignore", "-v", *(["--no-index"] if no_index else []), "--", path],
             cwd=str(root),
             capture_output=True,
             text=True,

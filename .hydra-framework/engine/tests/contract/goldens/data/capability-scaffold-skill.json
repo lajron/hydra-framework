@@ -6,7 +6,7 @@
     ".hydra-framework/adapters/providers/codex/capability-map.yaml": "b7477930e8b873de520503637055733760efabf4afe99e83739eda30ea03b632",
     ".hydra-framework/capabilities/agents/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     ".hydra-framework/capabilities/skills/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    ".hydra-framework/capabilities/skills/demo-skill/metadata.yaml": "b3e2a204d5983b077bc669e1dc5597b769e00a670bb8921b72c84d537a73ed06",
+    ".hydra-framework/capabilities/skills/demo-skill/metadata.yaml": "e50101f2671a6bd788b23570e1301edbdf7c9a4ee87cac16a6adf6a55ef91bde",
     ".hydra-framework/capabilities/skills/demo-skill/skill.md": "cb6476e97174875afc443cc18905636b30a9e9dbdc94ef0b349bbe15143d4810",
     ".hydra-framework/core/placement-rules.md": "5ccfd85befd6aa3ff7d5dd0fc1417b21ae5e3186839a360348c8b8ed51dfb60b",
     ".hydra-framework/manifest.yaml": "bc74566ab21d13c108337058c3db644e60fd8036887039425542e79efcb73c93",
@@ -15,7 +15,7 @@
     ".hydra-framework/tasks/templates/task.md": "32dd805b125370ccb27117f3984a894c773d0685fcd378aa6cbce3da715dba10",
     "AGENTS.md": "a52ae73fc0a471d277c57a8c65af99c0b3e814f984b2ead607c36d5115eb12bb",
     "AI_SYSTEM.md": "5a1cc2ad0944ad277aa08fe46d44c654ef5fa0256d6ca91925a2af23d6dfa5d6",
-    ".hydra-framework/cognition/graph/registry.yaml": "af5cdffb3fa78069dbb782d3da1f1a510b01292d1e4674a967da9a1332225a88"
+    ".hydra-framework/cognition/graph/registry.yaml": "b9d230bdc02537ce3b3da45c245f0ee264a429ede7fb5a4ed3edecec08fc37b1"
   },
   "stderr": "",
   "stdout": "Created capability skill: .hydra-framework/capabilities/skills/demo-skill\n- .hydra-framework/capabilities/skills/demo-skill/metadata.yaml\n- .hydra-framework/capabilities/skills/demo-skill/skill.md\nIndexed 1 objects: .hydra-framework/cognition/graph/registry.yaml\n"

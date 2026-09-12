@@ -7,61 +7,206 @@ import sys
 
 from hydra_engine.commands import CommandResult
 from hydra_engine.config import ConfigError
-from hydra_engine.documents.tokens import HydraYamlError, display_path, read_text, write_text
-from hydra_engine.providers.adapter_plan import planned_adapter_files
+from hydra_engine.documents.tokens import HydraYamlError, display_path
+from hydra_engine.providers.adapter_plan import LockUnavailableError, acquire_export_lock, apply_reconcile_plan, planned_adapter_files
+from hydra_engine.providers import capabilities
+from hydra_engine.providers import reclaim
 from hydra_engine.providers.paths import ProvidersPaths
 from hydra_engine.providers.reclaim import classify_surfaces, promote_surface
+from hydra_engine.providers.selection import capability_profiles, resolve_capability_selection, write_active_selection
+
+
+def _report_pending(paths: ProvidersPaths, plan: reclaim.ReconcilePlan, verb_created: str, verb_changed: str, verb_removed: str) -> None:
+    for path in plan.created:
+        print(f"- {verb_created}: {display_path(path, paths.root)}")
+    for path in plan.changed:
+        print(f"- {verb_changed}: {display_path(path, paths.root)}")
+    for unit in plan.removable:
+        for member in unit.members:
+            print(f"- {verb_removed}: {display_path(member, paths.root)}")
+    for label, reason in plan.kept:
+        print(f"- kept: {label}: {reason}")
+
+
+def resolve_active_plan(paths: ProvidersPaths) -> dict:
+    """The plan a no-`--profile` `export-adapters` would use: the active
+    profile's plan once this checkout has adopted profiles, else the full
+    catalog. Shared with `doctor`'s bootstrap check, which needs to know
+    whether *something* should be materialized without also running the
+    heavier ownership/orphan checks `reconcile_export` does."""
+    if (paths.hydra / "capabilities/profiles.yaml").exists():
+        selection = resolve_capability_selection(paths)
+        return planned_adapter_files(paths, selection.skills)
+    return planned_adapter_files(paths)
 
 
 def command_export_adapters(args, paths: ProvidersPaths) -> CommandResult:
     try:
-        plan = planned_adapter_files(paths)
+        profile_name = getattr(args, "profile", None)
+        if profile_name and not args.dry_run:
+            print("Hydra export failed: `--profile` is preview-only; use it with `--dry-run`", file=sys.stderr)
+            return CommandResult(1)
+        if profile_name and args.check:
+            print("Hydra export failed: `--profile` cannot be combined with `--check`", file=sys.stderr)
+            return CommandResult(1)
+        if profile_name:
+            selection = resolve_capability_selection(paths, profile_name)
+        elif (paths.hydra / "capabilities/profiles.yaml").exists():
+            # No profile named on the command line: reconcile using whatever
+            # this checkout has actually selected (`active.yaml`, or
+            # `default_profile` if it never has). A repo that never adopted
+            # a profile at all has no `profiles.yaml`, so it never reaches
+            # this branch and gets exactly today's full-catalog behavior.
+            selection = resolve_capability_selection(paths)
+        else:
+            selection = None
+        plan = reclaim.reconcile_export(paths, selection.skills if selection else None)
     except (HydraYamlError, ConfigError) as error:
         print(f"Hydra export failed: {error}", file=sys.stderr)
         return CommandResult(1)
-    if not plan:
+
+    if selection is not None and not selection.skills:
+        tags = ", ".join(selection.effective_tags) or "none"
+        print(f"Warning: profile `{selection.name}` selects no skills (effective tags: {tags}).")
+
+    if plan.abort_reason:
+        print(f"Hydra export failed: {plan.abort_reason}", file=sys.stderr)
+        return CommandResult(1)
+
+    if not plan.contents:
         print("No Hydra skills or agents found to export.")
         return CommandResult(0)
 
-    created = [path for path in sorted(plan) if not path.exists()]
-    changed = [
-        path for path in sorted(plan) if path.exists() and read_text(path) != plan[path]
-    ]
+    pending = bool(plan.created or plan.changed or plan.removable)
 
     if args.check:
-        if not created and not changed:
-            print(f"Hydra adapters: up to date ({len(plan)} generated files)")
+        if not pending:
+            print(f"Hydra adapters: up to date ({len(plan.contents)} generated files)")
             return CommandResult(0)
         print("Hydra adapters: drift detected")
-        for path in created:
-            print(f"- missing: {display_path(path, paths.root)}")
-        for path in changed:
-            print(f"- stale: {display_path(path, paths.root)}")
+        _report_pending(paths, plan, "missing", "stale", "obsolete")
         print("Run `hydra.py export-adapters` to regenerate.")
         return CommandResult(1)
 
     if args.dry_run:
-        if not created and not changed:
-            print(f"Hydra adapters: no changes ({len(plan)} generated files)")
+        if not pending:
+            print(f"Hydra adapters: no changes ({len(plan.contents)} generated files)")
             return CommandResult(0)
         print("Hydra adapters: would write")
-        for path in created:
-            print(f"- create: {display_path(path, paths.root)}")
-        for path in changed:
-            print(f"- update: {display_path(path, paths.root)}")
+        _report_pending(paths, plan, "create", "update", "remove")
         return CommandResult(0)
 
-    for path in created + changed:
-        write_text(path, plan[path])
+    try:
+        with acquire_export_lock(paths):
+            apply_reconcile_plan(plan)
+    except LockUnavailableError as error:
+        print(f"Hydra export failed: {error}", file=sys.stderr)
+        return CommandResult(1)
 
-    if not created and not changed:
-        print(f"Hydra adapters: already current ({len(plan)} generated files)")
+    if selection is not None:
+        tags = ", ".join(selection.effective_tags) or "none"
+        print(f"Hydra capability profile: {selection.name} (effective tags: {tags})")
+
+    if not pending:
+        print(f"Hydra adapters: already current ({len(plan.contents)} generated files)")
         return CommandResult(0)
-    print(f"Hydra adapters: wrote {len(created) + len(changed)} of {len(plan)} generated files")
-    for path in created:
-        print(f"- create: {display_path(path, paths.root)}")
-    for path in changed:
-        print(f"- update: {display_path(path, paths.root)}")
+    removed = sum(len(unit.members) for unit in plan.removable)
+    summary = f"Hydra adapters: wrote {len(plan.created) + len(plan.changed)} of {len(plan.contents)} generated files"
+    if removed:
+        summary += f", removed {removed}"
+    print(summary)
+    _report_pending(paths, plan, "create", "update", "remove")
+    if plan.removable:
+        print("Restart your Claude/Codex session: it composed its skill list at start and will not see this change until then.")
+    return CommandResult(0)
+
+
+def command_profile_select(args, paths: ProvidersPaths) -> CommandResult:
+    """Record and materialize a capability profile.
+
+    Four steps, in order, held under one lock: (1) acquire the lock; (2)
+    resolve the profile and build the whole plan in memory, no file touched;
+    (3) atomically write `active.yaml` -- the commit point; (4) apply the
+    planned adapter changes. A crash after step 3 leaves the checkout
+    recoverable by an ordinary `export-adapters`: it recomputes this same
+    plan from `active.yaml` plus canonical sources on every run, so nothing
+    here needs its own repair path.
+    """
+    try:
+        with acquire_export_lock(paths):
+            try:
+                selection = resolve_capability_selection(paths, args.name)
+                plan = reclaim.reconcile_export(paths, selection.skills)
+            except HydraYamlError as error:
+                print(f"Hydra profile select failed: {error}", file=sys.stderr)
+                return CommandResult(1)
+            if plan.abort_reason:
+                print(f"Hydra profile select failed: {plan.abort_reason}", file=sys.stderr)
+                return CommandResult(1)
+            write_active_selection(paths, args.name)
+            apply_reconcile_plan(plan)
+    except LockUnavailableError as error:
+        print(f"Hydra profile select failed: {error}", file=sys.stderr)
+        return CommandResult(1)
+
+    tags = ", ".join(selection.effective_tags) or "none"
+    removed = sum(len(unit.members) for unit in plan.removable)
+    print(f"Hydra profile selected: {args.name} (effective tags: {tags})")
+    print(f"Selected skills: {len(selection.skills)}")
+    print(f"Created {len(plan.created)}, updated {len(plan.changed)}, removed {removed}, kept-and-reported {len(plan.kept)}.")
+    for label, reason in plan.kept:
+        print(f"- kept: {label}: {reason}")
+    print("Restart your Claude/Codex session: it composed its skill list at start and will not see this change until then.")
+    return CommandResult(0)
+
+
+def command_profile_list(paths: ProvidersPaths) -> CommandResult:
+    try:
+        profiles = capability_profiles(paths)
+    except HydraYamlError as error:
+        print(f"Hydra profile failed: {error}", file=sys.stderr)
+        return CommandResult(1)
+    print("Hydra capability profiles:")
+    for profile, source in profiles:
+        tags = ", ".join(profile.tags) or "none"
+        print(f"- {profile.name}: {tags} ({source})")
+    return CommandResult(0)
+
+
+def command_profile_show(args, paths: ProvidersPaths) -> CommandResult:
+    try:
+        selection = resolve_capability_selection(paths, args.profile)
+    except HydraYamlError as error:
+        print(f"Hydra profile failed: {error}", file=sys.stderr)
+        return CommandResult(1)
+    tags = ", ".join(selection.effective_tags) or "none"
+    print(f"Hydra capability profile: {selection.name}")
+    print(f"Effective tags: {tags}")
+    print(f"Selected skills: {len(selection.skills)}")
+    for skill in selection.skills:
+        print(f"- {skill.name}: {', '.join(selection.reasons[skill])}")
+    if not selection.skills:
+        print(f"Warning: profile `{selection.name}` selects no skills (effective tags: {tags}).")
+
+    selected_names = {skill.name for skill in selection.skills}
+    dependencies: set[str] = set()
+    modules = list(selection.skills) + sorted(path for path in paths.agents_root().glob("*") if (path / "agent.md").exists())
+    for module in modules:
+        data = capabilities.parse_yaml(module / "metadata.yaml", paths.root)
+        dependencies.update(capabilities.yaml_list(capabilities.yaml_map(data.get("dependencies")).get("skills")))
+    missing = sorted(dependencies - selected_names)
+    if missing:
+        print("Unmaterialized declared skill dependencies (informational):")
+        for name in missing:
+            print(f"- {name}")
+    if args.untagged:
+        untagged = []
+        for skill in sorted(path for path in paths.skills_root().glob("*") if (path / "skill.md").exists()):
+            if not capabilities.yaml_list(capabilities.parse_yaml(skill / "metadata.yaml", paths.root).get("tags")):
+                untagged.append(skill.name)
+        print(f"Untagged skills: {len(untagged)}")
+        for name in untagged:
+            print(f"- {name}")
     return CommandResult(0)
 
 
@@ -124,14 +269,27 @@ def command_reclaim(args, paths: ProvidersPaths) -> CommandResult:
 
 
 def register(subparsers) -> None:
-    """Add `export-adapters` and `reclaim`."""
+    """Add `export-adapters`, `profile` (`list`/`show`/`select`), and `reclaim`."""
     export = subparsers.add_parser(
         "export-adapters",
         help="Generate provider skill and subagent wrappers from canonical Hydra capabilities",
     )
     export.add_argument("--check", action="store_true", help="Exit non-zero if any generated surface is missing or stale")
     export.add_argument("--dry-run", action="store_true", help="Report what would be written without writing")
+    export.add_argument("--profile", help="Preview one capability profile (requires --dry-run)")
     export.set_defaults(func=_dispatch_export_adapters)
+
+    profile = subparsers.add_parser("profile", help="Inspect, or select, this checkout's active capability profile")
+    profile_subparsers = profile.add_subparsers(dest="profile_command", required=True)
+    profile_list = profile_subparsers.add_parser("list", help="List shared and local capability profiles")
+    profile_list.set_defaults(func=_dispatch_profile_list)
+    profile_show = profile_subparsers.add_parser("show", help="Show skills selected by a capability profile")
+    profile_show.add_argument("--profile", help="Profile name (defaults to the checkout default)")
+    profile_show.add_argument("--untagged", action="store_true", help="Also list canonical skills without tags")
+    profile_show.set_defaults(func=_dispatch_profile_show)
+    profile_select = profile_subparsers.add_parser("select", help="Select and materialize a capability profile for this checkout")
+    profile_select.add_argument("name", help="Profile name: a shared preset, a local profile, or `full`")
+    profile_select.set_defaults(func=_dispatch_profile_select)
 
     reclaim = subparsers.add_parser(
         "reclaim",
@@ -145,6 +303,18 @@ def register(subparsers) -> None:
 
 def _dispatch_export_adapters(args, ctx) -> int:
     return command_export_adapters(args, ctx.providers_paths()).exit_code
+
+
+def _dispatch_profile_list(args, ctx) -> int:
+    return command_profile_list(ctx.providers_paths()).exit_code
+
+
+def _dispatch_profile_show(args, ctx) -> int:
+    return command_profile_show(args, ctx.providers_paths()).exit_code
+
+
+def _dispatch_profile_select(args, ctx) -> int:
+    return command_profile_select(args, ctx.providers_paths()).exit_code
 
 
 def _dispatch_reclaim(args, ctx) -> int:

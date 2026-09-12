@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from hydra_engine.checks import architecture_check, module_metadata, task_contract_docs
 from hydra_engine.objects import registry
-from hydra_engine.providers import capabilities
+from hydra_engine.providers import capabilities, selection
 from hydra_engine.seed import adaptations
 from hydra_engine.work import tiers
 
@@ -41,6 +41,10 @@ def module_metadata_check(ctx) -> list:
 
 def capability_maps_check(ctx) -> list:
     return capabilities.validate_capability_maps(ctx.providers_paths())
+
+
+def capability_profiles_check(ctx) -> list:
+    return selection.validate_capability_profiles(ctx.providers_paths())
 
 
 def task_contract_docs_check(ctx) -> list:
@@ -84,6 +88,7 @@ def object_model_check(ctx) -> list:
 NAMED_CHECKS = (
     ("module-metadata", module_metadata_check),
     ("capability-maps", capability_maps_check),
+    ("capability-profiles", capability_profiles_check),
     ("task-contract-docs", task_contract_docs_check),
     ("adaptations-ledger", adaptations_ledger_check),
     ("tier-boundaries", tier_boundaries_check),

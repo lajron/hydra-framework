@@ -51,6 +51,8 @@ PRIVATE_TIER_SEED: list[SeedArea] = [
     SeedArea("machine", "Operating system, capabilities, and local tool mappings.", "config"),
     SeedArea("repo-overrides", "Repository-specific private overrides.", "config"),
     SeedArea("secrets", "Credentials or secret references.", "config"),
+    SeedArea("locks", "The per-checkout export lock guarding `export-adapters`/`profile select`.", "machine"),
+    SeedArea("capabilities", "The local capability-profile policy (`profiles.yaml`) and machine-owned selection (`active.yaml`).", "config"),
 ]
 
 

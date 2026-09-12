@@ -6,6 +6,9 @@ hydra_object_kind: skill
 kind: procedure
 name: seed-reconciliation
 description: Compare this repository's Hydra copy against its base seed and decide what should flow back. Use when reconciling a diverged .hydra-framework/, or deciding whether a local change belongs in the shared framework.
+tags:
+  - hydra-maintainer
+  - framework-evolution
 scope: common-seed
 maturity: seed
 owners:

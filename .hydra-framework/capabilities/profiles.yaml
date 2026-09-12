@@ -1,0 +1,25 @@
+schema: hydra-framework.capability-profiles.v1
+hydra_id: hydra://capability/profile-policy/capability-profiles
+uid: 6f16f1d9-057d-4199-83aa-75ee5ec7f742
+schema_version: 3
+kind: capability-profile-policy
+title: Hydra Capability Profiles
+status: active
+scope: common-seed
+owners:
+  team: hydra
+relations: []
+provenance:
+  sources:
+    - .hydra-framework/core/placement-rules.md
+
+baseline_tags:
+  - hydra-core
+default_profile: full
+profiles:
+  core:
+    tags: []
+  hydra-maintainer:
+    tags:
+      - hydra-maintainer
+      - framework-evolution

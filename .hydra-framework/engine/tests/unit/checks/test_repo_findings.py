@@ -45,14 +45,20 @@ def _private_tier_shape() -> str:
         "migrations", "evolution/experiments", "scratch", "plans",
         "research", "prompts", "diagrams", "source-material", "tickets",
         "bug-reports", "developer", "machine", "repo-overrides", "secrets",
+        "locks", "capabilities",
     ]
     return "\n".join(f"`{path}/`" for path in paths)
 
 
 class NamedChecksTests(unittest.TestCase):
     def test_exposes_named_checks(self):
-        self.assertEqual(len(repo_findings.NAMED_CHECKS), 8)
+        self.assertEqual(len(repo_findings.NAMED_CHECKS), 9)
         ctx = _ctx()
+        (ctx.hydra / "capabilities").mkdir(parents=True, exist_ok=True)
+        (ctx.hydra / "capabilities/profiles.yaml").write_text(
+            "schema: hydra-framework.capability-profiles.v1\nbaseline_tags: []\ndefault_profile: full\nprofiles: {}\n",
+            encoding="utf-8",
+        )
         for name, check in repo_findings.NAMED_CHECKS:
             self.assertIsInstance(name, str)
             self.assertEqual(check(ctx), [])

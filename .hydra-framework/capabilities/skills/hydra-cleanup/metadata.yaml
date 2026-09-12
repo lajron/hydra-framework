@@ -6,6 +6,8 @@ hydra_object_kind: skill
 kind: procedure
 name: hydra-cleanup
 description: Review and reduce stale, redundant, misleading, or bloated Hydra framework material while preserving meaning, safety, and source-of-truth boundaries.
+tags:
+  - hydra-maintainer
 scope: base-seed
 maturity: seed
 owners:

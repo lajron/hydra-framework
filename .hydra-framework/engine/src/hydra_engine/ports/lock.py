@@ -1,0 +1,67 @@
+"""Per-checkout export lock port.
+
+`fcntl` (POSIX) and `msvcrt` (Windows) are both stdlib, so the lock that
+guards `export-adapters`/`profile select` needs no third-party dependency.
+The lock **fails closed**: if neither import succeeds, `acquire` raises
+`LockUnavailableError` rather than falling back to a no-op, because a no-op
+fallback would contradict the guarantee that concurrent exporters cannot
+interleave writes and removals.
+
+`LockUnavailableError` subclasses `HydraYamlError` so every existing call
+site that already catches `(HydraYamlError, ConfigError)` around export
+handles it with no new except clause, matching the same "subclass an
+already-caught type" rule the plan applies to profile-resolution errors.
+"""
+
+from __future__ import annotations
+
+import contextlib
+from pathlib import Path
+
+from hydra_engine.documents.tokens import HydraYamlError
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
+
+try:
+    import msvcrt
+except ImportError:
+    msvcrt = None
+
+
+class LockUnavailableError(HydraYamlError):
+    """No platform lock mechanism is importable; refuse to mutate."""
+
+
+@contextlib.contextmanager
+def acquire(path: Path):
+    """Hold the exclusive per-checkout lock at `path` for the block's duration.
+
+    Creates the lock file's parent directory if missing. Raises
+    `LockUnavailableError` immediately, before touching the filesystem, when
+    neither `fcntl` nor `msvcrt` is available.
+    """
+    if fcntl is None and msvcrt is None:
+        raise LockUnavailableError(
+            "no platform lock mechanism (fcntl/msvcrt) is available; refusing to mutate"
+        )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle = open(path, "a+")
+    try:
+        if fcntl is not None:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        else:
+            handle.seek(0)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+        try:
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            else:
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+    finally:
+        handle.close()

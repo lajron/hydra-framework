@@ -20,11 +20,11 @@ provenance:
     - source: .claude/rules/hydra-placement.md
       digest: sha256:e8f71f3d481932d35cc2c4c6717431c8e1a2be43e47e17fb75c39b5ddc1c5236
     - source: .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
-      digest: sha256:92c2c0e2af7afd6d566bb033f98e9e025b244a50d9cc8ceefcc42ae2b8df338d
+      digest: sha256:96cc1f63dda07e239bf711387bfe49baccba71467732e3c1b131f7350598fff1
 question: "How is an orphaned, drifted, or stale provider surface file fixed?"
 group: "fix-provider-surface"
 certainty: "confirmed"
-checked_on: "2026-09-10"
+checked_on: "2026-09-12"
 reads:
   - ".claude/rules/hydra-placement.md"
   - ".hydra-framework/engine/src/hydra_engine/providers/reclaim.py"

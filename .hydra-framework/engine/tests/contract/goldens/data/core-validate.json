@@ -14,9 +14,10 @@
     "AGENTS.md": "a52ae73fc0a471d277c57a8c65af99c0b3e814f984b2ead607c36d5115eb12bb",
     "AI_SYSTEM.md": "5a1cc2ad0944ad277aa08fe46d44c654ef5fa0256d6ca91925a2af23d6dfa5d6",
     ".hydra-framework/validation/capability-callers.yaml": "9b23c656cf01b2aa7d28546655c3de1fe7bed224c070b6150eeed9304c97a53c",
-    ".hydra-framework/repo/knowledge/state-tiers.md": "34b8a53d2362965b93aa3fed14b29c45afbea5ee1971c7a89af538b453f17228",
+    ".hydra-framework/repo/knowledge/state-tiers.md": "283c653c2556390046ac8e7c0275c27d3386d06a27b4fca372e528021ec6fde1",
     ".hydra-framework/config/delegation-policy.yaml": "28800c8f9d533f1a6fb4204d29a7cfb626fe4a5e43bfdbe9fce851d3af894c48",
-    ".hydra-framework/config/engine-policy.yaml": "6c56f73ccae04ea41b26987594c8e3f9eed69be4496e64e5b7613e1c5fc5e3d0"
+    ".hydra-framework/config/engine-policy.yaml": "6c56f73ccae04ea41b26987594c8e3f9eed69be4496e64e5b7613e1c5fc5e3d0",
+    ".hydra-framework/capabilities/profiles.yaml": "1e30d68f82c498a02661c141f2d14ce161a1d4eebc7daa75bba960113d77e999"
   },
   "stderr": "",
   "stdout": "Hydra validate: ok\nnote: provider `claude` cannot mechanically enforce delegation controls: generic-subagent-start-context, max-active-workers, max-depth\nnote: provider `codex` cannot mechanically enforce delegation controls: generic-subagent-start-context, max-active-workers, max-depth\n"

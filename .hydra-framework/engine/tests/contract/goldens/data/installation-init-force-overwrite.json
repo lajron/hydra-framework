@@ -18,5 +18,5 @@
     ".codex/hooks.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
   },
   "stderr": "",
-  "stdout": "Hydra init: copied 15 file(s) into <INIT_TARGET>\nPrivate local state: gitignore added, 24 directories created, 27 seed files written.\nNext, in the target repository:\n1. python3 .hydra-framework/scripts/hydra.py adopt\n2. python3 .hydra-framework/scripts/hydra.py adopt --record --repo <slug>\n3. python3 .hydra-framework/scripts/hydra.py export-adapters\nSee .hydra-framework/repo/knowledge/state-tiers.md for the private tier shape.\n"
+  "stdout": "Hydra init: copied 15 file(s) into <INIT_TARGET>\nPrivate local state: gitignore added, 26 directories created, 29 seed files written.\nNext, in the target repository:\n1. python3 .hydra-framework/scripts/hydra.py adopt\n2. python3 .hydra-framework/scripts/hydra.py adopt --record --repo <slug>\n3. python3 .hydra-framework/scripts/hydra.py export-adapters\nSee .hydra-framework/repo/knowledge/state-tiers.md for the private tier shape.\n"
 }

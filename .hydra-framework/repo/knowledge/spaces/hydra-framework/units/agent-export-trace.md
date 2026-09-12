@@ -26,13 +26,13 @@ provenance:
     - source: .hydra-framework/adapters/providers/claude/capability-map.yaml
       digest: sha256:9b638dadb5c46bf962a95c06f22ea14c98ee43e014045ef41a837957df9c2324
     - source: .hydra-framework/engine/src/hydra_engine/providers/capabilities.py
-      digest: sha256:56e3df1c20e6b5317dfadc964e614aa0818d1e639dee210b195e98e2789d33a6
+      digest: sha256:d46438e1dac157efcb00411db6d25b9cff21686532b24dbea0c53b248b14a09f
     - source: .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
-      digest: sha256:92c2c0e2af7afd6d566bb033f98e9e025b244a50d9cc8ceefcc42ae2b8df338d
+      digest: sha256:96cc1f63dda07e239bf711387bfe49baccba71467732e3c1b131f7350598fff1
 question: "How does one canonical agent's metadata become one generated Claude subagent, end to end?"
 group: "provider-export"
 certainty: "confirmed"
-checked_on: "2026-09-10"
+checked_on: "2026-09-12"
 reads:
   - ".hydra-framework/capabilities/agents/orchestrator/metadata.yaml"
   - ".hydra-framework/adapters/providers/claude/capability-map.yaml"

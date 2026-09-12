@@ -14,7 +14,15 @@ from hydra_engine.documents.tokens import HydraYamlError, display_path, is_relat
 from hydra_engine.documents.yaml_documents import parse_yaml, yaml_str
 from hydra_engine.identity.slugs import slugify
 from hydra_engine.ports import clock as clock_port
-from hydra_engine.providers.adapter_plan import planned_adapter_files
+from hydra_engine.providers.adapter_plan import (
+    PROVIDERS,
+    ReconcilePlan,
+    candidate_removals,
+    ownership_paths,
+    path_is_contained,
+    planned_adapter_files,
+)
+from hydra_engine.providers.capabilities import WRAPPER_PREFIX
 from hydra_engine.providers.paths import ProvidersPaths
 
 # Files a provider directory may contain without being an adapter over Hydra.
@@ -47,6 +55,46 @@ def sidecar_for(path: Path, kind: str) -> Path:
     return path.parent / ".hydra-adapter.yaml"
 
 
+def _removal_hint(body: Path, sidecar: Path, kind: str, root: Path) -> str:
+    """The exact hand-removal command a stale finding names.
+
+    A skill wrapper is a directory (`hydra-<slug>/`); an agent wrapper is two
+    sibling files with no directory of their own, so the command differs by
+    kind. Both `classify_surfaces` and `stale_wrapper_notices` (the
+    `move-object` rename case) render through this one function so the two
+    call sites can never say it differently.
+    """
+    if kind == "skill":
+        command = f"rm -rf {display_path(body.parent, root)}/"
+    else:
+        command = f"rm -f {display_path(body, root)} {display_path(sidecar, root)}"
+    return f"Hydra cannot prove it owns this any more. Remove it by hand:\n    {command}"
+
+
+def stale_wrapper_notices(paths: ProvidersPaths, old_slug: str, kind: str) -> list[str]:
+    """The same removal-line format `classify_surfaces` reports for a stale
+    wrapper, computed directly for a canonical rename `move-object` just
+    performed. A canonical rename removes `old_slug` from the ownership
+    index (nothing can prove ownership of its old wrapper any more), so
+    printing this immediately gives the same signal `reclaim`/`validate`
+    would surface on their next run, without waiting for one.
+    """
+    lines: list[str] = []
+    for provider in PROVIDERS:
+        if kind == "skill":
+            body = paths.root / provider.skills_target / f"{WRAPPER_PREFIX}{old_slug}" / "SKILL.md"
+        else:
+            if provider.agents_target is None or provider.agent_extension is None:
+                continue
+            body = paths.root / provider.agents_target / f"{WRAPPER_PREFIX}{old_slug}{provider.agent_extension}"
+        if not body.exists():
+            continue
+        sidecar = sidecar_for(body, kind)
+        lines.append(f"stale: {display_path(body, paths.root)}: canonical source is gone")
+        lines.append(f"  {_removal_hint(body, sidecar, kind, paths.root)}")
+    return lines
+
+
 def classify_surfaces(paths: ProvidersPaths) -> list[dict[str, str]]:
     """Classify every provider-native file against what Hydra generates.
 
@@ -77,7 +125,7 @@ def classify_surfaces(paths: ProvidersPaths) -> list[dict[str, str]]:
             if canonical:
                 if not (paths.root / canonical).exists():
                     status = "stale"
-                    detail = f"canonical source is gone: {canonical}"
+                    detail = f"canonical source is gone: {canonical}\n  {_removal_hint(path, sidecar, kind, paths.root)}"
                 elif path in plan and read_text(path) != plan[path]:
                     status = "drifted"
                     detail = f"edited wrapper; canonical source is {canonical}"
@@ -86,11 +134,11 @@ def classify_surfaces(paths: ProvidersPaths) -> list[dict[str, str]]:
                     detail = canonical
                 else:
                     status = "stale"
-                    detail = f"no longer generated; canonical source is {canonical}"
+                    detail = f"no longer generated; canonical source is {canonical}\n  {_removal_hint(path, sidecar, kind, paths.root)}"
             else:
                 status = "orphaned"
                 slug = slugify(path.parent.name if path.name == "SKILL.md" else path.stem)
-                slug = re.sub(r"^hydra-", "", slug)
+                slug = re.sub(rf"^{re.escape(WRAPPER_PREFIX)}", "", slug)
                 suggested = f".hydra-framework/{canonical_dir}/{slug}/"
                 suggested += "agent.md" if kind == "agent" else "skill.md"
                 detail = f"hand-authored {kind}; promote to {suggested}"
@@ -105,7 +153,7 @@ def promote_surface(paths: ProvidersPaths, item: dict[str, str]) -> Path | None:
         return None
     kind = item["kind"]
     slug = slugify(source.parent.name if source.name == "SKILL.md" else source.stem)
-    slug = re.sub(r"^hydra-", "", slug)
+    slug = re.sub(rf"^{re.escape(WRAPPER_PREFIX)}", "", slug)
     target_dir = paths.canonical_module_dir(kind) / slug
     body_name = "agent.md" if kind == "agent" else "skill.md"
     target = target_dir / body_name
@@ -204,3 +252,34 @@ def provider_surface_notice(paths: ProvidersPaths, edited: Path) -> list[str]:
             "  Delete the wrapper or restore its canonical source.",
         ]
     return []
+
+
+def reconcile_export(paths: ProvidersPaths, selection_skills=None) -> ReconcilePlan:
+    """The one planner `export-adapters` and `profile select` both read.
+
+    Builds the whole create/update/remove/kept plan in memory, with no
+    mutation, so `--check`, `--dry-run`, the real run, and `profile
+    select`'s step 2 can never disagree about what would happen or drift out
+    of sync with one another. Containment and the six ownership conditions
+    live in `adapter_plan` (`path_is_contained`/`candidate_removals`); this
+    function only orchestrates them, since it alone can also reach
+    `classify_surfaces` for the abort check without adapter_plan importing
+    this module back and creating a cycle.
+    """
+    for item in classify_surfaces(paths):
+        if item["status"] in {"orphaned", "drifted"}:
+            reason = (
+                f"a `{item['status']}` provider surface exists at `{item['path']}`: {item['detail']}; "
+                "resolve it (see `hydra.py reclaim`) before export can reconcile"
+            )
+            return ReconcilePlan({}, (), (), (), (), reason)
+
+    desired = planned_adapter_files(paths, selection_skills)
+    created = sorted(path for path in desired if not path.exists())
+    changed = sorted(path for path in desired if path.exists() and read_text(path) != desired[path])
+    for path in created + changed:
+        if not path_is_contained(path, paths.root):
+            return ReconcilePlan({}, (), (), (), (), f"`{display_path(path, paths.root)}` fails the containment check; refusing to write")
+
+    removable, kept = candidate_removals(paths, ownership_paths(paths), desired)
+    return ReconcilePlan(desired, tuple(created), tuple(changed), tuple(removable), tuple(kept), None)

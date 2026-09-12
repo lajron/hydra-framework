@@ -1,5 +1,0 @@
-schema: hydra-framework.adapter.v2
-provider: claude
-kind: skill
-canonical_source: .hydra-framework/capabilities/skills/wiki-authoring/skill.md
-generated_file: SKILL.md

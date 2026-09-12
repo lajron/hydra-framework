@@ -97,6 +97,7 @@ class ClassifySurfacesTests(unittest.TestCase):
         items = reclaim.classify_surfaces(paths)
         self.assertEqual(items[0]["status"], "stale")
         self.assertIn("canonical source is gone", items[0]["detail"])
+        self.assertIn("rm -rf .claude/skills/gone/", items[0]["detail"])
 
 
 class PromoteSurfaceTests(unittest.TestCase):
@@ -175,6 +176,84 @@ class ProviderSurfaceNoticeTests(unittest.TestCase):
         self.assertTrue(notice)
         self.assertIn("no canonical Hydra source", notice[0])
         self.assertIn("hydra.py reclaim --promote", notice[-1])
+
+
+def _demo_skill(paths: ProvidersPaths) -> None:
+    _write(
+        paths.root,
+        ".hydra-framework/capabilities/skills/demo-skill/metadata.yaml",
+        "name: demo-skill\ndescription: Use when relevant.\nkind: procedure\n",
+    )
+    _write(paths.root, ".hydra-framework/capabilities/skills/demo-skill/skill.md", "# Demo Skill\n\nBody.\n")
+
+
+class StaleWrapperNoticesTests(unittest.TestCase):
+    def test_names_the_exact_directory_and_removal_command(self):
+        paths = _paths()
+        _write(paths.root, ".claude/skills/hydra-foo/SKILL.md", "content\n")
+        lines = reclaim.stale_wrapper_notices(paths, "foo", "skill")
+        self.assertTrue(any("stale: .claude/skills/hydra-foo/SKILL.md" in line for line in lines))
+        self.assertTrue(any("rm -rf .claude/skills/hydra-foo/" in line for line in lines))
+
+    def test_nothing_materialized_produces_no_notice(self):
+        paths = _paths()
+        self.assertEqual(reclaim.stale_wrapper_notices(paths, "foo", "skill"), [])
+
+
+class ReconcileExportTests(unittest.TestCase):
+    def test_no_selection_reconciles_the_full_catalog(self):
+        paths = _paths()
+        _demo_skill(paths)
+        plan = reclaim.reconcile_export(paths)
+        self.assertIsNone(plan.abort_reason)
+        self.assertEqual(len(plan.created), len(plan.contents))
+        self.assertEqual(plan.changed, ())
+        self.assertEqual(plan.removable, ())
+
+    def test_narrowing_after_a_prior_export_plans_removal(self):
+        paths = _paths()
+        _demo_skill(paths)
+        full = reclaim.reconcile_export(paths)
+        for path, content in full.contents.items():
+            _write(paths.root, path.relative_to(paths.root).as_posix(), content)
+        narrowed = reclaim.reconcile_export(paths, selection_skills=[])
+        self.assertIsNone(narrowed.abort_reason)
+        self.assertEqual(narrowed.created, ())
+        self.assertEqual(narrowed.changed, ())
+        members = {member for unit in narrowed.removable for member in unit.members}
+        self.assertIn(paths.root / ".claude/skills/hydra-demo-skill/SKILL.md", members)
+
+    def test_an_orphaned_surface_aborts_without_mutation(self):
+        paths = _paths()
+        _demo_skill(paths)
+        _write(paths.root, ".claude/skills/deploy/SKILL.md", "content\n")
+        plan = reclaim.reconcile_export(paths)
+        self.assertIsNotNone(plan.abort_reason)
+        self.assertIn("orphaned", plan.abort_reason)
+        self.assertFalse((paths.root / ".claude/skills/hydra-demo-skill").exists())
+
+    def test_a_drifted_surface_aborts_without_mutation(self):
+        paths = _paths()
+        _demo_skill(paths)
+        full = reclaim.reconcile_export(paths)
+        for path, content in full.contents.items():
+            _write(paths.root, path.relative_to(paths.root).as_posix(), content)
+        edited = paths.root / ".claude/skills/hydra-demo-skill/SKILL.md"
+        edited.write_text(edited.read_text(encoding="utf-8") + "\nExtra.\n", encoding="utf-8")
+        plan = reclaim.reconcile_export(paths)
+        self.assertIsNotNone(plan.abort_reason)
+        self.assertIn("drifted", plan.abort_reason)
+
+    def test_a_symlinked_create_target_aborts_without_mutation(self):
+        paths = _paths()
+        _demo_skill(paths)
+        (paths.root / ".claude/skills").mkdir(parents=True)
+        outside = Path(tempfile.mkdtemp(prefix="providers-reclaim-outside-"))
+        (paths.root / ".claude/skills/hydra-demo-skill").symlink_to(outside, target_is_directory=True)
+        plan = reclaim.reconcile_export(paths)
+        self.assertIsNotNone(plan.abort_reason)
+        self.assertIn("containment", plan.abort_reason)
+        self.assertFalse((outside / "SKILL.md").exists())
 
 
 if __name__ == "__main__":

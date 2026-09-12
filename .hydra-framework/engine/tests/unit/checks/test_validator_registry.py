@@ -63,6 +63,12 @@ def _ctx() -> RepoContext:
     shape = hydra / "repo/knowledge/state-tiers.md"
     shape.parent.mkdir(parents=True)
     shape.write_text(_private_tier_shape(), encoding="utf-8")
+    profiles = hydra / "capabilities/profiles.yaml"
+    profiles.parent.mkdir(parents=True, exist_ok=True)
+    profiles.write_text(
+        "schema: hydra-framework.capability-profiles.v1\nbaseline_tags: []\ndefault_profile: full\nprofiles: {}\n",
+        encoding="utf-8",
+    )
     return RepoContext.for_root(root)
 
 
@@ -91,6 +97,7 @@ def _private_tier_shape() -> str:
         "migrations", "evolution/experiments", "scratch", "plans",
         "research", "prompts", "diagrams", "source-material", "tickets",
         "bug-reports", "developer", "machine", "repo-overrides", "secrets",
+        "locks", "capabilities",
     ]
     rows = "\n".join(f"| `{path}/` | fixture | fixture |" for path in paths)
     return f"""---
@@ -139,6 +146,7 @@ class LockedOrderTests(unittest.TestCase):
                 "provider-surfaces",
                 "module-metadata",
                 "capability-maps",
+                "capability-profiles",
                 "task-contract-docs",
                 "adaptations-ledger",
                 "tier-boundaries",
@@ -160,7 +168,7 @@ class LockedOrderTests(unittest.TestCase):
 class ChecksForTests(unittest.TestCase):
     def test_returns_zero_arg_checks_clean_on_a_fresh_tree(self):
         checks = validator_registry.checks_for(_ctx())
-        self.assertEqual(len(checks), 18)
+        self.assertEqual(len(checks), 19)
         for check in checks:
             self.assertEqual(check(), [])
 

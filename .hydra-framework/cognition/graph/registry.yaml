@@ -70,6 +70,21 @@ objects:
     aliases: []
     relations: []
     provenance_sources: []
+  hydra://capability/profile-policy/capability-profiles:
+    uid: 6f16f1d9-057d-4199-83aa-75ee5ec7f742
+    path: .hydra-framework/capabilities/profiles.yaml
+    digest: sha256:5480794b8ac1dd7a99bd0007a0c71b1a9f85402c0b98cac5a3c91ae9dc41f465
+    family: Capability
+    kind: capability-profile-policy
+    status: active
+    tier: shared
+    scope: common-seed
+    schema_version: 3
+    title: "Hydra Capability Profiles"
+    aliases: []
+    relations: []
+    provenance_sources:
+      - .hydra-framework/core/placement-rules.md
   hydra://capability/skill/adoption:
     uid: 8e424ab6-458a-405b-8db1-1639f1923430
     path: .hydra-framework/capabilities/skills/adoption/metadata.yaml
@@ -87,7 +102,7 @@ objects:
   hydra://capability/skill/complexity-review:
     uid: 70fdc169-475b-4c7a-8b08-4dc555a01101
     path: .hydra-framework/capabilities/skills/complexity-review/metadata.yaml
-    digest: sha256:56065ee3244431aa8c1917ff2991ce5b3b83754909d3ff8f5d7bae708d202875
+    digest: sha256:9a122ee066e43de0eac36c6cbbd53f05427b980163ce9d0029c7a4e3ab947c07
     family: Capability
     kind: skill
     status: seed
@@ -117,7 +132,7 @@ objects:
   hydra://capability/skill/hydra-cleanup:
     uid: 2c5ad0ed-3e69-4db6-bf4f-1b6cc6ac4c9f
     path: .hydra-framework/capabilities/skills/hydra-cleanup/metadata.yaml
-    digest: sha256:407ec5ff6c6f231f7db2abaeeea573b44aac58d4d64e45cacc0446bc3e07635a
+    digest: sha256:800a65b56dd37d10047fce777b9f2d4c9464b32861787a16254dd22a4b860032
     family: Capability
     kind: skill
     status: seed
@@ -176,7 +191,7 @@ objects:
   hydra://capability/skill/repository-inspection:
     uid: be6de7bd-a1a7-4d51-b5b0-22be6aeb070f
     path: .hydra-framework/capabilities/skills/repository-inspection/metadata.yaml
-    digest: sha256:e09afe0350b69cff5f1b110b95081fe47a301c0a1d8a6c7e4bd8167e3eeb83b4
+    digest: sha256:8c879b6fed5d508c94069b2bd112896016556f05cb71d12dfdfc28fb80df4680
     family: Capability
     kind: skill
     status: seed
@@ -190,7 +205,7 @@ objects:
   hydra://capability/skill/seed-reconciliation:
     uid: 00b83436-4c9d-4790-ae75-3fca55addfef
     path: .hydra-framework/capabilities/skills/seed-reconciliation/metadata.yaml
-    digest: sha256:a046956406163b4ef2e561d467b71080718e66b26134b85073b15747398e0210
+    digest: sha256:2b6eb2bf0daa29c32330bc2f0eefa57bbc1bbeedddd2efd3267e05f84952a112
     family: Capability
     kind: skill
     status: seed
@@ -325,7 +340,7 @@ objects:
   hydra://engine-module/object-family-registry:
     uid: 1eb7694e-2810-4fbf-a0f2-f4f4f2ee284a
     path: .hydra-framework/engine/src/hydra_engine/identity/object_families.py
-    digest: sha256:9411f398576af880114df68d56e74bf737cc7837ad2bf1020192f17c1f436fe2
+    digest: sha256:3b805e7cf31c41262b65b38473133c746155608b33cdce2e2f644ab023b3e7b5
     family: Runtime/Engine
     kind: engine-module
     status: active
@@ -435,7 +450,7 @@ objects:
   hydra://knowledge-slice/hydra-framework/overview:
     uid: e86b49f5-8055-4aeb-a001-084148d578bc
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/overview.md
-    digest: sha256:c89418a3c309fe6b5c3d7ccc0dc3b9d1e7896c058356023fca8a823d4abbd04d
+    digest: sha256:8841b6acf0663f2fc4d914646109b1cb8d781a6208c61308f34650dfb4cdb6c5
     family: Knowledge
     kind: knowledge-slice
     status: active
@@ -769,7 +784,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/agent-export-trace:
     uid: 6261c72a-da1b-46f9-8474-dddc40b53430
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/agent-export-trace.md
-    digest: sha256:456c7f2868188a98d4e25b2950df073ffc2308d45ca316a0c38e57920f71785d
+    digest: sha256:82b17903941d7c81405f4294894b35edb6a6615f3b9fd3512ef17073396a2153
     family: Knowledge
     kind: knowledge-unit
     status: active
@@ -828,7 +843,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/fix-provider-surface:
     uid: dbde7a08-930b-4a00-a468-da79f87d2c9d
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/fix-provider-surface.md
-    digest: sha256:494f33bca71d4cd8257d480fa4bc3def8d243abc81eeb0b31cfd9ec7658b7a08
+    digest: sha256:620961677cbb90095c48e6bdb876482e5b3d6249c4cc04296b1b516d0c0721b1
     family: Knowledge
     kind: knowledge-unit
     status: active

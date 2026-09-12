@@ -1,5 +1,0 @@
-schema: hydra-framework.adapter.v2
-provider: claude
-kind: agent
-canonical_source: .hydra-framework/capabilities/agents/repository-cartographer/agent.md
-generated_file: hydra-repository-cartographer.md

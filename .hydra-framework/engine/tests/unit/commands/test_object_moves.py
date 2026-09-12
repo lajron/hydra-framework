@@ -289,5 +289,75 @@ class CommandMoveObjectTests(unittest.TestCase):
         self.assertIn("note: .hydra-framework/knowledge/pointer.md still cites", out.getvalue())
 
 
+def _skill_metadata(name: str, uid: str = "00000000-0000-0000-0000-0000000000ab") -> str:
+    return (
+        "schema: hydra-framework.skill.v2\n"
+        f"hydra_id: hydra://capability/skill/{name}\n"
+        f"uid: {uid}\n"
+        "schema_version: 3\n"
+        "hydra_object_kind: skill\n"
+        f"name: {name}\n"
+        "description: Use when relevant.\n"
+        "status: active\n"
+        "scope: repo-local\n"
+        "owners:\n"
+        "  team: fixture\n"
+        "relations: []\n"
+        "provenance:\n"
+        "  sources: []\n"
+    )
+
+
+class CanonicalRenameStaleNoticeTests(unittest.TestCase):
+    """`move-object` on a canonical skill/agent rename must print the same
+    removal line `providers.reclaim`'s stale-wrapper report would."""
+
+    def _generated_wrapper(self, paths: ObjectLocations, slug: str) -> None:
+        wrapper = paths.root / f".claude/skills/hydra-{slug}/SKILL.md"
+        wrapper.parent.mkdir(parents=True)
+        wrapper.write_text("generated body\n", encoding="utf-8")
+        (wrapper.parent / ".hydra-adapter.yaml").write_text(
+            "schema: hydra-framework.adapter.v2\nprovider: claude\nkind: skill\n"
+            f"canonical_source: .hydra-framework/capabilities/skills/{slug}/skill.md\ngenerated_file: SKILL.md\n",
+            encoding="utf-8",
+        )
+
+    def test_rename_prints_the_removal_line_for_the_old_wrapper(self):
+        paths = _paths()
+        source = _write(paths, "capabilities/skills/foo/metadata.yaml", _skill_metadata("foo"))
+        _write(paths, "capabilities/skills/foo/skill.md", "# Foo\n")
+        self._generated_wrapper(paths, "foo")
+        destination = paths.hydra / "capabilities/skills/bar/metadata.yaml"
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            result = object_moves.command_move_object(_move_args(str(source), str(destination)), paths)
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("stale: .claude/skills/hydra-foo/SKILL.md", out.getvalue())
+        self.assertIn("rm -rf .claude/skills/hydra-foo/", out.getvalue())
+
+    def test_no_notice_when_no_wrapper_was_ever_generated(self):
+        paths = _paths()
+        source = _write(paths, "capabilities/skills/foo/metadata.yaml", _skill_metadata("foo"))
+        _write(paths, "capabilities/skills/foo/skill.md", "# Foo\n")
+        destination = paths.hydra / "capabilities/skills/bar/metadata.yaml"
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            result = object_moves.command_move_object(_move_args(str(source), str(destination)), paths)
+        self.assertEqual(result.exit_code, 0)
+        self.assertNotIn("stale:", out.getvalue())
+
+    def test_no_notice_when_the_slug_is_unchanged(self):
+        paths = _paths()
+        source = _write(paths, "capabilities/skills/foo/metadata.yaml", _skill_metadata("foo"))
+        _write(paths, "capabilities/skills/foo/skill.md", "# Foo\n")
+        self._generated_wrapper(paths, "foo")
+        destination = paths.hydra / "capabilities/skills/foo/metadata-renamed.yaml"
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            result = object_moves.command_move_object(_move_args(str(source), str(destination)), paths)
+        self.assertEqual(result.exit_code, 0)
+        self.assertNotIn("stale:", out.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -18,6 +18,24 @@ if str(_SCRIPTS_DIR) not in sys.path:
 
 _REENTRANCY_GUARD_ENV = "_HYDRA_GOLDEN_SELFTEST_GUARD"
 
+CAPABILITY_PROFILES_FIXTURE = """schema: hydra-framework.capability-profiles.v1
+hydra_id: hydra://capability/profile-policy/capability-profiles
+uid: 6f16f1d9-057d-4199-83aa-75ee5ec7f742
+schema_version: 3
+kind: capability-profile-policy
+title: Hydra Capability Profiles
+status: active
+scope: common-seed
+owners:
+  team: hydra
+relations: []
+provenance:
+  sources: []
+baseline_tags: []
+default_profile: full
+profiles: {}
+"""
+
 
 class CoreGoldenTests(unittest.TestCase):
     def test_doctor_happy_path(self):
@@ -25,6 +43,7 @@ class CoreGoldenTests(unittest.TestCase):
             ".gitignore": ".hydra-framework.local/\n",
             ".hydra-framework/repo/knowledge/state-tiers.md": PRIVATE_TIER_SHAPE_FIXTURE,
             ".hydra-framework/validation/capability-callers.yaml": CAPABILITY_CALLERS_FIXTURE,
+            ".hydra-framework/capabilities/profiles.yaml": CAPABILITY_PROFILES_FIXTURE,
             **PORTABLE_PROVIDER_SUPPORT_FIXTURE,
             **CONFIG_POLICY_FIXTURE,
             **PROVIDER_CAPABILITY_MAPS_FIXTURE,
@@ -35,6 +54,7 @@ class CoreGoldenTests(unittest.TestCase):
         outcome = run_golden(["validate"], extra_fixture={
             ".hydra-framework/repo/knowledge/state-tiers.md": PRIVATE_TIER_SHAPE_FIXTURE,
             ".hydra-framework/validation/capability-callers.yaml": CAPABILITY_CALLERS_FIXTURE,
+            ".hydra-framework/capabilities/profiles.yaml": CAPABILITY_PROFILES_FIXTURE,
             **CONFIG_POLICY_FIXTURE,
             **PROVIDER_CAPABILITY_MAPS_FIXTURE,
         })

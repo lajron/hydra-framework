@@ -1,5 +1,0 @@
-schema: hydra-framework.adapter.v2
-provider: claude
-kind: agent
-canonical_source: .hydra-framework/capabilities/agents/framework-evolution/agent.md
-generated_file: hydra-framework-evolution.md

@@ -63,6 +63,8 @@ other private directories without making them repository policy first.
 | `machine/` | config | Operating system, capabilities, and local tool mappings. |
 | `repo-overrides/` | config | Repository-specific private overrides. |
 | `secrets/` | config | Credentials or secret references. |
+| `locks/` | machine | The per-checkout export lock guarding `export-adapters`/`profile select`. |
+| `capabilities/` | config | The local capability-profile policy (`profiles.yaml`) and machine-owned selection (`active.yaml`). |
 
 The directory is not backed up by Git. Anything you cannot afford to lose
 belongs in the personal or shared tier, or in a private backup you manage. It

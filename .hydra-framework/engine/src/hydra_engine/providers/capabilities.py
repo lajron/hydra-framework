@@ -52,6 +52,14 @@ from hydra_engine.providers.paths import ProvidersPaths
 
 CAPABILITY_MAP_SCHEMA = "hydra-framework.capability-map.v1"
 
+# The one place a wrapper's name prefix is spelled. `adapter_plan.ownership_paths`,
+# `reclaim.py`'s stale-wrapper naming, `selection.py`'s wrapper-name-in-prose
+# check, and the generated `.gitignore` block (`git_ownership.py`) all read
+# this constant rather than each hard-coding `"hydra-"` -- the ignore patterns
+# in particular must track this value exactly, or a renamed prefix would
+# silently stop being ignored.
+WRAPPER_PREFIX = "hydra-"
+
 
 @dataclasses.dataclass(frozen=True)
 class Provider:
@@ -67,6 +75,7 @@ class Provider:
     slug: str
     skills_target: str
     agents_target: str | None
+    agent_extension: str | None
     build_agent_wrapper: Callable[[Path, str, dict, Path, hydra_config.EffectiveConfig], tuple[str, dict[str, str]]]
 
 
@@ -196,7 +205,7 @@ def build_skill_wrapper(skill_dir: Path, provider: str, root: Path) -> tuple[str
         meta.get("description"), f"Use when the Hydra `{name}` workflow is relevant."
     )
     kind = yaml_str(meta.get("kind"), "procedure")
-    wrapper_name = f"hydra-{name}"
+    wrapper_name = f"{WRAPPER_PREFIX}{name}"
     canonical = skill_dir / "skill.md"
     rel_source = canonical.relative_to(root).as_posix()
 
@@ -232,8 +241,11 @@ def agent_instruction_body(canonical: Path, meta: dict) -> str:
             body.append("\nCanonical knowledge:\n")
             body.extend(f"- `.hydra-framework/{item}`" for item in knowledge)
         if skills:
-            body.append("\nRelevant Hydra skills:\n")
-            body.extend(f"- `hydra-{item}`" for item in skills)
+            body.append("\nRelevant Hydra skills. The skill name works when the skill is materialized in\nthis checkout; the canonical source always resolves.\n")
+            body.extend(
+                f"- `{WRAPPER_PREFIX}{item}` -- `.hydra-framework/capabilities/skills/{item}/skill.md`"
+                for item in skills
+            )
         body.append("")
     return "\n".join(body) + "\n"
 
@@ -257,7 +269,7 @@ def build_agent_wrapper(
     )
     canonical = agent_dir / "agent.md"
     rel_source = canonical.relative_to(root).as_posix()
-    wrapper_name = f"hydra-{name}"
+    wrapper_name = f"{WRAPPER_PREFIX}{name}"
     effective = config or hydra_config.load_effective_config(
         hydra_config.ConfigPaths(root=root, hydra=root / ".hydra-framework", local=root / ".hydra-framework.local")
     )
@@ -301,7 +313,7 @@ def build_codex_agent_wrapper(
     description = yaml_str(meta.get("description"), f"Use for the Hydra `{name}` role.")
     canonical = agent_dir / "agent.md"
     rel_source = canonical.relative_to(root).as_posix()
-    wrapper_slug = f"hydra-{name}"
+    wrapper_slug = f"{WRAPPER_PREFIX}{name}"
     agent_name = slugify(wrapper_slug).replace("-", "_")
     effective = config or hydra_config.load_effective_config(
         hydra_config.ConfigPaths(root=root, hydra=root / ".hydra-framework", local=root / ".hydra-framework.local")
@@ -338,6 +350,6 @@ def build_codex_agent_wrapper(
 # holding a function is bound at module-load time, not deferred like a
 # function body's own name lookups, so this tuple cannot precede them.
 PROVIDERS = (
-    Provider("claude", ".claude/skills", ".claude/agents", build_agent_wrapper),
-    Provider("codex", ".agents/skills", ".codex/agents", build_codex_agent_wrapper),
+    Provider("claude", ".claude/skills", ".claude/agents", ".md", build_agent_wrapper),
+    Provider("codex", ".agents/skills", ".codex/agents", ".toml", build_codex_agent_wrapper),
 )

@@ -13,6 +13,7 @@ hydra_object_kind: skill
 kind: {kind}
 name: {name}
 description: {description}
+tags: []
 scope: repo-local
 maturity: experimental
 owners:

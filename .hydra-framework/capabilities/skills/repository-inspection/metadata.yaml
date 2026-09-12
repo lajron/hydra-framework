@@ -5,6 +5,9 @@ schema_version: 3
 hydra_object_kind: skill
 name: repository-inspection
 description: Inspect repository structure, Hydra docs, active tasks, and relevant knowledge before non-trivial repo work.
+tags:
+  - hydra-core
+  - developer
 scope: common-seed
 maturity: seed
 owners:

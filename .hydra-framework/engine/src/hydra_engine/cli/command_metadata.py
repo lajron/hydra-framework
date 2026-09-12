@@ -170,9 +170,17 @@ SIDE_EFFECT_COMMANDS: dict[str, CommandSafety] = {
         privacy="shared (tracked repository files)",
     ),
     "export-adapters": CommandSafety(
-        side_effects="writes generated provider skill/subagent wrapper files, unless --check or --dry-run is given",
-        confirmation="none needed; regenerable, tracked build output",
-        privacy="shared (tracked repository files)",
+        side_effects=(
+            "writes generated provider skill/subagent wrapper files, and deletes wrapper units a narrower "
+            "capability profile no longer selects, unless --check or --dry-run is given"
+        ),
+        confirmation="none needed; regenerable, and deletion is limited to units Hydra can prove it owns (see the six ownership conditions)",
+        privacy="local working tree only; generated output is Git-ignored and never tracked",
+    ),
+    "profile select": CommandSafety(
+        side_effects="writes .hydra-framework.local/capabilities/active.yaml, then reconciles adapters under the same lock as export-adapters, including deletion",
+        confirmation="none needed; reconciliation follows the same ownership-proven deletion as export-adapters, and a crash mid-way is recovered by an ordinary export-adapters",
+        privacy="private selection (.hydra-framework.local/) and local working tree for the Git-ignored adapters it materializes",
     ),
     "reclaim": CommandSafety(
         side_effects="moves hand-authored provider files into canonical Hydra when --promote is given",

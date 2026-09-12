@@ -17,3 +17,12 @@ __pycache__/
 
 # Stray temp files from an interrupted hydra.py atomic write (documents/tokens.py).
 .*.hydra-tmp-*
+
+# BEGIN hydra generated adapters (managed by hydra.py export-adapters)
+.claude/skills/hydra-*/
+.claude/agents/hydra-*.md
+.claude/agents/.hydra-adapter-hydra-*.yaml
+.agents/skills/hydra-*/
+.codex/agents/hydra-*.toml
+.codex/agents/.hydra-adapter-hydra-*.yaml
+# END hydra generated adapters

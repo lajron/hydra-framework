@@ -5,6 +5,9 @@ schema_version: 3
 hydra_object_kind: skill
 name: complexity-review
 description: Review a diff or repository area for unnecessary implementation complexity and identify concrete deletions or simpler replacements.
+tags:
+  - hydra-maintainer
+  - framework-evolution
 scope: common-seed
 maturity: seed
 owners:

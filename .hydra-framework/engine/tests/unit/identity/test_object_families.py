@@ -61,7 +61,7 @@ class RegistryConsistencyTests(unittest.TestCase):
     def test_the_four_kinds_this_repository_authors_are_registered(self):
         # These were absent from the flat map: they resolved to Capability only
         # via the `hydra://capability/` prefix, so a misspelling was invisible.
-        for kind in ("agent", "skill", "workflow", "tool-capability-registry"):
+        for kind in ("agent", "skill", "workflow", "tool-capability-registry", "capability-profile-policy"):
             self.assertEqual(object_families.family_for("", kind), "Capability")
 
     def test_runtime_engine_is_registered(self):

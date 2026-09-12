@@ -105,7 +105,7 @@ OBJECT_FAMILIES = (
         # are kinds only: no object is identified as `hydra://agent/...`, so
         # listing them as prefixes would be inventing a shape nothing uses.
         id_prefixes=("capability",),
-        kinds=("capability", "agent", "skill", "workflow", "tool-capability-registry"),
+        kinds=("capability", "agent", "skill", "workflow", "tool-capability-registry", "capability-profile-policy"),
     ),
     ObjectFamily(
         name="Work",
