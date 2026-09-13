@@ -15,7 +15,7 @@ _SRC = Path(__file__).resolve().parents[3] / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from hydra_engine.knowledge import packages, search_index  # noqa: E402
+from hydra_engine.knowledge import index_collection, packages, search_index  # noqa: E402
 from hydra_engine.objects.discovery import ObjectLocations  # noqa: E402
 
 
@@ -161,10 +161,10 @@ class SearchIndexTests(unittest.TestCase):
         docs = search_index.collect_search_documents(
             _paths(root), _resolver(root), ("validate",), content_ids=search_index.fingerprint(root),
         )
-        loaded = search_index._load_documents(search_index.default_db_path(local), search_index._corpus_digest(docs))
+        loaded = search_index._load_documents(search_index.default_db_path(local))
         self.assertEqual([doc.key for doc in loaded], [doc.key for doc in docs])
 
-    def test_build_index_publishes_an_immutable_database(self):
+    def test_build_index_uses_the_persistent_wal_database(self):
         root = _repo()
         local = root / ".hydra-framework.local"
         search_index.build_index(_paths(root), _resolver(root), local)
@@ -172,7 +172,7 @@ class SearchIndexTests(unittest.TestCase):
         self.assertIsNotNone(db_path)
         assert db_path is not None
         with sqlite3.connect(db_path) as conn:
-            self.assertEqual(conn.execute("PRAGMA journal_mode").fetchone()[0].lower(), "delete")
+            self.assertEqual(conn.execute("PRAGMA journal_mode").fetchone()[0].lower(), "wal")
 
     def test_invalid_private_database_falls_back_to_source(self):
         root = _repo()
@@ -239,7 +239,7 @@ class SearchIndexTests(unittest.TestCase):
         search_index.build_index(_paths(root), _resolver(root), local)
         overview = root / ".hydra-framework/repo/knowledge/knowledge-packages/example/overview.md"
         overview.write_text(overview.read_text(encoding="utf-8") + "incremental phrase\n", encoding="utf-8")
-        with mock.patch.object(search_index, "_document_for_path", wraps=search_index._document_for_path) as parse:
+        with mock.patch.object(index_collection, "_document_for_path", wraps=index_collection._document_for_path) as parse:
             results, _features, source = search_index.search(
                 "incremental phrase", paths=_paths(root), resolver_paths=_resolver(root), local=local,
             )
@@ -281,7 +281,7 @@ class SearchIndexTests(unittest.TestCase):
         commit = subprocess.run(["git", "commit", "-m", "edit"], cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.assertEqual(commit.returncode, 0, commit.stderr)
 
-        with mock.patch.object(search_index, "_document_for_path", wraps=search_index._document_for_path) as parse:
+        with mock.patch.object(index_collection, "_document_for_path", wraps=index_collection._document_for_path) as parse:
             results, _features, source = search_index.search(
                 "hooks removed phrase", paths=_paths(root), resolver_paths=_resolver(root), local=local,
             )
@@ -330,7 +330,7 @@ class SearchIndexTests(unittest.TestCase):
 
     def test_collect_search_documents_discovers_nodes_once_not_per_document(self):
         root = _repo()
-        with mock.patch.object(search_index, "discover_knowledge_nodes", wraps=search_index.discover_knowledge_nodes) as discover:
+        with mock.patch.object(index_collection, "discover_knowledge_nodes", wraps=index_collection.discover_knowledge_nodes) as discover:
             docs = search_index.collect_search_documents(_paths(root), _resolver(root))
         self.assertGreater(len(docs), 1)
         self.assertEqual(discover.call_count, 1)

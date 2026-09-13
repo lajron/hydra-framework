@@ -60,8 +60,9 @@ def _route_once(prompt: str, ctx, max_routed_nodes: int, *, force_source: bool =
     snapshot_warnings: list[str] = []
     try:
         snapshot = open_knowledge_snapshot(paths, stamp.publication if stamp is not None else None, _source, stamp=stamp)
-        nodes = list(snapshot.routing_nodes(results))
-        bindings = snapshot.bindings()
+        with snapshot:
+            nodes = list(snapshot.routing_nodes(results))
+            bindings = snapshot.bindings()
     except ValueError as error:
         if error.__class__.__name__ != "HydrationMismatch":
             # Exact references remain useful if optional v3 routing fails.
@@ -75,8 +76,8 @@ def _route_once(prompt: str, ctx, max_routed_nodes: int, *, force_source: bool =
                 command_ids=ctx.command_ids, limit=20, force_source=True,
             )
             stamp = None
-            snapshot = open_knowledge_snapshot(paths, None, _source)
-            nodes, bindings = list(snapshot.routing_nodes(results)), snapshot.bindings()
+            with open_knowledge_snapshot(paths, None, _source) as snapshot:
+                nodes, bindings = list(snapshot.routing_nodes(results)), snapshot.bindings()
     # `search` already resolves exact ids and paths before ranking.  Reusing
     # that one result set avoids a second whole-corpus collection per hook.
     exact_references = [result for result in results if result.channel == "exact"]

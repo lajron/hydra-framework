@@ -37,6 +37,17 @@ class KnowledgeSnapshot:
     def cached(self) -> bool:
         return self.store is not None
 
+    def close(self) -> None:
+        if isinstance(self.store, SqliteKnowledgeStore):
+            self.store.close()
+            self.store = None
+
+    def __enter__(self) -> "KnowledgeSnapshot":
+        return self
+
+    def __exit__(self, *_unused) -> None:
+        self.close()
+
     def canonical_nodes(self) -> tuple[object, ...]:
         if self._nodes is None:
             discover_knowledge_nodes = __import__("hydra_engine.knowledge.nodes", fromlist=("discover_knowledge_nodes",)).discover_knowledge_nodes

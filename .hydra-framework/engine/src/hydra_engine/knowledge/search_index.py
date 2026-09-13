@@ -3,28 +3,21 @@
 from __future__ import annotations
 
 import dataclasses
-import hashlib
 import re
 import sqlite3
-import uuid
-from collections.abc import Mapping
 from pathlib import Path
 
-from hydra_engine.documents.markdown import strip_markdown_code_fences
-from hydra_engine.documents.tokens import display_path, is_relative_to, read_text
+from hydra_engine.documents.tokens import display_path, is_relative_to
 from hydra_engine.identity.slugs import slugify
 from hydra_engine.knowledge.candidates import APPROX_CHARS_PER_TOKEN, approx_tokens
-from hydra_engine.knowledge.node_catalog import discover_knowledge_nodes, knowledge_node_for_path, resolve_inheritance
 from hydra_engine.knowledge.packages import ContextCompilerPaths
-from hydra_engine.knowledge import index_cache
+from hydra_engine.knowledge import index_cache, index_collection
 from hydra_engine.telemetry.writer import event_growth_notes as knowledge_events_growth_notes, events_path as telemetry_events_path, knowledge_counts as telemetry_counts, record_knowledge_command_usage as record_command_usage, record_knowledge_route as record_route
 
 SCHEMA_VERSION = "hydra-framework.knowledge-store.v3"
 DEFAULT_RESULT_LIMIT = 20
 DEFAULT_BUDGET = 2000
 DEFAULT_PREVIEW_CHARS = 280
-SEARCH_EXTENSIONS = {".md", ".yaml", ".yml", ".txt", ".sh", ".py"}
-SEARCH_ROOTS = (".hydra-framework/repo/knowledge", ".hydra-framework/capabilities", ".hydra-framework/core", ".hydra-framework/validation", ".hydra-framework/engine/src/hydra_engine")
 _TOKEN_RE = re.compile(r"[0-9A-Za-z_./:-]+")
 _HYDRA_URI_RE = re.compile(r"hydra://[A-Za-z0-9_./:-]+")
 _PATH_RE = re.compile(r"(?:^|\s)([.]?/?(?:AI_SYSTEM\.md|\.hydra-framework/[^\s`'\",)]+|project-wiki/[^\s`'\",)]+))")
@@ -34,11 +27,7 @@ _DOCUMENT_COLUMNS = ("key", "hydra_id", "aliases", "path", "kind", "package", "t
 class SqliteFeatures:
     fts5: bool; trigram: bool; error: str = ""
 
-@dataclasses.dataclass(frozen=True)
-class SearchDocument:
-    key: str; hydra_id: str; aliases: tuple[str, ...]; path: str; kind: str; package: str; title: str; keywords: tuple[str, ...]
-    routes: tuple[str, ...]; use_when: tuple[str, ...]; headings: tuple[str, ...]; body: str; relations: tuple[str, ...]
-    content_id: str = ""
+SearchDocument = index_collection.SearchDocument
 
 @dataclasses.dataclass(frozen=True)
 class SearchResult:
@@ -75,61 +64,7 @@ def probe_sqlite_features() -> SqliteFeatures:
             return SqliteFeatures(fts5=True, trigram=trigram)
     except sqlite3.Error as error:
         return SqliteFeatures(fts5=False, trigram=False, error=str(error))
-def collect_search_documents(
-    paths: ContextCompilerPaths,
-    resolver_paths: ObjectLocations,
-    command_ids: tuple[str, ...] = (),
-    *,
-    content_ids: Mapping[str, str] | None = None,
-    only_paths: frozenset[str] | None = None,
-) -> list[SearchDocument]:
-    """Collect canonical search documents; the registry is never an input."""
-    discovery = __import__("hydra_engine.objects.discovery", fromlist=("collect_hydra_objects",))
-    objects, _errors = discovery.collect_hydra_objects(resolver_paths)
-    by_path: dict[str, dict] = {}
-    by_id: dict[str, dict] = {}
-    for entry in objects:
-        hydra_id = _str(entry.get("id")).lower()
-        if not hydra_id:
-            continue
-        by_id[hydra_id] = entry
-        path = _str(entry.get("path"))
-        if path:
-            by_path.setdefault(path, {"ids": [], "entries": []})
-            by_path[path]["ids"].append(hydra_id)
-            by_path[path]["entries"].append(entry)
-
-    nodes = _discover_nodes_or_empty(paths)
-
-    docs: dict[str, SearchDocument] = {}
-    for file_path in _canonical_search_files(paths.root):
-        rel = display_path(file_path, paths.root)
-        if only_paths is not None and rel not in only_paths:
-            continue
-        grouped = by_path.get(rel, {"ids": [], "entries": []})
-        entry = grouped["entries"][0] if grouped["entries"] else {}
-        hydra_id = grouped["ids"][0] if grouped["ids"] else ""
-        docs[rel] = _with_content_id(
-            _document_for_path(paths, resolver_paths, file_path, rel, hydra_id, entry, nodes), content_ids,
-        )
-
-    for hydra_id, entry in by_id.items():
-        path = _str(entry.get("path"))
-        if only_paths is not None and path not in only_paths:
-            continue
-        if path not in docs:
-            docs[f"id:{hydra_id}"] = _with_content_id(
-                _document_for_object(paths, hydra_id, entry, nodes), content_ids,
-            )
-
-    for command_id in command_ids if only_paths is None else ():
-        key = f"command:{command_id}"
-        docs[key] = SearchDocument(key, "", (), "", "command", "", command_id, (command_id,), (), (), (), f"hydra.py {command_id}", ())
-    return list(docs.values())
-
-
-def _with_content_id(document: SearchDocument, content_ids: Mapping[str, str] | None) -> SearchDocument:
-    return dataclasses.replace(document, content_id=(content_ids or {}).get(document.path, ""))
+collect_search_documents = index_collection.collect_search_documents
 
 
 def build_index(paths: ContextCompilerPaths, resolver_paths: ObjectLocations, local: Path, command_ids: tuple[str, ...] = ()) -> tuple[int, SqliteFeatures]:
@@ -141,13 +76,12 @@ def build_index(paths: ContextCompilerPaths, resolver_paths: ObjectLocations, lo
     features = probe_sqlite_features()
 
     def populate(conn: sqlite3.Connection) -> None:
-        index_cache.create_index_tables(conn)
-        storage = __import__("hydra_engine.knowledge.storage", fromlist=("build_knowledge_store", "write_sqlite_store"))
-        storage.write_sqlite_store(conn, storage.build_knowledge_store(paths))
+        storage = __import__("hydra_engine.knowledge.storage", fromlist=("write_sqlite_store",))
+        storage.write_sqlite_store(conn, index_collection.build_knowledge_store(paths))
         _write_documents(conn, docs)
-        _write_meta(conn, docs, command_ids, features)
+        _write_meta(conn, command_ids, features)
 
-    index_cache.publish_versioned(local / "index", populate, publication_id=uuid.uuid4().hex)
+    index_cache.rebuild_index(local, populate)
     return len(docs), features
 
 
@@ -155,8 +89,8 @@ def _write_documents(conn: sqlite3.Connection, docs: list[SearchDocument]) -> No
     index_cache.write_documents(conn, docs, _row_for_document)
 
 
-def _write_meta(conn: sqlite3.Connection, docs: list[SearchDocument], command_ids: tuple[str, ...], features: SqliteFeatures) -> None:
-    index_cache.write_meta(conn, docs, command_ids, features, SCHEMA_VERSION, _corpus_digest)
+def _write_meta(conn: sqlite3.Connection, command_ids: tuple[str, ...], features: SqliteFeatures) -> None:
+    index_cache.write_meta(conn, command_ids, features, SCHEMA_VERSION)
 def index_status(paths: ContextCompilerPaths, resolver_paths: ObjectLocations, local: Path, command_ids: tuple[str, ...] = ()) -> str:
     state = _cache_state(paths, local)
     if isinstance(state, index_cache.SourceOnly):
@@ -173,27 +107,24 @@ def _cache_state(paths: ContextCompilerPaths, local: Path) -> index_cache.CacheS
     )
 
 
-def _update_index(paths, resolver_paths, local: Path, command_ids: tuple[str, ...], change) -> Path:
-    changed = frozenset((*change.added, *change.modified))
-    removed = (*change.deleted, *change.modified)
+def _update_index(paths, resolver_paths, local: Path, command_ids: tuple[str, ...], state: index_cache.Stale) -> Path:
+    changed = tuple(sorted(set((*state.delta.added, *state.delta.modified))))
+    removed = tuple(sorted(set((*state.delta.deleted, *state.delta.modified))))
 
     def apply_update(conn: sqlite3.Connection, current: dict[str, str]) -> None:
-        docs = collect_search_documents(
-            paths, resolver_paths, command_ids, content_ids=current, only_paths=changed,
-        )
+        nodes = index_collection.discover_nodes_or_empty(paths)
+        docs = collect_search_documents(paths, resolver_paths, content_ids=current, only_paths=frozenset(changed), _nodes=nodes)
+        replacements = index_collection.collect_changed_knowledge_objects(paths, changed, _nodes=nodes)
         if removed:
-            placeholders = ", ".join("?" for _ in removed)
-            conn.execute(f"DELETE FROM documents WHERE path IN ({placeholders})", removed)
-            index_cache.delete_knowledge_rows(conn, removed)
+            conn.execute(f"DELETE FROM documents WHERE path IN ({', '.join('?' for _ in removed)})", removed)
         _write_documents(conn, docs)
-        index_cache.write_changed_knowledge_rows(conn, paths, changed)
-        _write_meta(conn, _documents_from_connection(conn), command_ids, probe_sqlite_features())
+        index_cache.replace_changed_knowledge_rows(conn, removed, replacements)
 
-    return index_cache.update_index(paths, local, change, apply_update)
+    return index_cache.apply_index_delta(
+        paths, local, expected_generation=state.generation or "",
+        expected_fingerprint=state.fingerprint, apply_update=apply_update,
+    )
 
-
-def _documents_from_connection(conn: sqlite3.Connection) -> list[SearchDocument]:
-    return index_cache.documents_from_connection(conn, _document_from_row)
 def search(
     query: str,
     *,
@@ -208,7 +139,10 @@ def search(
     state: index_cache.CacheState = index_cache.SourceOnly("force-source") if force_source else _cache_state(paths, local)
     try:
         if isinstance(state, index_cache.Stale) and index_cache.command_ids_match(state.db_path, command_ids):
-            _update_index(paths, resolver_paths, local, command_ids, state.delta)
+            if index_collection.delta_is_local(paths, resolver_paths, state.delta):
+                _update_index(paths, resolver_paths, local, command_ids, state)
+            else:
+                build_index(paths, resolver_paths, local, command_ids)
             state = _cache_state(paths, local)
         elif isinstance(state, index_cache.Absent) or (isinstance(state, index_cache.Fresh) and not index_cache.command_ids_match(state.db_path, command_ids)):
             build_index(paths, resolver_paths, local, command_ids)
@@ -288,31 +222,12 @@ def substring_search(query: str, docs: list[SearchDocument]) -> list[SearchResul
 def sorted_results(results: list[SearchResult]) -> list[SearchResult]:
     tier = {"exact": 0, "path-route": 1, "substring": 2}
     return sorted(results, key=lambda r: (tier.get(r.channel, 9), r.rank, -r.graph_count, r.document.hydra_id, r.document.path))
-def _load_documents(db_path: Path | None, expected_digest: str | None = None) -> list[SearchDocument] | None:
+def _load_documents(db_path: Path | None) -> list[SearchDocument] | None:
     return index_cache.load_documents(
         db_path, schema=SCHEMA_VERSION, columns=_DOCUMENT_COLUMNS,
-        decode=_document_from_row, expected_digest=expected_digest,
+        decode=_document_from_row,
     )
 
-
-def _canonical_search_files(root: Path) -> list[Path]:
-    files: list[Path] = []
-    for raw in SEARCH_ROOTS:
-        base = root / raw
-        if not base.exists():
-            continue
-        files.extend(path for path in sorted(base.rglob("*")) if path.is_file() and path.suffix in SEARCH_EXTENSIONS)
-    if (root / "AI_SYSTEM.md").exists():
-        files.append(root / "AI_SYSTEM.md")
-    # The fingerprint also governs every document form that can carry a
-    # canonical Hydra object, including forms outside the lexical search roots.
-    handlers = __import__("hydra_engine.objects.object_handlers", fromlist=("object_document_paths",))
-    freshness = __import__("hydra_engine.knowledge.freshness", fromlist=("is_governed_path",))
-    files.extend(
-        path for path in handlers.object_document_paths(root / ".hydra-framework")
-        if freshness.is_governed_path(display_path(path, root))
-    )
-    return sorted(set(files))
 def _with_explicit_path_docs(docs: list[SearchDocument], query: str, path_refs: tuple[str, ...], paths: ContextCompilerPaths, resolver_paths: ObjectLocations) -> list[SearchDocument]:
     by_path = {_normal_path(doc.path): doc for doc in docs}
     nodes = None
@@ -323,46 +238,9 @@ def _with_explicit_path_docs(docs: list[SearchDocument], query: str, path_refs: 
         rel = _normal_path(display_path(path, paths.root))
         if rel not in by_path:
             if nodes is None:
-                nodes = _discover_nodes_or_empty(paths)
-            by_path[rel] = _document_for_path(paths, resolver_paths, path, rel, "", {}, nodes)
+                nodes = index_collection.discover_nodes_or_empty(paths)
+            by_path[rel] = index_collection.document_for_path(paths, path, rel, "", {}, nodes)
     return list(by_path.values())
-def _discover_nodes_or_empty(paths: ContextCompilerPaths) -> list:
-    try:
-        return discover_knowledge_nodes(paths)
-    except Exception:
-        return []
-def _document_for_path(paths: ContextCompilerPaths, resolver_paths: ObjectLocations, file_path: Path, rel: str, hydra_id: str, entry: dict, nodes: list) -> SearchDocument:
-    text = read_text(file_path)
-    headings = tuple(line.lstrip("#").strip() for line in text.splitlines() if line.startswith("#"))
-    package = _package_for(file_path, paths, hydra_id, entry, nodes)
-    routes, use_when, keywords = _routing_fields(file_path, paths, resolver_paths, nodes)
-    return SearchDocument(
-        key=rel, hydra_id=hydra_id, aliases=tuple(_list(entry.get("aliases"))), path=rel,
-        kind=_str(entry.get("kind"), "file"), package=package,
-        title=_str(entry.get("title"), headings[0] if headings else file_path.stem),
-        keywords=keywords, routes=routes, use_when=use_when, headings=headings,
-        body=strip_markdown_code_fences(text), relations=tuple(_list(entry.get("relations"))),
-    )
-def _document_for_object(paths: ContextCompilerPaths, hydra_id: str, entry: dict, nodes: list) -> SearchDocument:
-    path = _str(entry.get("path"))
-    return SearchDocument(
-        key=f"id:{hydra_id}", hydra_id=hydra_id, aliases=tuple(_list(entry.get("aliases"))),
-        path=path, kind=_str(entry.get("kind")), package=_package_for(paths.root / path, paths, hydra_id, entry, nodes),
-        title=_str(entry.get("title")), keywords=(), routes=(), use_when=(),
-        headings=(), body=_str(entry.get("title")), relations=tuple(_list(entry.get("relations"))),
-    )
-def _package_for(file_path: Path, paths: ContextCompilerPaths, hydra_id: str, entry: dict, nodes: list) -> str:
-    for prefix in ("hydra://knowledge-space/", "hydra://knowledge-node/"):
-        if hydra_id.startswith(prefix):
-            return hydra_id.removeprefix(prefix)
-    node = knowledge_node_for_path(file_path, nodes, paths)
-    return node.logical_id if node else ""
-def _routing_fields(file_path: Path, paths: ContextCompilerPaths, resolver_paths: ObjectLocations, nodes: list) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
-    node = knowledge_node_for_path(file_path, nodes, paths)
-    if node is None:
-        return (), (), ()
-    routes = resolve_inheritance(node, {item.logical_id: item for item in nodes})["routes"]
-    return tuple(routes), tuple(value for route in routes.values() for value in route.use_when), node.keywords
 def _row_for_document(doc: SearchDocument) -> tuple:
     return (
         doc.key, doc.hydra_id, "\n".join(doc.aliases), doc.path, doc.kind, doc.package,
@@ -376,20 +254,7 @@ def _document_from_row(row: tuple) -> SearchDocument:
         use_when=tuple(row[9].splitlines()), headings=tuple(row[10].splitlines()), body=row[11],
         relations=tuple(row[12].splitlines()), content_id=row[13],
     )
-def _corpus_digest(docs: list[SearchDocument]) -> str:
-    digest = hashlib.sha256()
-    for doc in sorted(docs, key=lambda item: item.key):
-        digest.update(repr(_row_for_document(doc)).encode("utf-8"))
-    return digest.hexdigest()
 def _normal_path(value: str) -> str:
     return value.strip().lstrip("./")
 def _has_explicit_selector(query: str, path_refs: tuple[str, ...]) -> bool:
     return bool(path_refs or _HYDRA_URI_RE.search(query) or _PATH_RE.search(query))
-def _list(value: object) -> list[str]:
-    if isinstance(value, list):
-        return [str(item) for item in value if item is not None]
-    if isinstance(value, str):
-        return [item.strip() for item in value.split(",") if item.strip()]
-    return []
-def _map(value: object) -> dict: return value if isinstance(value, dict) else {}
-def _str(value: object, default: str = "") -> str: return str(value) if value is not None else default

@@ -10,14 +10,10 @@ from typing import Protocol
 
 from hydra_engine.documents.markdown import strip_markdown_code_fences
 from hydra_engine.documents.tokens import read_text
-from hydra_engine.knowledge.nodes import (
-    KnowledgeNode,
-    discover_knowledge_nodes,
-    discover_node_unit_paths,
-    read_node,
-)
+from hydra_engine.knowledge.nodes import KnowledgeNode, read_node
 from hydra_engine.knowledge.units import read_unit
-from hydra_engine.knowledge.views import discover_views, read_view
+from hydra_engine.knowledge.views import read_view
+from hydra_engine.ports.sqlite_db import open_published
 
 
 @dataclasses.dataclass(frozen=True)
@@ -28,8 +24,6 @@ class StoredKnowledgeObject:
     path: str
     node_id: str
     relations: tuple[tuple[str, str], ...] = ()
-
-
 class KnowledgeStore(Protocol):
     def by_id(self, hydra_id: str) -> StoredKnowledgeObject | None: ...
     def by_uid(self, uid: str) -> StoredKnowledgeObject | None: ...
@@ -38,8 +32,6 @@ class KnowledgeStore(Protocol):
     def incoming(self, hydra_id: str, relation_type: str = "") -> tuple[StoredKnowledgeObject, ...]: ...
     def by_path(self, path: str) -> StoredKnowledgeObject | None: ...
     def node_for_path(self, path: str) -> StoredKnowledgeObject | None: ...
-
-
 class HydrationMismatch(ValueError):
     """A derived locator did not resolve to the canonical object it named.
 
@@ -47,8 +39,6 @@ class HydrationMismatch(ValueError):
     to abandon the complete cached operation, but retaining the reason makes
     it possible to test the mtime/size false-negative safety boundary.
     """
-
-
 def hydrate_object(paths, locator: StoredKnowledgeObject):
     """Read and verify one cached locator from canonical files.
 
@@ -83,8 +73,6 @@ def hydrate_object(paths, locator: StoredKnowledgeObject):
     ):
         raise HydrationMismatch(f"locator disagrees with canonical object: {locator.hydra_id}")
     return object_value
-
-
 def hydrate_node_and_ancestors(paths, store: KnowledgeStore, locator: StoredKnowledgeObject) -> tuple[KnowledgeNode, ...]:
     """Hydrate a selected node and every policy-contributing ancestor.
 
@@ -140,6 +128,8 @@ def hydrate_search_candidates(paths, db_path: Path, results) -> list | None:
                 hydrate_object(paths, locator)
     except (OSError, ValueError):
         return None
+    finally:
+        store.close()
     return results
 
 
@@ -210,36 +200,6 @@ class InMemoryKnowledgeStore:
                 return found
             candidate = candidate.rpartition("/")[0]
         return None
-
-
-def build_knowledge_store(paths) -> InMemoryKnowledgeStore:
-    records: list[StoredKnowledgeObject] = []
-    # The general search corpus still supports repositories mid-migration that
-    # have no Knowledge v3 tree.  They receive an empty v3 projection, not a
-    # failed reindex.
-    if not (paths.hydra / "repo/knowledge/spaces.yaml").is_file():
-        return InMemoryKnowledgeStore(records)
-    for node in discover_knowledge_nodes(paths):
-        records.append(StoredKnowledgeObject(
-            hydra_id=node.hydra_id, uid=node.uid, kind=node.kind,
-            path=node.path.relative_to(paths.root).as_posix(), node_id=node.logical_id,
-            relations=tuple((relation.relation_type, relation.target) for relation in node.relations),
-        ))
-        for unit_path in discover_node_unit_paths(node):
-            unit = read_unit(unit_path, paths.root)
-            if unit is None:
-                continue
-            records.append(StoredKnowledgeObject(
-                hydra_id=unit.hydra_id, uid=unit.uid, kind="knowledge-unit",
-                path=unit.path.relative_to(paths.root).as_posix(), node_id=node.logical_id,
-                relations=unit.relations,
-            ))
-    for view in discover_views(paths):
-        records.append(StoredKnowledgeObject(
-            hydra_id=view.hydra_id, uid=view.uid, kind="knowledge-view",
-            path=view.path.relative_to(paths.root).as_posix(), node_id="", relations=(),
-        ))
-    return InMemoryKnowledgeStore(records)
 
 
 def write_sqlite_store(conn: sqlite3.Connection, store: KnowledgeStore) -> None:
@@ -313,10 +273,11 @@ class SqliteKnowledgeStore:
 
     @classmethod
     def open(cls, db_path: Path) -> "SqliteKnowledgeStore | None":
-        try:
-            return cls(sqlite3.connect(f"file:{db_path}?mode=ro", uri=True))
-        except sqlite3.Error:
-            return None
+        conn = open_published(db_path)
+        return cls(conn) if conn is not None else None
+
+    def close(self) -> None:
+        self._conn.close()
 
     def by_id(self, hydra_id: str) -> StoredKnowledgeObject | None:
         return self._lookup("hydra_id = ?", (hydra_id.lower(),))
@@ -398,3 +359,6 @@ class SqliteKnowledgeStore:
             ORDER BY relations.rowid
         """
         return self._one(statement, (*probes, *probes))
+
+
+from hydra_engine.knowledge.index_collection import build_knowledge_store

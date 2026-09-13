@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import contextlib
 from typing import Callable
 
 from hydra_engine.identity.object_families import family_for
@@ -302,21 +303,14 @@ def run_context_providers(
         if (family in included if include_families else True) and family not in excluded
     ]
     open_knowledge_snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot
-    # `operation_stamp` is the one read stamp this whole call is pinned to: it
-    # is `None` unless this call itself opened a fresh cached snapshot below,
-    # so a recursive canonical rerun (which already carries its own
-    # `knowledge_snapshot`) never re-triggers the final revalidation.
     operation_stamp = None
+    snapshot_scope = contextlib.nullcontext()
     if active and request.knowledge_snapshot is None:
         results, _features, _source = context_support.search(
             request.task, paths=request.paths, resolver_paths=request.resolver_paths,
             local=request.resolver_paths.local, command_ids=request.command_ids,
             path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT,
         )
-        # Captured once the shared search above has settled (including any
-        # self-heal rebuild it triggered), this stamp pins the exact
-        # publication every routing/view/unit-hydration read below must
-        # agree with.
         operation_stamp = _capture_stamp(request.paths, request.resolver_paths.local)
         try:
             snapshot = open_knowledge_snapshot(request.paths, operation_stamp.publication, _source, stamp=operation_stamp)
@@ -330,23 +324,45 @@ def run_context_providers(
             )
             operation_stamp = None
             snapshot = open_knowledge_snapshot(request.paths, None, _source)
+        snapshot_scope = snapshot
         request = dataclasses.replace(request, search_results=tuple(results), knowledge_snapshot=snapshot)
-
-    candidates: list[dict] = []
-    seen: set[str] = set()
-    nodes: list[dict] = []
-    views: list[str] = []
-    policies: dict[str, dict] = {}
-    expansions: list[dict] = []
-    avoid: list[str] = []
-    verify: list[str] = []
-    for family in active:
-        try:
-            output = PROVIDERS_BY_FAMILY[family].collect(request)
-        except hydration_mismatch:
-            # Never combine a partially hydrated cache graph with source
-            # values.  Re-run the complete provider operation from one
-            # canonical snapshot, including shared search candidates.
+    with snapshot_scope:
+        candidates: list[dict] = []
+        seen: set[str] = set()
+        nodes: list[dict] = []
+        views: list[str] = []
+        policies: dict[str, dict] = {}
+        expansions: list[dict] = []
+        avoid: list[str] = []
+        verify: list[str] = []
+        for family in active:
+            try:
+                output = PROVIDERS_BY_FAMILY[family].collect(request)
+            except hydration_mismatch:
+                results, _features, _source = context_support.search(
+                    request.task, paths=request.paths, resolver_paths=request.resolver_paths,
+                    local=request.resolver_paths.local, command_ids=request.command_ids,
+                    path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT, force_source=True,
+                )
+                source_request = dataclasses.replace(
+                    request, search_results=tuple(results),
+                    knowledge_snapshot=open_knowledge_snapshot(request.paths, None, "source"),
+                )
+                return run_context_providers(source_request, include_families=include_families, exclude_families=exclude_families)
+            for candidate in output.candidates:
+                context_support.add_candidate(candidates, seen, candidate)
+            nodes.extend(output.nodes)
+            views.extend(value for value in output.views if value not in views)
+            policies.update(output.effective_policy)
+            expansions.extend(output.route_expansions)
+            for value in output.avoid_by_default:
+                if value not in avoid:
+                    avoid.append(value)
+            for value in output.verify:
+                if value not in verify:
+                    verify.append(value)
+            warnings.extend(output.warnings)
+        if operation_stamp is not None and operation_stamp.publication is not None and _capture_stamp(request.paths, request.resolver_paths.local) != operation_stamp:
             results, _features, _source = context_support.search(
                 request.task, paths=request.paths, resolver_paths=request.resolver_paths,
                 local=request.resolver_paths.local, command_ids=request.command_ids,
@@ -357,42 +373,7 @@ def run_context_providers(
                 knowledge_snapshot=open_knowledge_snapshot(request.paths, None, "source"),
             )
             return run_context_providers(source_request, include_families=include_families, exclude_families=exclude_families)
-        for candidate in output.candidates:
-            context_support.add_candidate(candidates, seen, candidate)
-        nodes.extend(output.nodes)
-        views.extend(value for value in output.views if value not in views)
-        policies.update(output.effective_policy)
-        expansions.extend(output.route_expansions)
-        for value in output.avoid_by_default:
-            if value not in avoid:
-                avoid.append(value)
-        for value in output.verify:
-            if value not in verify:
-                verify.append(value)
-        warnings.extend(output.warnings)
-
-    if (
-        operation_stamp is not None and operation_stamp.publication is not None
-        and _capture_stamp(request.paths, request.resolver_paths.local) != operation_stamp
-    ):
-        # The governed corpus or the published index moved somewhere between
-        # the initial search and this final check -- after routing, view
-        # selection and unit hydration all read through the pinned snapshot
-        # above. Every candidate gathered above may span two generations of
-        # the cached graph, so discard the whole result and rerun once from
-        # canonical sources rather than return a mixed operation.
-        results, _features, _source = context_support.search(
-            request.task, paths=request.paths, resolver_paths=request.resolver_paths,
-            local=request.resolver_paths.local, command_ids=request.command_ids,
-            path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT, force_source=True,
+        return ProviderOutput(
+            candidates=candidates, nodes=nodes, views=views, effective_policy=policies,
+            route_expansions=expansions, avoid_by_default=avoid, verify=verify, warnings=warnings,
         )
-        source_request = dataclasses.replace(
-            request, search_results=tuple(results),
-            knowledge_snapshot=open_knowledge_snapshot(request.paths, None, "source"),
-        )
-        return run_context_providers(source_request, include_families=include_families, exclude_families=exclude_families)
-
-    return ProviderOutput(
-        candidates=candidates, nodes=nodes, views=views, effective_policy=policies,
-        route_expansions=expansions, avoid_by_default=avoid, verify=verify, warnings=warnings,
-    )
