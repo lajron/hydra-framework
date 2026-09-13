@@ -10,7 +10,9 @@ import uuid
 from collections.abc import Callable
 from pathlib import Path
 
-from hydra_engine.knowledge.freshness import CorpusDelta, FreshnessError, GuardResult, delta, evaluate_guard, fingerprint
+from hydra_engine.knowledge.freshness import (
+    CorpusDelta, FreshnessError, GuardResult, delta, evaluate_guard, fingerprint, fingerprint_digest,
+)
 from hydra_engine.ports.lock import LockUnavailableError, try_acquire
 from hydra_engine.ports.sqlite_db import (
     connect, discard_database, live_db_path, open_published, query_store_disabled,
@@ -85,6 +87,16 @@ def _write_generation(conn: sqlite3.Connection) -> str:
     return generation
 
 
+def _write_fingerprint_digest(conn: sqlite3.Connection) -> None:
+    """Record one aggregate digest of the just-written `documents` rows.
+
+    Written in the same transaction as the rows it summarizes, so a reader
+    can later prove a clean match from this one string instead of reading
+    every row again (D9)."""
+    pairs = dict(conn.execute("SELECT path, content_id FROM documents WHERE path != '' AND content_id != ''"))
+    conn.execute("INSERT OR REPLACE INTO meta VALUES ('fingerprint_digest', ?)", (fingerprint_digest(pairs),))
+
+
 def read_generation(conn: sqlite3.Connection) -> str | None:
     try:
         row = conn.execute("SELECT value FROM meta WHERE key = 'generation'").fetchone()
@@ -123,6 +135,7 @@ def rebuild_index(local: Path, populate: Callable[[sqlite3.Connection], None]) -
             conn.execute("BEGIN IMMEDIATE")
             _reset_index_tables(conn)
             populate(conn)
+            _write_fingerprint_digest(conn)
             _write_generation(conn)
             conn.commit()
             truncate_wal(conn)
@@ -161,6 +174,7 @@ def apply_index_delta(
         apply_update(conn, current)
         if fingerprint(paths.root) != current:
             raise CorpusMovedError("governed corpus moved during delta")
+        _write_fingerprint_digest(conn)
         _write_generation(conn)
         conn.commit()
         return db_path
@@ -207,6 +221,17 @@ def capture_stamp(paths, local: Path) -> OperationStamp:
     return OperationStamp(corpus, db_path, generation) if generation else OperationStamp({}, None, None)
 
 
+def _stored_content_ids(conn: sqlite3.Connection) -> dict[str, str]:
+    """The full `path -> content_id` row scan: only reached when the
+    aggregate digest is absent or does not match (D9)."""
+    return {
+        path: content_id
+        for path, content_id in conn.execute(
+            "SELECT path, content_id FROM documents WHERE path != '' AND content_id != ''"
+        )
+    }
+
+
 def cache_state(paths, local: Path, *, guard: GuardResult, schema: str, columns: tuple[str, ...]) -> CacheState:
     """Classify a publication without parsing or walking canonical files."""
     if not guard.ok:
@@ -229,12 +254,16 @@ def cache_state(paths, local: Path, *, guard: GuardResult, schema: str, columns:
         generation = read_generation(conn)
         if meta.get("schema") != schema or actual_columns != columns or generation is None:
             return Absent(current)
-        previous = {
-            path: content_id
-            for path, content_id in conn.execute(
-                "SELECT path, content_id FROM documents WHERE path != '' AND content_id != ''"
-            )
-        }
+        # A stored digest that matches the current fingerprint proves the
+        # publication is clean without reading a single `documents` row: the
+        # digest was written from those exact rows in the same transaction
+        # that set this generation (D9). Any mismatch -- including a missing
+        # digest from an index built before this fast path existed -- falls
+        # through to the row-by-row delta below, which is always correct.
+        stored_digest = meta.get("fingerprint_digest")
+        if stored_digest is not None and stored_digest == fingerprint_digest(current):
+            return Fresh(db_path, current, generation)
+        previous = _stored_content_ids(conn)
     except sqlite3.Error:
         return Absent(current)
     finally:

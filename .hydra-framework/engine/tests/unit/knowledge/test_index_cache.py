@@ -7,6 +7,7 @@ import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from hydra_engine.knowledge import index_cache
 from hydra_engine.knowledge.freshness import GuardResult
@@ -115,6 +116,128 @@ class OperationStampTests(unittest.TestCase):
             index_cache.Stale(self.local / "index" / "knowledge.db", {}, index_cache.CorpusDelta((), (), ())),
         ):
             self.assertEqual(index_cache.stamp_from_fresh(state), index_cache.OperationStamp({}, None, None))
+
+
+class FingerprintDigestFastPathTests(unittest.TestCase):
+    """D9: a clean read proves freshness from one aggregate `meta` digest
+    instead of scanning every `documents` row. Any digest mismatch --
+    including a missing digest, the state of an index built before this fast
+    path existed -- must fall back to the existing row-by-row delta, so both
+    paths have to classify every corpus mutation identically."""
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.root = Path(self._tmp.name)
+        subprocess.run(["git", "init", "-q"], cwd=self.root, check=True)
+        subprocess.run(["git", "config", "user.email", "fixture@example.com"], cwd=self.root, check=True)
+        subprocess.run(["git", "config", "user.name", "Fixture"], cwd=self.root, check=True)
+        (self.root / "AI_SYSTEM.md").write_text("# AI System\n", encoding="utf-8")
+        (self.root / ".hydra-framework/repo/knowledge").mkdir(parents=True)
+        (self.root / ".hydra-framework/repo/knowledge/tracked.md").write_text("# Tracked\n", encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "fixture"], cwd=self.root, check=True)
+        self.paths = ContextCompilerPaths(root=self.root, hydra=self.root / ".hydra-framework")
+        self.local = self.root / ".hydra-framework.local"
+
+    _SCHEMA = "test-schema"
+    _COLUMNS = (
+        "key", "hydra_id", "aliases", "path", "kind", "package", "title",
+        "keywords", "routes", "use_when", "headings", "body", "relations", "content_id",
+    )
+
+    def _build_index_matching_worktree(self) -> None:
+        current = index_cache.fingerprint(self.root)
+
+        def populate(conn):
+            for path, content_id in current.items():
+                conn.execute(
+                    "INSERT INTO documents VALUES (?, '', '', ?, '', '', '', '', '', '', '', '', '', ?)",
+                    (path, path, content_id),
+                )
+            conn.execute("INSERT OR REPLACE INTO meta VALUES ('schema', ?)", (self._SCHEMA,))
+        index_cache.rebuild_index(self.local, populate)
+
+    def _classify(self):
+        return index_cache.cache_state(
+            self.paths, self.local, guard=index_cache.guard_for(self.root.resolve()),
+            schema=self._SCHEMA, columns=self._COLUMNS,
+        )
+
+    def _drop_stored_digest(self) -> None:
+        db_path = index_cache.default_db_path(self.local)
+        assert db_path is not None
+        conn = index_cache.connect(db_path)
+        try:
+            conn.execute("DELETE FROM meta WHERE key = 'fingerprint_digest'")
+            conn.commit()
+        finally:
+            conn.close()
+
+    def _assert_fast_and_full_scan_agree(self):
+        fast = self._classify()
+        self._drop_stored_digest()
+        full = self._classify()
+        self.assertEqual(fast, full)
+        # Restore the digest for any later mutation in the same test.
+        self._rewrite_stored_digest()
+        return fast
+
+    def _rewrite_stored_digest(self) -> None:
+        db_path = index_cache.default_db_path(self.local)
+        assert db_path is not None
+        conn = index_cache.connect(db_path)
+        try:
+            index_cache._write_fingerprint_digest(conn)
+            conn.commit()
+        finally:
+            conn.close()
+
+    def test_clean_repository_is_fresh_without_scanning_any_document_row(self):
+        self._build_index_matching_worktree()
+        with mock.patch.object(index_cache, "_stored_content_ids", wraps=index_cache._stored_content_ids) as scan:
+            state = self._classify()
+        self.assertIsInstance(state, index_cache.Fresh)
+        scan.assert_not_called()
+
+    def test_a_mismatched_digest_falls_back_to_the_full_row_scan(self):
+        self._build_index_matching_worktree()
+        (self.root / ".hydra-framework/repo/knowledge/tracked.md").write_text("# Tracked, edited\n", encoding="utf-8")
+        with mock.patch.object(index_cache, "_stored_content_ids", wraps=index_cache._stored_content_ids) as scan:
+            state = self._classify()
+        self.assertIsInstance(state, index_cache.Stale)
+        scan.assert_called_once()
+
+    def test_added_document_is_stale_identically_on_both_paths(self):
+        self._build_index_matching_worktree()
+        (self.root / ".hydra-framework/repo/knowledge/added.md").write_text("# Added\n", encoding="utf-8")
+        state = self._assert_fast_and_full_scan_agree()
+        self.assertIsInstance(state, index_cache.Stale)
+        self.assertIn(".hydra-framework/repo/knowledge/added.md", state.delta.added)
+
+    def test_modified_document_is_stale_identically_on_both_paths(self):
+        self._build_index_matching_worktree()
+        (self.root / ".hydra-framework/repo/knowledge/tracked.md").write_text("# Tracked, edited\n", encoding="utf-8")
+        state = self._assert_fast_and_full_scan_agree()
+        self.assertIsInstance(state, index_cache.Stale)
+        self.assertIn(".hydra-framework/repo/knowledge/tracked.md", state.delta.modified)
+
+    def test_deleted_document_is_stale_identically_on_both_paths(self):
+        self._build_index_matching_worktree()
+        (self.root / ".hydra-framework/repo/knowledge/tracked.md").unlink()
+        state = self._assert_fast_and_full_scan_agree()
+        self.assertIsInstance(state, index_cache.Stale)
+        self.assertIn(".hydra-framework/repo/knowledge/tracked.md", state.delta.deleted)
+
+    def test_reverted_document_is_fresh_again_identically_on_both_paths(self):
+        self._build_index_matching_worktree()
+        tracked = self.root / ".hydra-framework/repo/knowledge/tracked.md"
+        original = tracked.read_text(encoding="utf-8")
+        tracked.write_text("# Tracked, edited\n", encoding="utf-8")
+        self.assertIsInstance(self._classify(), index_cache.Stale)
+        tracked.write_text(original, encoding="utf-8")
+        state = self._assert_fast_and_full_scan_agree()
+        self.assertIsInstance(state, index_cache.Fresh)
 
 
 class PersistentTransactionTests(unittest.TestCase):

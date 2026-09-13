@@ -265,17 +265,44 @@ class StampRevalidationTests(unittest.TestCase):
         args = type("Args", (), {"prompt": "Please do an engine refactor"})()
         out = io.StringIO()
         with (
-            mock.patch("hydra_engine.cli.route_prompt._capture_stamp", side_effect=[real_stamp, moved_stamp]),
+            # The opening stamp is no longer a `_capture_stamp` call at all
+            # (D8): it is reused from `search_for_context_provider`'s settled
+            # `Fresh` state, so only the closing revalidation below calls
+            # `_capture_stamp`, and it is this mocked move that must trigger
+            # the rerun.
+            mock.patch("hydra_engine.cli.route_prompt._capture_stamp", return_value=moved_stamp) as capture_stamp,
+            mock.patch(
+                "hydra_engine.knowledge.search_index.search_for_context_provider",
+                wraps=search_index.search_for_context_provider,
+            ) as search_for_context_provider,
             mock.patch("hydra_engine.knowledge.search_index.search", wraps=search_index.search) as search,
             contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()),
         ):
             self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
 
-        self.assertEqual(len(search.call_args_list), 2)
-        self.assertFalse(search.call_args_list[0].kwargs.get("force_source", False))
-        self.assertTrue(search.call_args_list[1].kwargs["force_source"])
+        search_for_context_provider.assert_called_once()
+        capture_stamp.assert_called_once()
+        self.assertEqual(len(search.call_args_list), 1)
+        self.assertTrue(search.call_args_list[0].kwargs["force_source"])
         # The rerun must still produce a correct (canonical) routing decision,
         # not an empty or partially-hydrated one.
+        self.assertIn("Example", out.getvalue())
+
+    def test_clean_repository_costs_exactly_two_git_fingerprint_reads(self):
+        """P15/D8: a clean routed prompt shares the pinning fingerprint
+        between the settled cache classification and the opening stamp,
+        leaving only the closing revalidation as a genuine second, independent
+        Git read -- two calls total, down from three."""
+        ctx = self._git_ctx()
+        search_index.build_index(ctx.context_compiler_paths(), ctx.resolver_paths(), ctx.local)
+        args = type("Args", (), {"prompt": "Please do an engine refactor"})()
+        out = io.StringIO()
+        with (
+            mock.patch.object(index_cache, "fingerprint", wraps=index_cache.fingerprint) as fingerprint,
+            contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()),
+        ):
+            self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
+        self.assertEqual(fingerprint.call_count, 2)
         self.assertIn("Example", out.getvalue())
 
 

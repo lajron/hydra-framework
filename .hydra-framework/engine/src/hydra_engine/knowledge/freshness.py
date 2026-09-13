@@ -241,6 +241,17 @@ def fingerprint(root: Path) -> dict[str, str]:
     return ids
 
 
+def fingerprint_digest(mapping: Mapping[str, str]) -> str:
+    """One aggregate digest of a path-to-content-id fingerprint map.
+
+    Two mappings with the same digest are the same set of (path, content_id)
+    pairs. Used to prove a published index still matches the governed corpus
+    from a single stored string, without re-reading every row that produced
+    it (D9)."""
+    canonical = "\n".join(f"{path}\0{content_id}" for path, content_id in sorted(mapping.items()))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def delta(old: Mapping[str, str], new: Mapping[str, str]) -> CorpusDelta:
     """Classify path-to-content-id changes between two corpus snapshots."""
     old_paths = set(old)
