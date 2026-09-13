@@ -1020,16 +1020,17 @@ Reporting/acceptance:
 
 ## Current Stage
 
-Phase 4 implementation is complete and its focused, full-unit, validation, and
-whitespace checks pass. The required completed selftest result remains
-unavailable: direct, detached, and PTY invocations are terminated at the
-30-second boundary. This is a hard validation boundary: do not begin Phase 5
-until a runner can complete `hydra.py selftest`. Its read-path findings (P13,
-P14, P15) were split out to
-`bounded-knowledge-retrieval` on 2026-09-13; this record now plans only the
-write path in five phases. A records-only revalidation expanded Phases 2-5 and
-added D12-D19 before implementation. Phase 2 added only the transitional WAL
-primitives and transaction APIs; Phase 3 is next.
+All five phases are implemented and validated. Phase 5's correctness gates
+passed at 1k and 10k; both its timed verdicts are recorded (10k full rebuild
+missed the 5000 ms gate as D7 predicted; 10k single-document incremental
+missed the 100 ms gate despite a 16x+ improvement over the pre-task
+baseline, attributed to the `fingerprint()` git-subprocess layer, not to
+anything this record's phases touched). Final full unit discovery,
+`selftest`, `validate`, and `git diff --check` all pass. No further phase
+work remains in this record; whether to open a follow-up task for the
+fingerprint-layer cost is left to the task requester. Its read-path findings
+(P13, P14, P15) were split out to `bounded-knowledge-retrieval` on
+2026-09-13; this record covered only the write path in five phases.
 
 ## Readiness
 
@@ -1088,9 +1089,18 @@ Status: ready
 
 ## Step State
 
-- Active step: obtain a completed Phase 4 `hydra.py selftest` result.
-- Next step: record that result, checkpoint the accepted Phase 4 boundary, and
-  stop. Do not begin Phase 5 in this task continuation.
+- Active step: none. All five phases are complete and validated.
+- Next step: none in this record. A follow-up task for the `fingerprint()`
+  git-subprocess cost identified by the Phase 5 diagnostic is a decision for
+  the task requester, not scoped here.
+- Completed steps: Phase 5 benchmark: disposable 1k/10k Git fixtures built
+  from the checkpointed engine source; correctness gates passed at both
+  sizes; timed full-rebuild and single-document-incremental series recorded
+  (5 warmups + 30 samples each) with both 10k verdicts (missed/missed,
+  reported factually per D19); final full unit discovery, `selftest`,
+  `validate`, and `git diff --check` all pass.
+- Completed steps: Phase 4 accepted, including a completed `hydra.py selftest`
+  (1599 tests, OK) obtained from a runner without a 30-second command limit.
 - Completed steps: Phase 4 implementation: collection moved to
   `knowledge/index_collection.py`; safe direct-path deltas use one node
   catalog pass and never walk the full corpus; structural/ambiguous changes
@@ -1313,6 +1323,140 @@ Phase 4 changed:
   `hydra.py selftest` invocation again produced partial progress and was
   terminated at the terminal's 30-second boundary; no completed selftest pass
   is claimed. Phase 5 must not start until that evidence exists.
+- Phase 4 selftest, obtained 2026-09-13 from a runner without a 30-second
+  command limit: `python3 .hydra-framework/scripts/hydra.py selftest` ran to
+  completion, "Ran 1599 tests in 50.328s" / "OK", wall time 50.653s. Phase 4 is
+  accepted on this evidence together with the prior focused/full-discovery/
+  validate/diff-check results.
+- Recovery commit, 2026-09-13: this task's own Phase 2-4 production/test
+  changes and its own task record/checkpoint were committed at `285874f` ("WIP
+  scalable knowledge index through phase 4"), 14 files. The registry, P12's
+  neighboring `problems.md` edits, and the sibling `bounded-knowledge-retrieval`
+  record/checkpoint were deliberately left uncommitted/untouched. An initial
+  commit attempt accidentally swept in the sibling task's two files because
+  they were already staged from an earlier session; it was corrected in-place
+  with `git reset --soft HEAD~1`, unstaging just those two files, before
+  recommitting, since the commit was local and not yet shared.
+- Phase 5 harness, 2026-09-13: the complete generator/timing/correctness-gate
+  source is tracked at
+  `.hydra-framework/validation/knowledge-v3/write_path_benchmark.py`
+  (sha256:e3962dcf3d21ebf410d31277064aab2fd1f7d6c243ea6564896acafb97bccd4a at
+  the point it was run; committed alongside this record so the digest and the
+  file never diverge). It lives outside `.hydra-framework/engine/src`/`tests`,
+  the same convention this directory's existing `benchmark.py`/`engine_gates.py`
+  already use, so it is not subject to that package's architecture caps. Each
+  subcommand (`machine-info`, `gate --size N`, `bench --size N --op
+  {rebuild,incremental}`) builds its own fresh disposable fixture under a
+  `mktemp -d` outside this checkout and removes it on exit; `bench` checkpoints
+  after every warmup/sample to its `--out` file so a killed run resumes rather
+  than losing progress (immaterial to the reported numbers below, all of which
+  ran to completion in one invocation each).
+- Phase 5 machine/commit record, 2026-09-13 (`machine-info` subcommand):
+  Linux 7.0.0-31-generic, AMD Ryzen 7 7730U with Radeon Graphics, 16 logical
+  CPUs, Python 3.12.3, Git 2.43.0, SQLite 3.45.1, both the repository checkout
+  and the system temp directory on local `ext4` with about 311 GiB free.
+  Production code (`.hydra-framework/engine/src` and
+  `.../engine/tests/unit`) had zero diff against HEAD (commit `285874f`) at
+  the time every timed sample below was taken, so every number is against the
+  accepted Phase 4 checkpoint, not a moving tree. Load average at the time was
+  low (~0.3); no other CPU/IO-heavy process was deliberately run concurrently
+  with a timed series -- an initial attempt to run the two 10k timed series
+  concurrently was stopped before either produced a sample, specifically
+  because simultaneous load could invalidate both under this same clause; each
+  timed series below ran alone.
+- Phase 5 fixture, 2026-09-13: each disposable repository copies this
+  checkout's real `.hydra-framework/engine/src` (the checkpointed engine
+  source, ~220 files) and `.hydra-framework/scripts/hydra.py` (the shim) to
+  reproduce the real repository's own fixed governed-corpus overhead, since
+  `knowledge/freshness.py`'s `SEARCH_ROOTS` includes that engine source tree.
+  A minimal `AI_SYSTEM.md`, one `benchmark` space, and one nested
+  `benchmark/selected` node (with `state.md`/`overview.md`) are authored
+  directly rather than copied, plus exactly N generated Knowledge units
+  (block-style YAML frontmatter, `v3_fixtures.write_unit`'s exact shape) under
+  that node, then `git init`/`add -A`/`commit`. At N=1000 this produced 1220
+  tracked files and a 682 KB published `knowledge.db`; at N=10000, 10220
+  tracked files and a 6.5 MB `knowledge.db` -- both differ from the
+  historical "206+8 fixed / ~20 MB" figures (expected: this generator copies
+  the real, larger current engine source rather than the older prototype's
+  smaller fixture, and the schema/body sizes differ), so they are recorded
+  here rather than silently carried forward per D19.
+- Phase 5 correctness gate, 1k (`gate --size 1000`, 27.8s wall):
+  passed -- build produced WAL mode, all four tables/six indices, a non-empty
+  generation, no pointer/versioned files, and provider source `sqlite`; all
+  six D16-eligible mutation kinds (unstaged modify, staged modify, add,
+  delete, stable-id rename, changed-id rename), run through the public
+  provider operation against independent incremental/full-rebuild clones,
+  produced logical-row-identical (`documents`/`knowledge_objects`/
+  `knowledge_relations`/`meta` minus `generation`) results with the
+  generation moved and the selected node/unit still resolving; a WAL reader
+  pinned before an incremental commit and a full rebuild still read its
+  opening generation, and a new reader afterward read the rebuild's
+  generation; a subprocess killed with `os._exit` between the delta callback
+  and its commit left the prior generation/rows intact with
+  `PRAGMA integrity_check = ok`; and a structural `node.yaml` change took the
+  full-rebuild branch (`apply_index_delta` was, by assertion, never called).
+- Phase 5 correctness gate, 10k (`gate --size 10000`, 2m50.2s wall): the same
+  nine checks passed at 10k, with the six mutation-kind comparisons run
+  against independent 10k-unit clones each time.
+- Phase 5 diagnostic, 2026-09-13: a targeted, untimed probe (not part of the
+  tracked harness's timed path; a one-off interactive check, reported here for
+  transparency) instrumented `index_cache.fingerprint` around one single-unit
+  incremental `run_context_providers` call on a freshly-built 1k fixture: it
+  is called 6 times per operation (once in `_cache_state`, twice inside
+  `apply_index_delta`'s pre/post verification, and others via `capture_stamp`/
+  revalidation), each call costing about 26 ms (git `ls-files -s` plus
+  `status --porcelain=v2` over the whole tracked-file set), for about 157 ms
+  of a 214 ms total -- roughly three quarters of one incremental operation.
+  This cost scales with total tracked-file count, not with delta size, and is
+  not something any phase here targeted (D2's diagnosis and Phase 4's
+  delta-scoping are about canonical file collection, not the freshness guard/
+  fingerprint layer itself). It is the leading explanation for why the
+  incremental verdicts below still miss their gate despite Phase 4's
+  measured, large reduction in the previously dominant canonical-collection
+  cost. Recorded as a factual explanation, not acted on: no production code
+  changed in response.
+- Phase 5 timed full-rebuild series (`bench --size N --op rebuild`, 5 warmups
+  + 30 samples, `time.perf_counter_ns`, p50 = median of ranks 15/16, p95 =
+  nearest-rank 29 of 30):
+
+  | Size | p50 | p95 | Gate (p95) | Verdict |
+  | --- | ---: | ---: | ---: | --- |
+  | 1,000 | 1832.34 ms | 1858.95 ms | n/a (informational) | n/a |
+  | 10,000 | 15616.39 ms | 15809.12 ms | <= 5000 ms | **missed** |
+
+  The 10k full-rebuild result is materially unchanged from the historical
+  15910.49/16437.83 ms (about 1.8-3.8% faster, within the noise this harness's
+  differences from the original probe could produce), consistent with D7:
+  full rebuild was never targeted by any phase in this record, and Phase 4's
+  delta-scoping does not apply to it. This is a legitimate, pre-known miss,
+  not a regression, and is reported exactly per D19/Phase 5's acceptance
+  clause rather than treated as erasing the incremental result below.
+- Phase 5 timed single-document incremental series (`bench --size N --op
+  incremental`, same sampling contract; each sample begins from a freshly
+  rebuilt index and alternates the same non-selected unit between two
+  same-length, byte-distinct bodies before an untimed staleness check, per
+  D19):
+
+  | Size | p50 | p95 | Gate (p95) | Verdict |
+  | --- | ---: | ---: | ---: | --- |
+  | 1,000 | 200.94 ms | 247.41 ms | n/a (informational) | n/a |
+  | 10,000 | 685.05 ms | 743.38 ms | <= 100 ms | **missed** |
+
+  Against the historical 10k figures (11544.09 ms p50 / 12042.02 ms p95),
+  this is a 16.85x p50 / 16.20x speedup -- the write-path caching and
+  delta-scoped collection this record built are real and large -- but the
+  100 ms gate itself is still missed at both fixture sizes. Per the diagnostic
+  above, the residual cost is best explained by the repeated `fingerprint()`
+  git-subprocess layer rather than canonical collection, which Phase 4
+  already bounded to the changed unit (D16/D17/D18). This is reported as a
+  factual miss; no production code was changed in response, and addressing
+  the fingerprint layer's own cost is a separately planned follow-up, not
+  this task's remaining work.
+- Phase 5 final validation, 2026-09-13: complete unit discovery passed (1441
+  tests); `hydra.py selftest` completed ("Ran 1599 tests in 50.238s" / "OK");
+  `hydra.py validate` passed with only the existing provider-age,
+  telemetry-volume, and delegation-enforcement advisories (no stale registry
+  digest, so `ref index` was not run); `git diff --check` passed.
 
 ## Blockers
 
@@ -1325,6 +1469,15 @@ Not blockers, recorded so they are not rediscovered:
 - This record's read-path scope (P13, P14, P15, the false FTS5 reporting among
   them) moved to `bounded-knowledge-retrieval`; that record's own Blockers
   section carries the FTS5-label obligation now, not this one.
+- Phase 5 measured both write-path gates missed at 10k: full rebuild (D7,
+  expected/not targeted) and single-document incremental (unexpected as a
+  strict pass, though a 16x+ improvement over the pre-task baseline). The
+  Phase 5 diagnostic attributes the incremental miss to `index_cache`'s
+  repeated `fingerprint()` git-subprocess calls (6 per operation), a layer no
+  phase in this record touched. Addressing that layer's own cost is a
+  candidate follow-up task, not opened here: this record's scope was the
+  canonical-collection cost (D2), which it fixed and measured: the decision
+  to record it as a new problem/task is left to the task requester.
 
 ## Continuation Notes
 
