@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import contextlib
 from typing import Callable
 
 from hydra_engine.identity.object_families import family_for
@@ -32,6 +33,11 @@ NODE_OVERVIEW_PRIORITY = 20
 def _hydration_mismatch_type():
     """Load the cache-mismatch subtype without widening static fan-out."""
     return __import__("hydra_engine.knowledge.storage", fromlist=("HydrationMismatch",)).HydrationMismatch
+
+
+def _capture_stamp(paths, local):
+    """Load the operation-scoped read stamp without widening static fan-out."""
+    return __import__("hydra_engine.knowledge.index_cache", fromlist=("capture_stamp",)).capture_stamp(paths, local)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -296,16 +302,22 @@ def run_context_providers(
         family for family in PROVIDERS_BY_FAMILY
         if (family in included if include_families else True) and family not in excluded
     ]
+    open_knowledge_snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot
+    operation_stamp = None
+    snapshot_scope = contextlib.nullcontext()
     if active and request.knowledge_snapshot is None:
-        results, _features, _source = context_support.search(
+        results, _features, _source, reusable_stamp = context_support.search_for_context_provider(
             request.task, paths=request.paths, resolver_paths=request.resolver_paths,
             local=request.resolver_paths.local, command_ids=request.command_ids,
             path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT,
         )
-        from hydra_engine.knowledge.search_index import default_db_path
-        open_knowledge_snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot
+        # Reuse the search's own settled `Fresh` classification as the
+        # opening stamp only when it answered from that publication; every
+        # other case (source fallback, rebuild failure, ...) still pins a
+        # fresh, independent observation exactly as before (D20).
+        operation_stamp = reusable_stamp if reusable_stamp is not None else _capture_stamp(request.paths, request.resolver_paths.local)
         try:
-            snapshot = open_knowledge_snapshot(request.paths, default_db_path(request.resolver_paths.local), _source)
+            snapshot = open_knowledge_snapshot(request.paths, operation_stamp.publication, _source, stamp=operation_stamp)
         except ValueError as error:
             if not isinstance(error, hydration_mismatch):
                 raise
@@ -314,50 +326,58 @@ def run_context_providers(
                 local=request.resolver_paths.local, command_ids=request.command_ids,
                 path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT, force_source=True,
             )
-            snapshot = open_knowledge_snapshot(request.paths, default_db_path(request.resolver_paths.local), _source)
+            operation_stamp = None
+            snapshot = open_knowledge_snapshot(request.paths, None, _source)
+        snapshot_scope = snapshot
         request = dataclasses.replace(request, search_results=tuple(results), knowledge_snapshot=snapshot)
-
-    candidates: list[dict] = []
-    seen: set[str] = set()
-    nodes: list[dict] = []
-    views: list[str] = []
-    policies: dict[str, dict] = {}
-    expansions: list[dict] = []
-    avoid: list[str] = []
-    verify: list[str] = []
-    for family in active:
-        try:
-            output = PROVIDERS_BY_FAMILY[family].collect(request)
-        except hydration_mismatch:
-            # Never combine a partially hydrated cache graph with source
-            # values.  Re-run the complete provider operation from one
-            # canonical snapshot, including shared search candidates.
+    with snapshot_scope:
+        candidates: list[dict] = []
+        seen: set[str] = set()
+        nodes: list[dict] = []
+        views: list[str] = []
+        policies: dict[str, dict] = {}
+        expansions: list[dict] = []
+        avoid: list[str] = []
+        verify: list[str] = []
+        for family in active:
+            try:
+                output = PROVIDERS_BY_FAMILY[family].collect(request)
+            except hydration_mismatch:
+                results, _features, _source = context_support.search(
+                    request.task, paths=request.paths, resolver_paths=request.resolver_paths,
+                    local=request.resolver_paths.local, command_ids=request.command_ids,
+                    path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT, force_source=True,
+                )
+                source_request = dataclasses.replace(
+                    request, search_results=tuple(results),
+                    knowledge_snapshot=open_knowledge_snapshot(request.paths, None, "source"),
+                )
+                return run_context_providers(source_request, include_families=include_families, exclude_families=exclude_families)
+            for candidate in output.candidates:
+                context_support.add_candidate(candidates, seen, candidate)
+            nodes.extend(output.nodes)
+            views.extend(value for value in output.views if value not in views)
+            policies.update(output.effective_policy)
+            expansions.extend(output.route_expansions)
+            for value in output.avoid_by_default:
+                if value not in avoid:
+                    avoid.append(value)
+            for value in output.verify:
+                if value not in verify:
+                    verify.append(value)
+            warnings.extend(output.warnings)
+        if operation_stamp is not None and operation_stamp.publication is not None and _capture_stamp(request.paths, request.resolver_paths.local) != operation_stamp:
             results, _features, _source = context_support.search(
                 request.task, paths=request.paths, resolver_paths=request.resolver_paths,
                 local=request.resolver_paths.local, command_ids=request.command_ids,
                 path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT, force_source=True,
             )
-            from hydra_engine.knowledge.search_index import default_db_path
-            open_knowledge_snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot
             source_request = dataclasses.replace(
                 request, search_results=tuple(results),
-                knowledge_snapshot=open_knowledge_snapshot(request.paths, default_db_path(request.resolver_paths.local), "source"),
+                knowledge_snapshot=open_knowledge_snapshot(request.paths, None, "source"),
             )
             return run_context_providers(source_request, include_families=include_families, exclude_families=exclude_families)
-        for candidate in output.candidates:
-            context_support.add_candidate(candidates, seen, candidate)
-        nodes.extend(output.nodes)
-        views.extend(value for value in output.views if value not in views)
-        policies.update(output.effective_policy)
-        expansions.extend(output.route_expansions)
-        for value in output.avoid_by_default:
-            if value not in avoid:
-                avoid.append(value)
-        for value in output.verify:
-            if value not in verify:
-                verify.append(value)
-        warnings.extend(output.warnings)
-    return ProviderOutput(
-        candidates=candidates, nodes=nodes, views=views, effective_policy=policies,
-        route_expansions=expansions, avoid_by_default=avoid, verify=verify, warnings=warnings,
-    )
+        return ProviderOutput(
+            candidates=candidates, nodes=nodes, views=views, effective_policy=policies,
+            route_expansions=expansions, avoid_by_default=avoid, verify=verify, warnings=warnings,
+        )

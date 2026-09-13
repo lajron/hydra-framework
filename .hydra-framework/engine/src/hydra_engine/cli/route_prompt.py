@@ -30,6 +30,64 @@ ROUTE_EMISSIONS_FILE = "route-emissions.jsonl"
 ROUTE_PROMPT_REEMIT_EVERY = 25
 
 
+def _capture_stamp(paths, local):
+    """Load the operation-scoped read stamp without widening static fan-out."""
+    return __import__("hydra_engine.knowledge.index_cache", fromlist=("capture_stamp",)).capture_stamp(paths, local)
+
+
+def _open_knowledge_snapshot():
+    return __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot
+
+
+def _route_once(prompt: str, ctx, max_routed_nodes: int, *, force_source: bool = False):
+    """Run one search+routing pass pinned to a single read stamp.
+
+    Returns `(matches, warnings, exact_references, stamp)`. `stamp` is `None`
+    whenever this pass is already canonical (`force_source`, or the cache
+    degraded on its own), meaning the caller has nothing left to revalidate.
+    """
+    paths = ctx.context_compiler_paths()
+    results, _features, _source = search_index.search(
+        prompt, paths=paths, resolver_paths=ctx.resolver_paths(), local=ctx.local,
+        command_ids=ctx.command_ids, limit=20, force_source=force_source,
+    )
+    # Captured once the search above has settled (including any self-heal
+    # rebuild it triggered), this stamp pins the exact publication the
+    # snapshot below opens, so the two never independently resolve two
+    # different generations of the published index.
+    stamp = None if force_source else _capture_stamp(paths, ctx.local)
+    open_knowledge_snapshot = _open_knowledge_snapshot()
+    snapshot_warnings: list[str] = []
+    try:
+        snapshot = open_knowledge_snapshot(paths, stamp.publication if stamp is not None else None, _source, stamp=stamp)
+        with snapshot:
+            nodes = list(snapshot.routing_nodes(results))
+            bindings = snapshot.bindings()
+    except ValueError as error:
+        if error.__class__.__name__ != "HydrationMismatch":
+            # Exact references remain useful if optional v3 routing fails.
+            nodes, bindings = [], {}
+            snapshot_warnings.append(f"Knowledge v3 routing unavailable: {error}")
+            stamp = None
+        else:
+            # A single source rerun prevents cache/source graph mixing.
+            results, _features, _source = search_index.search(
+                prompt, paths=paths, resolver_paths=ctx.resolver_paths(), local=ctx.local,
+                command_ids=ctx.command_ids, limit=20, force_source=True,
+            )
+            stamp = None
+            with open_knowledge_snapshot(paths, None, _source) as snapshot:
+                nodes, bindings = list(snapshot.routing_nodes(results)), snapshot.bindings()
+    # `search` already resolves exact ids and paths before ranking.  Reusing
+    # that one result set avoids a second whole-corpus collection per hook.
+    exact_references = [result for result in results if result.channel == "exact"]
+    matches, match_warnings = route_prompt_node_pointers(
+        prompt, paths, search_results=tuple(results), max_routed_nodes=max_routed_nodes,
+        bindings=bindings, nodes=nodes,
+    )
+    return matches, [*snapshot_warnings, *match_warnings], exact_references, stamp
+
+
 def command_route_prompt(args, ctx) -> int:
     payload = prompt_payload_from_stdin_or_arg(args)
     prompt = payload.prompt
@@ -38,48 +96,17 @@ def command_route_prompt(args, ctx) -> int:
     started = time.perf_counter()
     as_json = bool(getattr(args, "json", False))
     max_routed_nodes = ctx.threshold_value("hydra_engine.knowledge.routing.MAX_ROUTED_NODES")
-    results, _features, _source = search_index.search(
-        prompt,
-        paths=ctx.context_compiler_paths(),
-        resolver_paths=ctx.resolver_paths(),
-        local=ctx.local,
-        command_ids=ctx.command_ids,
-        limit=20,
-    )
-    snapshot_warnings: list[str] = []
-    try:
-        snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot(
-            ctx.context_compiler_paths(), search_index.default_db_path(ctx.local), _source,
-        )
-        nodes = list(snapshot.routing_nodes(results))
-        bindings = snapshot.bindings()
-    except ValueError as error:
-        if error.__class__.__name__ != "HydrationMismatch":
-            # Exact references remain useful if optional v3 routing fails.
-            nodes, bindings = [], {}
-            snapshot_warnings.append(f"Knowledge v3 routing unavailable: {error}")
-        else:
-            # A single source rerun prevents cache/source graph mixing.
-            results, _features, _source = search_index.search(
-                prompt, paths=ctx.context_compiler_paths(), resolver_paths=ctx.resolver_paths(), local=ctx.local,
-                command_ids=ctx.command_ids, limit=20, force_source=True,
-            )
-            snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot(
-                ctx.context_compiler_paths(), search_index.default_db_path(ctx.local), _source,
-            )
-            nodes, bindings = list(snapshot.routing_nodes(results)), snapshot.bindings()
-    # `search` already resolves exact ids and paths before ranking.  Reusing
-    # that one result set avoids a second whole-corpus collection per hook.
-    exact_references = [result for result in results if result.channel == "exact"]
-    matches, warnings = route_prompt_node_pointers(
-        prompt,
-        ctx.context_compiler_paths(),
-        search_results=tuple(results),
-        max_routed_nodes=max_routed_nodes,
-        bindings=bindings,
-        nodes=nodes,
-    )
-    warnings = [*snapshot_warnings, *warnings]
+    matches, warnings, exact_references, stamp = _route_once(prompt, ctx, max_routed_nodes)
+    if (
+        stamp is not None and stamp.publication is not None
+        and _capture_stamp(ctx.context_compiler_paths(), ctx.local) != stamp
+    ):
+        # The governed corpus or the published index moved between the
+        # search above and this check, spanning routing and reference
+        # resolution: discard the pinned-cache result and rerun once from
+        # canonical sources rather than emit a decision that mixes two
+        # generations of the cached graph.
+        matches, warnings, exact_references, _stamp = _route_once(prompt, ctx, max_routed_nodes, force_source=True)
     match_reason = "global index" if matches else "none"
     reflections_dir = ctx.hydra / "evolution" / "reflections"
     telemetry_packages_dir = ctx.hydra / "repo" / "telemetry" / "packages"

@@ -1,0 +1,14 @@
+#!/bin/sh
+# Best-effort private knowledge-index and object query store refresh after a
+# commit. `ref store rebuild --if-exists` only acts once someone has built
+# the store at least once -- opt-in first build, self-maintaining after,
+# mirroring how hook-reindex-knowledge already works here.
+set -e
+
+root=$(git rev-parse --show-toplevel)
+script="$root/.hydra-framework/scripts/hydra.py"
+
+[ -f "$script" ] || exit 0
+
+python3 "$script" hook-reindex-knowledge --if-exists >/dev/null 2>&1 || true
+python3 "$script" ref store rebuild --if-exists >/dev/null 2>&1 || true

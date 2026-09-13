@@ -5,10 +5,12 @@ from __future__ import annotations
 import argparse
 import contextlib
 import io as stdlib_io
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 _SRC = Path(__file__).resolve().parents[3] / "src"
 if str(_SRC) not in sys.path:
@@ -18,7 +20,9 @@ from hydra_engine.commands import knowledge  # noqa: E402
 from hydra_engine.documents.digests import normalized_digest  # noqa: E402
 from hydra_engine.documents.frontmatter_blocks import markdown_frontmatter  # noqa: E402
 from hydra_engine.knowledge.packages import ContextCompilerPaths  # noqa: E402
+from hydra_engine.knowledge import search_index  # noqa: E402
 from hydra_engine.objects.discovery import ObjectLocations  # noqa: E402
+from hydra_engine.ports import lock as lock_port  # noqa: E402
 from v3_fixtures import paths_for, write_node, write_unit  # noqa: E402
 
 
@@ -205,8 +209,54 @@ class KnowledgeSearchCommandTests(unittest.TestCase):
         with contextlib.redirect_stdout(out):
             result = knowledge.command_hook_reindex_knowledge(args, paths, resolver_paths, local, ("validate",))
         self.assertEqual(result.exit_code, 0)
-        self.assertTrue((local / "index/knowledge.db").exists())
+        self.assertIsNotNone(search_index.default_db_path(local))
         self.assertIn("documents indexed", out.getvalue())
+
+    def test_hook_reindex_knowledge_uses_incremental_update_when_stale(self):
+        paths, resolver_paths, local = _seed_search_repo()
+        for command in (
+            ("git", "init"),
+            ("git", "config", "user.email", "tests@example.invalid"),
+            ("git", "config", "user.name", "Tests"),
+            ("git", "add", "-A"),
+            ("git", "commit", "-m", "seed"),
+        ):
+            subprocess.run(command, cwd=paths.root, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        args = argparse.Namespace(if_exists=False)
+        with contextlib.redirect_stdout(stdlib_io.StringIO()):
+            knowledge.command_hook_reindex_knowledge(args, paths, resolver_paths, local, ("validate",))
+
+        overview = paths.hydra / "repo/knowledge/spaces/example/overview.md"
+        overview.write_text(overview.read_text(encoding="utf-8") + "hook incremental phrase\n", encoding="utf-8")
+
+        with mock.patch.object(search_index, "build_index", wraps=search_index.build_index) as rebuild:
+            out = stdlib_io.StringIO()
+            with contextlib.redirect_stdout(out):
+                result = knowledge.command_hook_reindex_knowledge(args, paths, resolver_paths, local, ("validate",))
+        rebuild.assert_not_called()
+        self.assertEqual(result.exit_code, 0)
+        results, _features, source = search_index.search(
+            "hook incremental phrase", paths=paths, resolver_paths=resolver_paths, local=local, command_ids=("validate",),
+        )
+        self.assertEqual(source, "sqlite")
+        self.assertIn("hook incremental phrase", results[0].document.body)
+
+    def test_hook_reindex_knowledge_backs_off_while_quiescence_lock_is_held(self):
+        """The bracket around a known multi-file governed write (see
+        `migration_v2.apply_reviewed_plan`) is the same `knowledge-write.lock`
+        this hook trigger tries non-blockingly; a contended lock is not an
+        error, just nothing done this run."""
+        paths, resolver_paths, local = _seed_search_repo()
+        args = argparse.Namespace(if_exists=False)
+        lock_path = paths.root / ".hydra-framework.local/locks/knowledge-write.lock"
+        with lock_port.acquire(lock_path):
+            out = stdlib_io.StringIO()
+            with contextlib.redirect_stdout(out):
+                result = knowledge.command_hook_reindex_knowledge(args, paths, resolver_paths, local, ("validate",))
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(out.getvalue(), "")
+        self.assertIsNone(search_index.default_db_path(local))
 
     def test_knowledge_search_prints_ranked_results(self):
         paths, resolver_paths, local = _seed_search_repo()

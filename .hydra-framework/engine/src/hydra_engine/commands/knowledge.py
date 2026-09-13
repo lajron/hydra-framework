@@ -79,16 +79,24 @@ def _budgeted_results(
 
 
 def command_hook_reindex_knowledge(args, paths: ContextCompilerPaths, resolver_paths: ObjectLocations, local: Path, command_ids: tuple[str, ...]) -> CommandResult:
+    """Trigger for `post-commit`/`post-checkout`/`post-merge`/`post-rewrite`.
+    See `knowledge_migration.refresh_knowledge_index` for the quiescence
+    bracket this backs off under and why nothing here is load-bearing."""
     db_path = search_index.default_db_path(local)
-    if args.if_exists and not db_path.exists():
+    if args.if_exists and db_path is None:
         return CommandResult(0)
-    count, features = search_index.build_index(paths, resolver_paths, local, command_ids)
+    outcome = knowledge_migration.refresh_knowledge_index(paths, resolver_paths, local, command_ids)
+    if outcome is None:
+        return CommandResult(0)
+    count, features = outcome
+    db_path = search_index.default_db_path(local)
     mode = "FTS5"
     if not features.fts5:
         mode = "substring fallback"
     elif features.trigram:
         mode = "FTS5 trigram"
-    print(f"Hydra knowledge index: {count} documents indexed at {db_path.relative_to(paths.root)} ({mode})")
+    display = db_path.relative_to(paths.root) if db_path is not None else local / "index"
+    print(f"Hydra knowledge index: {count} documents indexed at {display} ({mode})")
     return CommandResult(0)
 
 

@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 _SRC = Path(__file__).resolve().parents[3] / "src"
 if str(_SRC) not in sys.path:
@@ -53,6 +54,32 @@ class ConnectExistingTests(unittest.TestCase):
         path.parent.mkdir(parents=True)
         path.write_bytes(b"not a sqlite database")
         self.assertIsNone(sqlite_db.connect_existing(path))
+
+
+class LivePublicationTests(unittest.TestCase):
+    def test_live_path_and_pinned_read_opener(self):
+        path = sqlite_db.live_db_path(_db_path().parent)
+        self.assertEqual(path.name, "knowledge.db")
+        conn = sqlite_db.connect(path)
+        conn.execute("CREATE TABLE t (x TEXT)")
+        conn.execute("INSERT INTO t VALUES ('a')")
+        conn.commit()
+        reader = sqlite_db.open_published(path)
+        self.assertIsNotNone(reader)
+        assert reader is not None
+        try:
+            self.assertEqual(reader.execute("SELECT x FROM t").fetchone()[0], "a")
+            with self.assertRaises(sqlite3.OperationalError):
+                reader.execute("INSERT INTO t VALUES ('b')")
+        finally:
+            reader.close()
+            conn.close()
+
+    def test_garbage_file_is_not_opened(self):
+        path = sqlite_db.live_db_path(_db_path().parent)
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"not sqlite")
+        self.assertIsNone(sqlite_db.open_published(path))
 
 
 class RebuildAtomicallyTests(unittest.TestCase):

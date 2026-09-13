@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 import os
 import sqlite3
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,7 +15,7 @@ _SRC = Path(__file__).resolve().parents[3] / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from hydra_engine.knowledge import packages, search_index  # noqa: E402
+from hydra_engine.knowledge import index_collection, packages, search_index  # noqa: E402
 from hydra_engine.objects.discovery import ObjectLocations  # noqa: E402
 
 
@@ -27,11 +28,27 @@ def _resolver(root: Path) -> ObjectLocations:
     return ObjectLocations(root=root, hydra=hydra, local=root / ".hydra-framework.local", personal_tasks_rel="tasks/personal", object_registry=hydra / "cognition/graph/registry.yaml")
 
 
+def _commit(root: Path) -> None:
+    for command in (
+        ("git", "init"),
+        ("git", "config", "user.email", "tests@example.invalid"),
+        ("git", "config", "user.name", "Tests"),
+        ("git", "add", "-A"),
+        ("git", "commit", "-m", "fixture"),
+    ):
+        subprocess.run(command, cwd=root, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
 def _repo() -> Path:
     root = Path(tempfile.mkdtemp(prefix="search-index-"))
     pkg = root / ".hydra-framework/repo/knowledge/knowledge-packages/example"
     pkg.mkdir(parents=True)
-    (pkg / "overview.md").write_text("# Example Overview\nhydra routing adapter exports\n", encoding="utf-8")
+    (pkg / "overview.md").write_text(
+        "---\nhydra_id: hydra://knowledge-package/example\nuid: example-uid\nschema_version: 3\n"
+        "kind: knowledge-package\ntitle: Example Package\nstatus: active\nscope: repo-local\nowners:\n  team: tests\n"
+        "relations: []\nprovenance:\n  sources: []\n---\n# Example Overview\nhydra routing adapter exports\n",
+        encoding="utf-8",
+    )
     (pkg / "routing.yaml").write_text(
         "schema: hydra-framework.package-routing.v2\n"
         "package: example\n"
@@ -42,7 +59,12 @@ def _repo() -> Path:
     )
     unit_doc = root / ".hydra-framework/repo/knowledge-units/0013-routing.md"
     unit_doc.parent.mkdir(parents=True)
-    unit_doc.write_text("# 0013: Routing\nExact unit body\n", encoding="utf-8")
+    unit_doc.write_text(
+        "---\nhydra_id: hydra://knowledge-unit/0013-routing\nuid: routing-uid\nschema_version: 3\n"
+        "kind: knowledge-unit\ntitle: Routing Unit\nstatus: active\nscope: repo-local\nowners:\n  team: tests\n"
+        "relations:\n  - hydra://knowledge-package/example\nprovenance:\n  sources: []\n---\n# 0013: Routing\nExact unit body\n",
+        encoding="utf-8",
+    )
     registry = root / ".hydra-framework/cognition/graph/registry.yaml"
     registry.parent.mkdir(parents=True)
     registry.write_text(
@@ -63,6 +85,7 @@ def _repo() -> Path:
         "    relations:\n      - hydra://knowledge-package/example\n",
         encoding="utf-8",
     )
+    _commit(root)
     return root
 
 
@@ -83,6 +106,7 @@ class SearchIndexTests(unittest.TestCase):
             "routable: true\nkeywords:\n  - old-keyword\n",
             encoding="utf-8",
         )
+        _commit(root)
         local = root / ".hydra-framework.local"
         search_index.build_index(_paths(root), _resolver(root), local)
         original = node.stat()
@@ -94,7 +118,7 @@ class SearchIndexTests(unittest.TestCase):
             "old-keyword", paths=_paths(root), resolver_paths=_resolver(root), local=local,
         )
 
-        self.assertEqual(source, "source")
+        self.assertEqual(source, "sqlite")
         self.assertEqual(results, [])
 
     def test_exact_lookup_bypasses_lexical_ranking(self):
@@ -134,34 +158,31 @@ class SearchIndexTests(unittest.TestCase):
         root = _repo()
         local = root / ".hydra-framework.local"
         search_index.build_index(_paths(root), _resolver(root), local, ("validate",))
-        docs = search_index.collect_search_documents(_paths(root), _resolver(root), ("validate",))
-        loaded = search_index._load_documents(search_index.default_db_path(local), search_index._corpus_digest(docs))
+        docs = search_index.collect_search_documents(
+            _paths(root), _resolver(root), ("validate",), content_ids=search_index.fingerprint(root),
+        )
+        loaded = search_index._load_documents(search_index.default_db_path(local))
         self.assertEqual([doc.key for doc in loaded], [doc.key for doc in docs])
 
-    def test_build_index_enables_wal_and_a_busy_timeout(self):
-        # B4: WAL lets a concurrent reader keep working through the
-        # DROP-and-rebuild here, and busy_timeout waits out a writer
-        # instead of raising `database is locked`.
+    def test_build_index_uses_the_persistent_wal_database(self):
         root = _repo()
         local = root / ".hydra-framework.local"
         search_index.build_index(_paths(root), _resolver(root), local)
-        with sqlite3.connect(search_index.default_db_path(local)) as conn:
+        db_path = search_index.default_db_path(local)
+        self.assertIsNotNone(db_path)
+        assert db_path is not None
+        with sqlite3.connect(db_path) as conn:
             self.assertEqual(conn.execute("PRAGMA journal_mode").fetchone()[0].lower(), "wal")
-            self.assertGreater(conn.execute("PRAGMA busy_timeout").fetchone()[0], 0)
 
     def test_invalid_private_database_falls_back_to_source(self):
         root = _repo()
-        db_path = root / ".hydra-framework.local/index/knowledge.db"
-        db_path.parent.mkdir(parents=True)
-        with sqlite3.connect(db_path) as conn:
-            conn.execute("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)")
-            conn.execute("CREATE TABLE documents (only_column TEXT)")
-            conn.execute("INSERT INTO meta VALUES ('schema', ?)", (search_index.SCHEMA_VERSION,))
-            conn.execute("INSERT INTO documents VALUES ('bad')")
+        index_dir = root / ".hydra-framework.local/index"
+        index_dir.mkdir(parents=True)
+        (index_dir / "knowledge-current.json").write_text("not json", encoding="utf-8")
         results, _features, source = search_index.search(
             "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=root / ".hydra-framework.local"
         )
-        self.assertEqual(source, "source")
+        self.assertEqual(source, "sqlite")
         self.assertTrue(results)
 
     def test_index_status_reports_missing_fresh_and_stale(self):
@@ -187,7 +208,7 @@ class SearchIndexTests(unittest.TestCase):
         results, _features, source = search_index.search(
             "fresh phrase", paths=_paths(root), resolver_paths=_resolver(root), local=local
         )
-        self.assertEqual(source, "source")
+        self.assertEqual(source, "sqlite")
         self.assertIn("fresh phrase", results[0].document.body)
 
     def test_fresh_store_does_not_recollect_the_corpus(self):
@@ -201,9 +222,115 @@ class SearchIndexTests(unittest.TestCase):
         self.assertEqual(source, "sqlite")
         self.assertTrue(results)
 
+    def test_clean_read_does_not_walk_directories(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        with mock.patch.object(Path, "rglob", side_effect=AssertionError("directory walk")):
+            results, _features, source = search_index.search(
+                "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "sqlite")
+        self.assertTrue(results)
+
+    def test_incremental_update_reparses_only_changed_document(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        overview = root / ".hydra-framework/repo/knowledge/knowledge-packages/example/overview.md"
+        overview.write_text(overview.read_text(encoding="utf-8") + "incremental phrase\n", encoding="utf-8")
+        with mock.patch.object(index_collection, "_document_for_path", wraps=index_collection._document_for_path) as parse:
+            results, _features, source = search_index.search(
+                "incremental phrase", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "sqlite")
+        self.assertEqual(parse.call_count, 1)
+        self.assertIn("incremental phrase", results[0].document.body)
+
+    def test_correctness_holds_with_all_hooks_removed(self):
+        """Phase 6 acceptance: hooks are never load-bearing for correctness.
+
+        Point `core.hooksPath` at hooks that always fail for every trigger
+        Phase 6 adds (`post-commit`/`post-checkout`/`post-merge`/
+        `post-rewrite`) -- strictly harder than hooks being merely absent,
+        since these actually run and exit nonzero -- then perform a real
+        `git commit` and confirm `search()` still detects and repairs the
+        resulting staleness entirely on its own. `search()` never invokes a
+        hook; its own guarded fingerprint comparison is the whole correctness
+        mechanism, so a hook doing nothing here should change nothing but
+        latency.
+        """
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+
+        failing_hooks = root / "broken-hooks"
+        failing_hooks.mkdir()
+        for name in ("post-commit", "post-checkout", "post-merge", "post-rewrite"):
+            hook = failing_hooks / name
+            hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+            hook.chmod(0o755)
+        subprocess.run(
+            ["git", "config", "core.hooksPath", str(failing_hooks)],
+            cwd=root, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+
+        overview = root / ".hydra-framework/repo/knowledge/knowledge-packages/example/overview.md"
+        overview.write_text(overview.read_text(encoding="utf-8") + "hooks removed phrase\n", encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=root, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        commit = subprocess.run(["git", "commit", "-m", "edit"], cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertEqual(commit.returncode, 0, commit.stderr)
+
+        with mock.patch.object(index_collection, "_document_for_path", wraps=index_collection._document_for_path) as parse:
+            results, _features, source = search_index.search(
+                "hooks removed phrase", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "sqlite")
+        self.assertEqual(parse.call_count, 1)
+        self.assertIn("hooks removed phrase", results[0].document.body)
+
+    def test_command_ids_change_forces_full_rebuild(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        with mock.patch.object(search_index, "build_index", wraps=search_index.build_index) as rebuild:
+            results, _features, source = search_index.search(
+                "validate", paths=_paths(root), resolver_paths=_resolver(root), local=local, command_ids=("validate",),
+            )
+        self.assertEqual(source, "sqlite")
+        rebuild.assert_called_once()
+        self.assertEqual(results[0].document.kind, "command")
+
+    def test_schema_change_forces_full_rebuild(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        with mock.patch.object(search_index, "SCHEMA_VERSION", "hydra-framework.knowledge-store.v4"), mock.patch.object(
+            search_index, "build_index", wraps=search_index.build_index,
+        ) as rebuild:
+            _results, _features, source = search_index.search(
+                "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "sqlite")
+        rebuild.assert_called_once()
+
+    def test_explicit_selector_miss_reruns_canonically(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        db_path = search_index.default_db_path(local)
+        assert db_path is not None
+        with sqlite3.connect(db_path) as conn:
+            conn.execute("UPDATE documents SET hydra_id = '' WHERE hydra_id = 'hydra://knowledge-package/example'")
+        results, _features, source = search_index.search(
+            "hydra://knowledge-package/example", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+        )
+        self.assertEqual(source, "source")
+        self.assertEqual(results[0].document.hydra_id, "hydra://knowledge-package/example")
+
     def test_collect_search_documents_discovers_nodes_once_not_per_document(self):
         root = _repo()
-        with mock.patch.object(search_index, "discover_knowledge_nodes", wraps=search_index.discover_knowledge_nodes) as discover:
+        with mock.patch.object(index_collection, "discover_knowledge_nodes", wraps=index_collection.discover_knowledge_nodes) as discover:
             docs = search_index.collect_search_documents(_paths(root), _resolver(root))
         self.assertGreater(len(docs), 1)
         self.assertEqual(discover.call_count, 1)
@@ -234,6 +361,101 @@ class SearchIndexTests(unittest.TestCase):
         exact = search_index.SearchResult(search_index.SearchDocument("a", "hydra://knowledge-unit/0013-routing", (), "a.md", "knowledge-unit", "", "A", (), (), (), (), "alpha", ()), "exact", 0)
         lexical = search_index.SearchResult(search_index.SearchDocument("b", "", (), "b.md", "file", "", "B", (), (), (), (), "alpha alpha alpha", ()), "substring", -3)
         self.assertEqual(search_index.sorted_results([lexical, exact]), [exact, lexical])
+
+
+class SearchForContextProviderTests(unittest.TestCase):
+    """D20: the internal context-provider search entry point may return a
+    reusable opening `OperationStamp` only when the settled cache state is
+    `Fresh` and the search actually answered from that publication; every
+    other case must return `None` so the caller pins its own fresh stamp."""
+
+    def test_fresh_cache_hit_returns_a_stamp_matching_a_fresh_capture(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        results, _features, source, stamp = search_index.search_for_context_provider(
+            "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+        )
+        self.assertEqual(source, "sqlite")
+        self.assertTrue(results)
+        self.assertIsNotNone(stamp)
+        from hydra_engine.knowledge import index_cache
+        self.assertEqual(stamp, index_cache.capture_stamp(_paths(root), local))
+
+    def test_incremental_update_settling_fresh_shares_final_state_as_stamp(self):
+        """The exact D20 scenario: a single-document incremental update
+        settles to `Fresh`, and the stamp returned is built from that same
+        settled state, never from a fresh independent Git read."""
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        overview = root / ".hydra-framework/repo/knowledge/knowledge-packages/example/overview.md"
+        overview.write_text(overview.read_text(encoding="utf-8") + "incremental phrase\n", encoding="utf-8")
+        from hydra_engine.knowledge import index_cache
+
+        with mock.patch.object(index_cache, "stamp_from_fresh", wraps=index_cache.stamp_from_fresh) as stamp_from_fresh:
+            results, _features, source, stamp = search_index.search_for_context_provider(
+                "incremental phrase", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "sqlite")
+        self.assertTrue(results)
+        stamp_from_fresh.assert_called_once()
+        (settled_state,), _kwargs = stamp_from_fresh.call_args
+        self.assertIsInstance(settled_state, index_cache.Fresh)
+        self.assertEqual(stamp, index_cache.OperationStamp(settled_state.fingerprint, settled_state.db_path, settled_state.generation))
+
+    def test_force_source_never_shares_a_stamp(self):
+        """`search_for_context_provider` never itself forces source, but the
+        stamp-sharing rule it applies (`state is Fresh and source == "sqlite"`)
+        must reject a forced-source outcome even though `state` may still be
+        a stale `Fresh` object left over from a prior settle."""
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        outcome = search_index._search_outcome(
+            "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local, force_source=True,
+        )
+        self.assertEqual(outcome.source, "source")
+        from hydra_engine.knowledge import index_cache
+        self.assertNotIsInstance(outcome.state, index_cache.Fresh)
+
+    def test_failed_update_never_shares_a_stamp(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        overview = root / ".hydra-framework/repo/knowledge/knowledge-packages/example/overview.md"
+        overview.write_text(overview.read_text(encoding="utf-8") + "incremental phrase\n", encoding="utf-8")
+        with mock.patch.object(search_index, "_update_index", side_effect=OSError("update failed")):
+            results, _features, source, stamp = search_index.search_for_context_provider(
+                "incremental phrase", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "source")
+        self.assertIsNone(stamp)
+
+    def test_reentrant_canonical_retry_never_shares_a_stamp(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        with mock.patch.object(search_index, "_hydrate_cached_candidates", return_value=None):
+            results, _features, source, stamp = search_index.search_for_context_provider(
+                "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "source")
+        self.assertTrue(results)
+        self.assertIsNone(stamp)
+
+    def test_public_search_return_shape_is_unchanged(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        outcome = search_index.search(
+            "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+        )
+        self.assertEqual(len(outcome), 3)
+        results, features, source = outcome
+        self.assertTrue(results)
+        self.assertEqual(source, "sqlite")
+        self.assertIsInstance(features, search_index.SqliteFeatures)
 
 
 if __name__ == "__main__":

@@ -23,7 +23,6 @@ from typing import Callable
 
 _BUSY_TIMEOUT_MS = 5000
 
-
 def query_store_disabled() -> bool:
     """`HYDRA_QUERY_STORE=off`: the escape hatch every read
     gate checks before even trying to connect, for a machine boundary (CI,
@@ -40,9 +39,14 @@ def connect(db_path: Path) -> sqlite3.Connection:
     locked` (matches `knowledge/search_index.py`'s `_connect`)."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute(f"PRAGMA busy_timeout={_BUSY_TIMEOUT_MS}")
-    return conn
+    try:
+        if conn.execute("PRAGMA journal_mode=WAL").fetchone()[0].lower() != "wal":
+            raise sqlite3.DatabaseError("SQLite WAL mode is unavailable")
+        conn.execute(f"PRAGMA busy_timeout={_BUSY_TIMEOUT_MS}")
+        return conn
+    except BaseException:
+        conn.close()
+        raise
 
 
 def connect_existing(db_path: Path) -> sqlite3.Connection | None:
@@ -53,18 +57,62 @@ def connect_existing(db_path: Path) -> sqlite3.Connection | None:
     on `None` rather than raising."""
     if not db_path.exists():
         return None
+    conn = None
     try:
         conn = connect(db_path)
         conn.execute("SELECT 1")
         return conn
-    except sqlite3.DatabaseError:
+    except (OSError, sqlite3.DatabaseError):
+        if conn is not None:
+            conn.close()
         return None
+
+
+def live_db_path(index_dir: Path) -> Path:
+    """The persistent knowledge-index location."""
+    return index_dir / "knowledge.db"
+
+
+def discard_database(db_path: Path) -> None:
+    """Discard an unreadable disposable database and its WAL sidecars."""
+    _remove_with_wal_sidecars(db_path)
+
+
+def truncate_wal(conn: sqlite3.Connection) -> bool:
+    """Best-effort WAL compaction; a pinned reader makes this non-fatal."""
+    try:
+        return conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()[0] == 0
+    except sqlite3.Error:
+        return False
 
 
 def _remove_with_wal_sidecars(path: Path) -> None:
     path.unlink(missing_ok=True)
     Path(f"{path}-wal").unlink(missing_ok=True)
     Path(f"{path}-shm").unlink(missing_ok=True)
+
+
+def _remove_temp_database(path: Path) -> None:
+    """Remove the complete temporary SQLite artifact, if a build failed."""
+    path.unlink(missing_ok=True)
+    Path(f"{path}-journal").unlink(missing_ok=True)
+    Path(f"{path}-wal").unlink(missing_ok=True)
+    Path(f"{path}-shm").unlink(missing_ok=True)
+
+
+def open_published(db_path: Path) -> sqlite3.Connection | None:
+    """Open one explicitly pinned read-only WAL snapshot, or return ``None``."""
+    conn = None
+    try:
+        conn = sqlite3.connect(f"{db_path.resolve().as_uri()}?mode=ro", uri=True)
+        conn.execute(f"PRAGMA busy_timeout={_BUSY_TIMEOUT_MS}")
+        conn.execute("BEGIN")
+        conn.execute("PRAGMA schema_version").fetchone()
+        return conn
+    except (OSError, sqlite3.DatabaseError):
+        if conn is not None:
+            conn.close()
+        return None
 
 
 def rebuild_atomically(db_path: Path, populate: Callable[[sqlite3.Connection], None]) -> None:
