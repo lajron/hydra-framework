@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import dataclasses
 import tempfile
 import unittest
 import sqlite3
+import subprocess
 from pathlib import Path
 from unittest import mock
 
 from hydra_engine.identity.object_families import OBJECT_FAMILIES
 from hydra_engine.knowledge import context_providers
+from hydra_engine.knowledge import index_cache
 from hydra_engine.knowledge import search_index
 from hydra_engine.knowledge import snapshot as knowledge_snapshot
 from hydra_engine.knowledge import storage
@@ -19,6 +22,17 @@ from v3_fixtures import paths_for, write_node, write_unit
 def _resolver_paths(root: Path) -> ObjectLocations:
     hydra = root / ".hydra-framework"
     return ObjectLocations(root, hydra, root / ".hydra-framework.local", "tasks/personal", hydra / "cognition/graph/registry.yaml")
+
+
+def _commit(root: Path) -> None:
+    for command in (
+        ("git", "init"),
+        ("git", "config", "user.email", "tests@example.invalid"),
+        ("git", "config", "user.name", "Tests"),
+        ("git", "add", "-A"),
+        ("git", "commit", "-m", "fixture"),
+    ):
+        subprocess.run(command, cwd=root, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
 def _request(root: Path, **changes) -> context_providers.ProviderRequest:
@@ -100,6 +114,7 @@ class KnowledgeCollectorTests(unittest.TestCase):
         write_node(paths, "security", keywords=("security",))
         write_unit(paths, "demo", "adopt", requires=(required,))
         write_unit(paths, "security", "baseline")
+        _commit(root)
         return paths
 
     def test_route_selects_priority_and_cross_space_required_closure(self):
@@ -248,6 +263,7 @@ class KnowledgeCollectorTests(unittest.TestCase):
             paths = paths_for(root)
             write_node(paths, "demo", keywords=("demo",))
             unit = write_unit(paths, "demo", "guide")
+            _commit(root)
             local = root / ".hydra-framework.local"
             request = _request(
                 root,
@@ -256,7 +272,7 @@ class KnowledgeCollectorTests(unittest.TestCase):
                 path_values=(unit.relative_to(root).as_posix(),),
             )
 
-            with mock.patch("hydra_engine.knowledge.search_index.query_store_disabled", return_value=True):
+            with mock.patch("hydra_engine.knowledge.index_cache.query_store_disabled", return_value=True):
                 source_output = context_providers.run_context_providers(request, include_families=("Knowledge",))
 
             search_index.build_index(paths, _resolver_paths(root), local)
@@ -297,6 +313,81 @@ class RunContextProvidersTests(unittest.TestCase):
                     context_providers.run_context_providers(
                         _request(Path(tmp), knowledge_snapshot=object()), include_families=("Knowledge",)
                     )
+
+
+class StampRevalidationTests(unittest.TestCase):
+    """Phase 5: operation-scoped read-stamp propagation and final
+    revalidation. `run_context_providers` pins one `index_cache.OperationStamp`
+    across the whole operation and revalidates it once at the end; a stamp
+    that moved mid-operation must discard the accumulated result and rerun
+    canonically rather than publish a mix of two generations."""
+
+    def _fixture(self, root: Path):
+        paths = paths_for(root, ("demo",))
+        write_node(paths, "demo", keywords=("demo",))
+        write_unit(paths, "demo", "guide")
+        _commit(root)
+        return paths
+
+    def _moved_stamp(self, real_stamp: index_cache.OperationStamp) -> index_cache.OperationStamp:
+        # A different, non-existent publication path is enough to make the
+        # stamp compare unequal without a real second publish.
+        return dataclasses.replace(real_stamp, publication=real_stamp.publication.with_name("moved.db"))
+
+    def test_publication_change_midoperation_reruns(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths = self._fixture(root)
+            local = root / ".hydra-framework.local"
+            search_index.build_index(paths, _resolver_paths(root), local)
+            real_stamp = index_cache.capture_stamp(paths, local)
+            self.assertIsNotNone(real_stamp.publication)
+            moved_stamp = self._moved_stamp(real_stamp)
+
+            with (
+                mock.patch(
+                    "hydra_engine.knowledge.context_providers._capture_stamp",
+                    side_effect=[real_stamp, moved_stamp],
+                ),
+                mock.patch(
+                    "hydra_engine.knowledge.context_support.search",
+                    wraps=context_providers.context_support.search,
+                ) as search,
+            ):
+                output = context_providers.run_context_providers(
+                    _request(root, paths=paths, task="demo"), include_families=("Knowledge",),
+                )
+
+            self.assertEqual(len(search.call_args_list), 2)
+            self.assertFalse(search.call_args_list[0].kwargs.get("force_source", False))
+            self.assertTrue(search.call_args_list[1].kwargs["force_source"])
+            self.assertEqual(output.nodes[0]["node"], "demo")
+
+    def test_no_mixed_cache_and_source_graph(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths = self._fixture(root)
+            local = root / ".hydra-framework.local"
+            search_index.build_index(paths, _resolver_paths(root), local)
+            real_stamp = index_cache.capture_stamp(paths, local)
+            moved_stamp = self._moved_stamp(real_stamp)
+            request = _request(root, paths=paths, task="demo")
+
+            with mock.patch("hydra_engine.knowledge.index_cache.query_store_disabled", return_value=True):
+                source_output = context_providers.run_context_providers(request, include_families=("Knowledge",))
+
+            with mock.patch(
+                "hydra_engine.knowledge.context_providers._capture_stamp",
+                side_effect=[real_stamp, moved_stamp],
+            ):
+                racy_output = context_providers.run_context_providers(request, include_families=("Knowledge",))
+
+            # The mid-operation move must discard every candidate/node
+            # gathered against the pinned (now-stale) publication -- the
+            # rerun result must match a pure canonical run exactly, never a
+            # mix of the two generations.
+            self.assertEqual(racy_output.nodes, source_output.nodes)
+            self.assertEqual(racy_output.candidates, source_output.candidates)
 
 
 if __name__ == "__main__":

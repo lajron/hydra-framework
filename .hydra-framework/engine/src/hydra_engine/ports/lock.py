@@ -16,6 +16,7 @@ already-caught type" rule the plan applies to profile-resolution errors.
 from __future__ import annotations
 
 import contextlib
+import time
 from pathlib import Path
 
 from hydra_engine.documents.tokens import HydraYamlError
@@ -33,6 +34,21 @@ except ImportError:
 
 class LockUnavailableError(HydraYamlError):
     """No platform lock mechanism is importable; refuse to mutate."""
+
+
+def _try_lock(handle) -> bool:
+    if fcntl is not None:
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return True
+        except BlockingIOError:
+            return False
+    handle.seek(0)
+    try:
+        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        return True
+    except OSError:
+        return False
 
 
 @contextlib.contextmanager
@@ -55,6 +71,44 @@ def acquire(path: Path):
         else:
             handle.seek(0)
             msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+        try:
+            yield
+        finally:
+            if fcntl is not None:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            else:
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+    finally:
+        handle.close()
+
+
+@contextlib.contextmanager
+def try_acquire(path: Path, timeout: float = 0.0):
+    """Try to hold *path* exclusively for at most *timeout* seconds.
+
+    The port keeps its fail-closed platform behavior.  Contention is reported
+    as ``LockUnavailableError`` instead of waiting indefinitely as ``acquire``
+    does.
+    """
+    if fcntl is None and msvcrt is None:
+        raise LockUnavailableError(
+            "no platform lock mechanism (fcntl/msvcrt) is available; refusing to mutate"
+        )
+    if timeout < 0:
+        raise ValueError("timeout must not be negative")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle = open(path, "a+")
+    deadline = time.monotonic() + timeout
+    acquired = False
+    try:
+        while not acquired:
+            acquired = _try_lock(handle)
+            if acquired:
+                break
+            if time.monotonic() >= deadline:
+                raise LockUnavailableError(f"lock is unavailable: {path}")
+            time.sleep(min(0.01, max(0.0, deadline - time.monotonic())))
         try:
             yield
         finally:

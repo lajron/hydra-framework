@@ -34,6 +34,11 @@ def _hydration_mismatch_type():
     return __import__("hydra_engine.knowledge.storage", fromlist=("HydrationMismatch",)).HydrationMismatch
 
 
+def _capture_stamp(paths, local):
+    """Load the operation-scoped read stamp without widening static fan-out."""
+    return __import__("hydra_engine.knowledge.index_cache", fromlist=("capture_stamp",)).capture_stamp(paths, local)
+
+
 @dataclasses.dataclass(frozen=True)
 class ProviderRequest:
     task: str
@@ -296,16 +301,25 @@ def run_context_providers(
         family for family in PROVIDERS_BY_FAMILY
         if (family in included if include_families else True) and family not in excluded
     ]
+    open_knowledge_snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot
+    # `operation_stamp` is the one read stamp this whole call is pinned to: it
+    # is `None` unless this call itself opened a fresh cached snapshot below,
+    # so a recursive canonical rerun (which already carries its own
+    # `knowledge_snapshot`) never re-triggers the final revalidation.
+    operation_stamp = None
     if active and request.knowledge_snapshot is None:
         results, _features, _source = context_support.search(
             request.task, paths=request.paths, resolver_paths=request.resolver_paths,
             local=request.resolver_paths.local, command_ids=request.command_ids,
             path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT,
         )
-        from hydra_engine.knowledge.search_index import default_db_path
-        open_knowledge_snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot
+        # Captured once the shared search above has settled (including any
+        # self-heal rebuild it triggered), this stamp pins the exact
+        # publication every routing/view/unit-hydration read below must
+        # agree with.
+        operation_stamp = _capture_stamp(request.paths, request.resolver_paths.local)
         try:
-            snapshot = open_knowledge_snapshot(request.paths, default_db_path(request.resolver_paths.local), _source)
+            snapshot = open_knowledge_snapshot(request.paths, operation_stamp.publication, _source, stamp=operation_stamp)
         except ValueError as error:
             if not isinstance(error, hydration_mismatch):
                 raise
@@ -314,7 +328,8 @@ def run_context_providers(
                 local=request.resolver_paths.local, command_ids=request.command_ids,
                 path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT, force_source=True,
             )
-            snapshot = open_knowledge_snapshot(request.paths, default_db_path(request.resolver_paths.local), _source)
+            operation_stamp = None
+            snapshot = open_knowledge_snapshot(request.paths, None, _source)
         request = dataclasses.replace(request, search_results=tuple(results), knowledge_snapshot=snapshot)
 
     candidates: list[dict] = []
@@ -337,11 +352,9 @@ def run_context_providers(
                 local=request.resolver_paths.local, command_ids=request.command_ids,
                 path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT, force_source=True,
             )
-            from hydra_engine.knowledge.search_index import default_db_path
-            open_knowledge_snapshot = __import__("hydra_engine.knowledge.snapshot", fromlist=("open_knowledge_snapshot",)).open_knowledge_snapshot
             source_request = dataclasses.replace(
                 request, search_results=tuple(results),
-                knowledge_snapshot=open_knowledge_snapshot(request.paths, default_db_path(request.resolver_paths.local), "source"),
+                knowledge_snapshot=open_knowledge_snapshot(request.paths, None, "source"),
             )
             return run_context_providers(source_request, include_families=include_families, exclude_families=exclude_families)
         for candidate in output.candidates:
@@ -357,6 +370,28 @@ def run_context_providers(
             if value not in verify:
                 verify.append(value)
         warnings.extend(output.warnings)
+
+    if (
+        operation_stamp is not None and operation_stamp.publication is not None
+        and _capture_stamp(request.paths, request.resolver_paths.local) != operation_stamp
+    ):
+        # The governed corpus or the published index moved somewhere between
+        # the initial search and this final check -- after routing, view
+        # selection and unit hydration all read through the pinned snapshot
+        # above. Every candidate gathered above may span two generations of
+        # the cached graph, so discard the whole result and rerun once from
+        # canonical sources rather than return a mixed operation.
+        results, _features, _source = context_support.search(
+            request.task, paths=request.paths, resolver_paths=request.resolver_paths,
+            local=request.resolver_paths.local, command_ids=request.command_ids,
+            path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT, force_source=True,
+        )
+        source_request = dataclasses.replace(
+            request, search_results=tuple(results),
+            knowledge_snapshot=open_knowledge_snapshot(request.paths, None, "source"),
+        )
+        return run_context_providers(source_request, include_families=include_families, exclude_families=exclude_families)
+
     return ProviderOutput(
         candidates=candidates, nodes=nodes, views=views, effective_policy=policies,
         route_expansions=expansions, avoid_by_default=avoid, verify=verify, warnings=warnings,

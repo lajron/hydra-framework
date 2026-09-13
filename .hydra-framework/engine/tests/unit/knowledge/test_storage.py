@@ -4,16 +4,20 @@ import unittest
 import sqlite3
 import tempfile
 from pathlib import Path
+from unittest import mock
 
+from hydra_engine.knowledge import search_index
 from hydra_engine.knowledge.packages import ContextCompilerPaths
 from hydra_engine.knowledge.storage import (
     HydrationMismatch,
     InMemoryKnowledgeStore,
     SqliteKnowledgeStore,
     StoredKnowledgeObject,
+    build_knowledge_store,
     hydrate_node_and_ancestors,
     write_sqlite_store,
 )
+from hydra_engine.objects.discovery import ObjectLocations
 
 
 class KnowledgeStoreTests(unittest.TestCase):
@@ -77,6 +81,46 @@ class KnowledgeStoreTests(unittest.TestCase):
         self.assertEqual(store.by_uid("unit-uid"), unit)
         self.assertEqual(store.outgoing(unit.hydra_id, "tests"), (node,))
         self.assertEqual(store.node_for_path(".hydra-framework/repo/knowledge/spaces/product/checkout/units/payments.md"), node)
+
+    def test_sqlite_store_matches_inmemory(self):
+        root = Path(__file__).resolve().parents[5]
+        paths = ContextCompilerPaths(root=root, hydra=root / ".hydra-framework")
+        memory = build_knowledge_store(paths)
+        objects = tuple(memory.iter_objects())
+        relation_types = {edge_type for item in objects for edge_type, _target in item.relations}
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = Path(tmp) / "knowledge.db"
+            with sqlite3.connect(db_path) as conn:
+                write_sqlite_store(conn, memory)
+            store = SqliteKnowledgeStore.open(db_path)
+            self.assertIsNotNone(store)
+            assert store is not None
+            for item in objects:
+                self.assertEqual(store.by_id(item.hydra_id), memory.by_id(item.hydra_id))
+                self.assertEqual(store.by_uid(item.uid), memory.by_uid(item.uid))
+                self.assertEqual(store.by_path(item.path), memory.by_path(item.path))
+                self.assertEqual(store.node_for_path(item.path), memory.node_for_path(item.path))
+                for relation_type in (*sorted(relation_types), ""):
+                    self.assertEqual(store.outgoing(item.hydra_id, relation_type), memory.outgoing(item.hydra_id, relation_type))
+                    self.assertEqual(store.incoming(item.hydra_id, relation_type), memory.incoming(item.hydra_id, relation_type))
+
+    def test_read_path_does_not_call_iter_objects(self):
+        root = Path(__file__).resolve().parents[5]
+        paths = ContextCompilerPaths(root=root, hydra=root / ".hydra-framework")
+        resolver_paths = ObjectLocations(
+            root, paths.hydra, root / ".hydra-framework.local", "tasks/personal",
+            paths.hydra / "cognition/graph/registry.yaml",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            local = Path(tmp) / ".hydra-framework.local"
+            search_index.build_index(paths, resolver_paths, local)
+            with mock.patch.object(SqliteKnowledgeStore, "iter_objects", side_effect=AssertionError("eager read")):
+                results, _features, source = search_index.search(
+                    "hydra://knowledge-space/hydra-framework",
+                    paths=paths, resolver_paths=resolver_paths, local=local,
+                )
+        self.assertEqual(source, "sqlite")
+        self.assertTrue(results)
 
 
 if __name__ == "__main__":

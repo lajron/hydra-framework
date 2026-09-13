@@ -18,6 +18,15 @@ class KnowledgeSnapshot:
 
     paths: object
     store: KnowledgeStore | None = None
+    # The read stamp this snapshot's `store` was opened against, or `None` in
+    # source mode. The caller that opened this snapshot threads it through
+    # search, routing, views and unit hydration by simply reusing the one
+    # snapshot instance, then revalidates it once at the end of the
+    # observable operation: a fresh `index_cache.capture_stamp(...)` unequal
+    # to this value means the governed corpus or the publication moved
+    # during the operation, so the whole result must be discarded and rerun
+    # canonically rather than published as a mix of two generations.
+    stamp: object | None = None
     _nodes: tuple[object, ...] | None = None
     _views: tuple[object, ...] | None = None
     _bindings: dict | None = None
@@ -157,8 +166,8 @@ class KnowledgeSnapshot:
         return units, owners
 
 
-def open_knowledge_snapshot(paths, db_path, source: str) -> KnowledgeSnapshot:
+def open_knowledge_snapshot(paths, db_path, source: str, *, stamp: object | None = None) -> KnowledgeSnapshot:
     store = SqliteKnowledgeStore.open(db_path) if source == "sqlite" else None
     if source == "sqlite" and store is None:
         raise HydrationMismatch("SQLite store became unavailable during operation")
-    return KnowledgeSnapshot(paths, store)
+    return KnowledgeSnapshot(paths, store, stamp if source == "sqlite" else None)

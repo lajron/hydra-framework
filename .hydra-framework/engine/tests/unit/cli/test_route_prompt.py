@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import contextlib
+import dataclasses
 import io
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 _SRC = Path(__file__).resolve().parents[3] / "src"
 if str(_SRC) not in sys.path:
@@ -20,6 +23,7 @@ if str(_UNIT) not in sys.path:
 from hydra_engine import thresholds  # noqa: E402
 from hydra_engine.cli import route_prompt  # noqa: E402
 from hydra_engine.cli.dispatch import RepoContext  # noqa: E402
+from hydra_engine.knowledge import index_cache, search_index  # noqa: E402
 from v3_fixtures import paths_for, write_node, write_unit  # noqa: E402
 
 
@@ -228,6 +232,51 @@ class CommandRoutePromptTests(unittest.TestCase):
             args = type("Args", (), {"prompt": ""})()
             self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
         self.assertIn("Hydra Knowledge v3 routing (pointers only):", text_out.getvalue())
+
+
+class StampRevalidationTests(unittest.TestCase):
+    """Phase 5: `command_route_prompt` pins one operation-scoped read stamp
+    across its search+routing pass and revalidates it once before rendering;
+    a stamp that moved mid-operation must discard the pinned-cache result
+    and rerun canonically rather than route from a mixed generation."""
+
+    def _git_ctx(self) -> RepoContext:
+        root = Path(tempfile.mkdtemp(prefix="route-prompt-stamp-test-"))
+        (root / ".hydra-framework").mkdir(parents=True)
+        for command in (
+            ("git", "init", "-q"),
+            ("git", "config", "user.email", "fixture@example.com"),
+            ("git", "config", "user.name", "Fixture"),
+        ):
+            subprocess.run(command, cwd=root, check=True)
+        ctx = RepoContext.for_root(root)
+        _seed_package(ctx)
+        subprocess.run(["git", "add", "-A"], cwd=root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "fixture"], cwd=root, check=True)
+        return ctx
+
+    def test_publication_change_midoperation_reruns(self):
+        ctx = self._git_ctx()
+        search_index.build_index(ctx.context_compiler_paths(), ctx.resolver_paths(), ctx.local)
+        real_stamp = index_cache.capture_stamp(ctx.context_compiler_paths(), ctx.local)
+        self.assertIsNotNone(real_stamp.publication)
+        moved_stamp = dataclasses.replace(real_stamp, publication=real_stamp.publication.with_name("moved.db"))
+
+        args = type("Args", (), {"prompt": "Please do an engine refactor"})()
+        out = io.StringIO()
+        with (
+            mock.patch("hydra_engine.cli.route_prompt._capture_stamp", side_effect=[real_stamp, moved_stamp]),
+            mock.patch("hydra_engine.knowledge.search_index.search", wraps=search_index.search) as search,
+            contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()),
+        ):
+            self.assertEqual(route_prompt.command_route_prompt(args, ctx), 0)
+
+        self.assertEqual(len(search.call_args_list), 2)
+        self.assertFalse(search.call_args_list[0].kwargs.get("force_source", False))
+        self.assertTrue(search.call_args_list[1].kwargs["force_source"])
+        # The rerun must still produce a correct (canonical) routing decision,
+        # not an empty or partially-hydrated one.
+        self.assertIn("Example", out.getvalue())
 
 
 if __name__ == "__main__":

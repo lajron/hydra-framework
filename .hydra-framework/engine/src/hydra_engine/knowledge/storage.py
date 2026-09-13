@@ -260,28 +260,141 @@ def write_sqlite_store(conn: sqlite3.Connection, store: KnowledgeStore) -> None:
         "INSERT INTO knowledge_relations VALUES (?, ?, ?)",
         [(item.hydra_id, relation_type, target) for item in objects for relation_type, target in item.relations],
     )
+    conn.execute("CREATE INDEX idx_objects_uid ON knowledge_objects(uid)")
+    conn.execute("CREATE INDEX idx_objects_path ON knowledge_objects(path)")
+    conn.execute("CREATE INDEX idx_objects_node ON knowledge_objects(node_id)")
+    conn.execute("CREATE INDEX idx_objects_kind ON knowledge_objects(kind)")
+    conn.execute("CREATE INDEX idx_relations_source ON knowledge_relations(source_id)")
+    conn.execute("CREATE INDEX idx_relations_target ON knowledge_relations(target_id)")
 
 
-class SqliteKnowledgeStore(InMemoryKnowledgeStore):
-    """Read-only private projection; callers still hydrate selected files canonically."""
+class SqliteKnowledgeStore:
+    """Read-only private projection backed by its SQLite connection."""
+
+    def __init__(self, conn: sqlite3.Connection):
+        self._conn = conn
+
+    @staticmethod
+    def _objects(rows) -> tuple[StoredKnowledgeObject, ...]:
+        grouped: list[StoredKnowledgeObject] = []
+        current_key = object()
+        current: list | None = None
+        relations: list[tuple[str, str]] = []
+        for row in rows:
+            key, hydra_id, uid, kind, path, node_id, relation_type, target_id = row
+            if key != current_key:
+                if current is not None:
+                    grouped.append(StoredKnowledgeObject(*current, tuple(relations)))
+                current_key = key
+                current = [hydra_id, uid, kind, path, node_id]
+                relations = []
+            if relation_type is not None:
+                relations.append((relation_type, target_id))
+        if current is not None:
+            grouped.append(StoredKnowledgeObject(*current, tuple(relations)))
+        return tuple(grouped)
+
+    def _one(self, statement: str, parameters: tuple = ()) -> StoredKnowledgeObject | None:
+        return next(iter(self._objects(self._conn.execute(statement, parameters))), None)
+
+    def _lookup(self, predicate: str, parameters: tuple) -> StoredKnowledgeObject | None:
+        return self._one(
+            f"""
+            WITH found AS (
+                SELECT hydra_id, uid, kind, path, node_id
+                FROM knowledge_objects WHERE {predicate}
+            )
+            SELECT found.hydra_id, found.hydra_id, found.uid, found.kind, found.path, found.node_id, relations.relation_type, relations.target_id
+            FROM found LEFT JOIN knowledge_relations AS relations ON relations.source_id = found.hydra_id
+            ORDER BY relations.rowid
+            """,
+            parameters,
+        )
 
     @classmethod
     def open(cls, db_path: Path) -> "SqliteKnowledgeStore | None":
         try:
-            with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as conn:
-                rows = conn.execute(
-                    "SELECT hydra_id, uid, kind, path, node_id FROM knowledge_objects ORDER BY hydra_id"
-                ).fetchall()
-                edges = conn.execute(
-                    "SELECT source_id, relation_type, target_id FROM knowledge_relations "
-                    "ORDER BY source_id, relation_type, target_id"
-                ).fetchall()
+            return cls(sqlite3.connect(f"file:{db_path}?mode=ro", uri=True))
         except sqlite3.Error:
             return None
-        relations: dict[str, list[tuple[str, str]]] = {}
-        for source, relation_type, target in edges:
-            relations.setdefault(source.lower(), []).append((relation_type, target))
-        return cls(
-            StoredKnowledgeObject(hydra_id, uid, kind, path, node_id, tuple(relations.get(hydra_id.lower(), ())))
-            for hydra_id, uid, kind, path, node_id in rows
+
+    def by_id(self, hydra_id: str) -> StoredKnowledgeObject | None:
+        return self._lookup("hydra_id = ?", (hydra_id.lower(),))
+
+    def by_uid(self, uid: str) -> StoredKnowledgeObject | None:
+        return self._lookup("uid = ?", (uid,))
+
+    def iter_objects(self) -> Iterable[StoredKnowledgeObject]:
+        rows = self._conn.execute(
+            """
+            SELECT objects.hydra_id, objects.hydra_id, objects.uid, objects.kind, objects.path, objects.node_id, relations.relation_type, relations.target_id
+            FROM knowledge_objects AS objects
+            LEFT JOIN knowledge_relations AS relations ON relations.source_id = objects.hydra_id
+            ORDER BY objects.hydra_id, relations.rowid
+            """
         )
+        return iter(self._objects(rows))
+
+    def outgoing(self, hydra_id: str, relation_type: str = "") -> tuple[StoredKnowledgeObject, ...]:
+        return self._objects(self._conn.execute(
+            """
+            WITH edges AS (
+                SELECT rowid AS edge_id, target_id
+                FROM knowledge_relations
+                WHERE source_id = ? AND (? = '' OR relation_type = ?)
+            )
+            SELECT edges.edge_id, target.hydra_id, target.uid, target.kind, target.path, target.node_id, relations.relation_type, relations.target_id
+            FROM edges
+            JOIN knowledge_objects AS target ON target.hydra_id = edges.target_id
+            LEFT JOIN knowledge_relations AS relations ON relations.source_id = target.hydra_id
+            ORDER BY edges.edge_id, relations.rowid
+            """,
+            (hydra_id.lower(), relation_type, relation_type),
+        ))
+
+    def incoming(self, hydra_id: str, relation_type: str = "") -> tuple[StoredKnowledgeObject, ...]:
+        return self._objects(self._conn.execute(
+            """
+            WITH sources AS (
+                SELECT DISTINCT source_id
+                FROM knowledge_relations
+                WHERE target_id = ? AND (? = '' OR relation_type = ?)
+            )
+            SELECT source.hydra_id, source.hydra_id, source.uid, source.kind, source.path, source.node_id, relations.relation_type, relations.target_id
+            FROM sources
+            JOIN knowledge_objects AS source ON source.hydra_id = sources.source_id
+            LEFT JOIN knowledge_relations AS relations ON relations.source_id = source.hydra_id
+            ORDER BY source.hydra_id, relations.rowid
+            """,
+            (hydra_id.lower(), relation_type, relation_type),
+        ))
+
+    def by_path(self, path: str) -> StoredKnowledgeObject | None:
+        normalized = path.lstrip("./")
+        return self._lookup("path IN (?, ?)", (normalized, f".{normalized}"))
+
+    def node_for_path(self, path: str) -> StoredKnowledgeObject | None:
+        candidate = path.lstrip("./")
+        probes: list[str] = []
+        while candidate:
+            probes.extend((
+                f".{candidate}/node.yaml", f".{candidate}/space.yaml",
+                f"{candidate}/node.yaml", f"{candidate}/space.yaml",
+            ))
+            candidate = candidate.rpartition("/")[0]
+        if not probes: return None
+        placeholders = ", ".join("?" for _ in probes)
+        precedence = " ".join(f"WHEN ? THEN {index}" for index in range(len(probes)))
+        statement = f"""
+            WITH found AS (
+                SELECT hydra_id, uid, kind, path, node_id
+                FROM knowledge_objects
+                WHERE path IN ({placeholders}) AND kind IN ('knowledge-node', 'knowledge-space')
+                ORDER BY CASE path {precedence} END
+                LIMIT 1
+            )
+            SELECT found.hydra_id, found.hydra_id, found.uid, found.kind, found.path, found.node_id, relations.relation_type, relations.target_id
+            FROM found LEFT JOIN knowledge_relations AS relations ON relations.source_id = found.hydra_id
+            ORDER BY relations.rowid
+        """
+        return self._one(statement, (*probes, *probes))
