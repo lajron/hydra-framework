@@ -47,15 +47,25 @@ def _route_once(prompt: str, ctx, max_routed_nodes: int, *, force_source: bool =
     degraded on its own), meaning the caller has nothing left to revalidate.
     """
     paths = ctx.context_compiler_paths()
-    results, _features, _source = search_index.search(
-        prompt, paths=paths, resolver_paths=ctx.resolver_paths(), local=ctx.local,
-        command_ids=ctx.command_ids, limit=20, force_source=force_source,
-    )
-    # Captured once the search above has settled (including any self-heal
-    # rebuild it triggered), this stamp pins the exact publication the
-    # snapshot below opens, so the two never independently resolve two
-    # different generations of the published index.
-    stamp = None if force_source else _capture_stamp(paths, ctx.local)
+    if force_source:
+        results, _features, _source = search_index.search(
+            prompt, paths=paths, resolver_paths=ctx.resolver_paths(), local=ctx.local,
+            command_ids=ctx.command_ids, limit=20, force_source=True,
+        )
+        stamp = None
+    else:
+        # Reuse the settled `Fresh` cache state as the opening stamp when the
+        # search itself answered from it (D8/D20): this shares the one Git
+        # fingerprint read `cache_state` already did instead of pinning a
+        # second, independent one microseconds later. Captured only once the
+        # search has settled, including any self-heal rebuild it triggered,
+        # so the stamp still pins the exact publication the snapshot below
+        # opens.
+        results, _features, _source, reusable_stamp = search_index.search_for_context_provider(
+            prompt, paths=paths, resolver_paths=ctx.resolver_paths(), local=ctx.local,
+            command_ids=ctx.command_ids, limit=20,
+        )
+        stamp = reusable_stamp if reusable_stamp is not None else _capture_stamp(paths, ctx.local)
     open_knowledge_snapshot = _open_knowledge_snapshot()
     snapshot_warnings: list[str] = []
     try:

@@ -305,7 +305,7 @@ class SearchIndexTests(unittest.TestCase):
         root = _repo()
         local = root / ".hydra-framework.local"
         search_index.build_index(_paths(root), _resolver(root), local)
-        with mock.patch.object(search_index, "SCHEMA_VERSION", "hydra-framework.knowledge-store.v4"), mock.patch.object(
+        with mock.patch.object(search_index, "SCHEMA_VERSION", "hydra-framework.knowledge-store.v5"), mock.patch.object(
             search_index, "build_index", wraps=search_index.build_index,
         ) as rebuild:
             _results, _features, source = search_index.search(
@@ -456,6 +456,96 @@ class SearchForContextProviderTests(unittest.TestCase):
         self.assertTrue(results)
         self.assertEqual(source, "sqlite")
         self.assertIsInstance(features, search_index.SqliteFeatures)
+
+
+class LexicalNarrowingDifferentialTests(unittest.TestCase):
+    """Phase 3 acceptance (P13/D10): the FTS5-narrowed candidate path must
+    return byte-identical `SearchResult` lists, in the same order, to the old
+    whole-corpus scan it replaces, across every query channel -- and the
+    substring-scan fallback for a host without the trigram tokenizer must
+    match both of them too."""
+
+    QUERIES_AND_CHANNELS = (
+        ("hydra://knowledge-unit/0013-routing", "exact"),  # exact id
+        ("Please read .hydra-framework/repo/knowledge-units/0013-routing.md", "exact"),  # exact path
+        ("Example Package", "exact"),  # exact slug
+        ("knowledge-packages", "path-route"),  # path-route
+        ("adapter exports", "substring"),  # substring
+        ("no match anywhere for this text string zz", None),  # empty
+    )
+
+    def _search(self, root, query, *, narrow: bool):
+        paths, resolver, local = _paths(root), _resolver(root), root / ".hydra-framework.local"
+        if narrow:
+            return search_index.search(query, paths=paths, resolver_paths=resolver, local=local)
+        with mock.patch.object(search_index, "_narrowed_documents", return_value=None):
+            return search_index.search(query, paths=paths, resolver_paths=resolver, local=local)
+
+    def test_narrowed_path_matches_whole_corpus_scan_across_channels(self):
+        root = _repo()
+        search_index.build_index(_paths(root), _resolver(root), root / ".hydra-framework.local")
+        for query, channel in self.QUERIES_AND_CHANNELS:
+            with self.subTest(query=query):
+                narrowed_results, _narrowed_features, narrowed_source = self._search(root, query, narrow=True)
+                full_results, _full_features, full_source = self._search(root, query, narrow=False)
+                self.assertEqual(narrowed_source, "sqlite")
+                self.assertEqual(full_source, "sqlite")
+                self.assertEqual(narrowed_results, full_results)
+                if channel is None:
+                    self.assertEqual(narrowed_results, [])
+                else:
+                    self.assertTrue(narrowed_results)
+                    self.assertEqual(narrowed_results[0].channel, channel)
+
+    def test_forced_no_fts5_substring_fallback_matches_the_narrowed_and_full_scan_results(self):
+        """A host without the trigram tokenizer never narrows at all (its
+        index is built without an FTS5 table); its whole-corpus substring
+        scan must still agree with both the narrowed and forced-full results
+        a trigram host produces for the same corpus and query."""
+        root = _repo()
+        with mock.patch.object(search_index, "probe_sqlite_features", return_value=search_index.SqliteFeatures(False, False)):
+            search_index.build_index(_paths(root), _resolver(root), root / ".hydra-framework.local")
+        for query, channel in self.QUERIES_AND_CHANNELS:
+            with self.subTest(query=query):
+                results, _features, source = search_index.search(
+                    query, paths=_paths(root), resolver_paths=_resolver(root), local=root / ".hydra-framework.local",
+                )
+                self.assertEqual(source, "sqlite")
+                if channel is None:
+                    self.assertEqual(results, [])
+                else:
+                    self.assertTrue(results)
+                    self.assertEqual(results[0].channel, channel)
+        # And the same corpus built *with* trigram support must reach the
+        # identical answer for the lexical-channel query, proving the
+        # fallback is not merely plausible but actually correct.
+        trigram_root = _repo()
+        search_index.build_index(_paths(trigram_root), _resolver(trigram_root), trigram_root / ".hydra-framework.local")
+        substring_query = "adapter exports"
+        no_fts_results, _f1, _s1 = search_index.search(
+            substring_query, paths=_paths(root), resolver_paths=_resolver(root), local=root / ".hydra-framework.local",
+        )
+        trigram_results, _f2, _s2 = search_index.search(
+            substring_query, paths=_paths(trigram_root), resolver_paths=_resolver(trigram_root), local=trigram_root / ".hydra-framework.local",
+        )
+        self.assertEqual(
+            [(r.channel, r.document.hydra_id, r.document.path, r.rank, r.graph_count) for r in no_fts_results],
+            [(r.channel, r.document.hydra_id, r.document.path, r.rank, r.graph_count) for r in trigram_results],
+        )
+
+    def test_reported_mode_matches_what_the_index_actually_contains(self):
+        root = _repo()
+        search_index.build_index(_paths(root), _resolver(root), root / ".hydra-framework.local")
+        self.assertEqual(search_index.lexical_mode(root / ".hydra-framework.local"), "fts5-trigram")
+
+        fallback_root = _repo()
+        with mock.patch.object(search_index, "probe_sqlite_features", return_value=search_index.SqliteFeatures(False, False)):
+            search_index.build_index(_paths(fallback_root), _resolver(fallback_root), fallback_root / ".hydra-framework.local")
+        self.assertEqual(search_index.lexical_mode(fallback_root / ".hydra-framework.local"), "substring-scan")
+
+    def test_reported_mode_with_no_index_yet_is_substring_scan(self):
+        root = _repo()
+        self.assertEqual(search_index.lexical_mode(root / ".hydra-framework.local"), "substring-scan")
 
 
 if __name__ == "__main__":
