@@ -2,7 +2,10 @@
 
 Task: .hydra-framework/tasks/personal/milosdenic-dev-gmail-com/2026-09-13-bounded-knowledge-retrieval.md
 Created: 2026-09-13
-Status: paused
+Status: complete -- see the task record's "Completion Summary" section for
+the full account of Phases 2-4, measurements, and validation. This
+checkpoint's body below is left as originally written (the split-session
+state) for history; it is not the current state.
 
 ## Goal
 

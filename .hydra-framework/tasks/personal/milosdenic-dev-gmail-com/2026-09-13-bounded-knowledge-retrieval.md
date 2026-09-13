@@ -294,9 +294,14 @@ once the numbers support the claims made.
 
 ## Current Stage
 
-Split out of `2026-09-13-scalable-incremental-knowledge-index` at its Phase 1
-boundary. No phase of this record's own numbering has started. No production
-code changed yet.
+Complete. Phases 2, 3 and 4 all landed on branch `bounded-knowledge-retrieval`
+(this task's readiness blocker on the sibling task's Phase 4 was verified
+lifted before starting: the sibling task and its own write-path
+follow-up (`bounded-write-path-freshness-cost`) had both already been
+completed and folded into `problems.md`, evidenced by `git log` showing
+`4499edb` and `7ef193c`/`e3632f1` landed before this session began).
+See "Completion Summary" below for what was actually done, measured, and
+what remains.
 
 ## Readiness
 
@@ -343,14 +348,13 @@ Status: blocked
 
 ## Step State
 
-- Active step: none. This record starts blocked on the sibling task; no
-  phase of its own has begun.
-- Next step: Phase 2, bounded freshness checking, once the sibling task's
-  Phase 4 has landed.
-- Completed steps: none under this record's own numbering. The shared Phase
-  1 design work is recorded in the sibling task, whose Step State names it
-  complete.
-- Superseded or skipped steps: none yet.
+- Active step: none. All four phases are complete.
+- Next step: none for this task record. `.hydra-framework.local/index/` may
+  need one full rebuild after this lands (schema bump to v4 forces it
+  automatically on the next read; see Phase 3 below).
+- Completed steps: Phase 2 (bounded freshness checking, D8/D9), Phase 3
+  (real FTS5 lexical index, D10/D11), Phase 4 (read-path benchmark).
+- Superseded or skipped steps: none.
 
 ## Changed Files
 
@@ -418,15 +422,22 @@ discovered by `validate`.
 
 ## Blockers
 
-Blocked on the sibling task's Phase 4 landing (see Readiness).
+None. The sibling task's blocker was verified lifted (see Current Stage).
+
+Remaining, not blocking completion:
+
+- The engine-clean 10k read gate's p50 (83.96ms) misses its 50ms target
+  (p95, 88.45ms, meets the 100ms target). Profiling attributes the residual
+  cost entirely to `freshness.fingerprint`'s per-tracked-path
+  `is_governed_path`/`pathlib` overhead on the benchmark fixture's file
+  count, not to anything this task's phases touched -- `freshness.py`'s
+  internals are this task's explicit out-of-scope boundary (D8/D9 changed
+  only its call sites). If this gate needs to be met, it is a new,
+  separately-scoped problem against `freshness.fingerprint` itself, not a
+  reopening of P13/this task's scope.
 
 Not blockers, recorded so they are not rediscovered:
 
-- Until Phase 3 lands, `hydra.py knowledge index` and `knowledge search` keep
-  reporting an FTS5 index that does not exist. This is accepted deliberately
-  (D11) and is not allowed to outlive the task: if Phase 3 is dropped or
-  fails acceptance, the label fix becomes required standalone work before
-  completion.
 - This record was split out of a single design session that grew from four
   phases to seven. That is not scope creep by drift: each problem this
   record owns is confirmed, measured, and has its own entry in
@@ -437,8 +448,131 @@ Not blockers, recorded so they are not rediscovered:
 
 - Running state: none. No background processes, no dev servers, no extra
   worktrees.
-- Resume check: `git log --oneline -1` should show this record's commit on
-  branch `knowledge-freshness-scalable-cache`, and the sibling task's Step
-  State should confirm its Phase 4 acceptance passed before Phase 2 here
-  starts. If the sibling task's Phase 4 has not landed, this record is
-  correctly still blocked and Phase 2 should not begin.
+- Resume check: not applicable; this record is complete.
+
+## Completion Summary (2026-09-13)
+
+### Phase 2: bounded freshness checking (P15/R14, D8/D9)
+
+Files: `knowledge/freshness.py` (`fingerprint_digest`), `knowledge/index_cache.py`
+(`_write_fingerprint_digest`, `cache_state` fast path), `cli/route_prompt.py`
+(`_route_once` now calls `search_index.search_for_context_provider`), plus
+`tests/unit/cli/test_route_prompt.py` and
+`tests/unit/knowledge/test_index_cache.py`.
+
+- D8: `route_prompt._route_once` reuses the settled `Fresh` cache-state
+  fingerprint as its opening `OperationStamp` (`stamp_from_fresh`, already
+  built for D20) instead of an independent `capture_stamp` read, falling back
+  to `capture_stamp` only when the search did not answer from `Fresh` sqlite.
+  The closing revalidation in `command_route_prompt` is untouched -- still a
+  genuinely independent second read.
+- D9: `_write_fingerprint_digest` writes an aggregate digest of the
+  `documents` table's `(path, content_id)` pairs into `meta` in the same
+  transaction as the generation (both `rebuild_index` and
+  `apply_index_delta`). `cache_state` compares that stored digest against
+  `fingerprint_digest(current)`; a match returns `Fresh` after one `meta`
+  row, never touching `documents`. Any mismatch, including a missing digest
+  from a pre-existing index, falls back to the original full row scan
+  unchanged.
+- Tests added: `FingerprintDigestFastPathTests` (clean/added/modified/
+  deleted/reverted all classify identically on both paths; the fast path
+  never calls the full-scan helper on a clean repository) in
+  `test_index_cache.py`; `test_clean_repository_costs_exactly_two_git_fingerprint_reads`
+  and an updated `test_publication_change_midoperation_reruns` in
+  `test_route_prompt.py`. The "not reused across a self-heal rebuild" proof
+  is the existing D20 test `test_incremental_update_settling_fresh_shares_final_state_as_stamp`
+  in `test_search_index.py`, which `route_prompt` now shares by construction
+  (it calls the same `search_for_context_provider`).
+- Measured on this repository: `fingerprint(git) calls=2 total=31.0ms`, down
+  from `calls=3 total=45.0ms` (Phase 1 baseline).
+
+### Phase 3: real lexical index (P13/R12, P14/R13, D10/D11)
+
+Files: new `knowledge/lexical_index.py` (FTS5 table + exact-selector lookup
+tables) and `tests/unit/knowledge/test_lexical_index.py`; `knowledge/index_cache.py`
+(`_reset_index_tables` drops the new tables too); `knowledge/search_index.py`
+(`SCHEMA_VERSION` bumped v3->v4, `_narrowed_documents`, `lexical_mode`, write
+paths call `lexical_index.write_rows`/`delete_rows_for_keys`); `commands/knowledge.py`
+(both report sites use `search_index.lexical_mode`); plus
+`tests/unit/knowledge/test_search_index.py`.
+
+A genuinely new module was needed rather than fitting inside `index_cache.py`
+or `search_index.py`: both were within 30-80 lines of the 400-line cap before
+this phase, and the new FTS5/lookup-table logic is a distinct, cohesive unit.
+`lexical_index.py` is 119 lines; `index_cache.py` and `search_index.py` stayed
+under the cap throughout (see `wc -l` in Validation below).
+
+- FTS5 table `documents_fts` (trigram tokenizer), plus `document_ids`,
+  `document_paths`, `document_slugs` lookup tables, all maintained inside the
+  same write transactions as `documents` on both `rebuild_index` and
+  `apply_index_delta`.
+- `search()`'s `_narrowed_documents` narrows to a small candidate set via
+  these tables (only when the published index's stored `trigram` meta flag
+  is `yes`; otherwise returns `None` and the caller falls back to the
+  original `_load_documents` whole-corpus read, unchanged), then runs the
+  existing, unmodified `exact_matches`/`substring_search`/`sorted_results`
+  over that narrowed set. Channel, rank, graph count, and the tie-break are
+  untouched.
+- `commands/knowledge.py` reports `search_index.lexical_mode(local)`, which
+  reads the published index's own `meta.trigram` row, not a fresh
+  host-capability probe.
+- Differential tests added (`LexicalNarrowingDifferentialTests` in
+  `test_search_index.py`): narrowed vs. whole-corpus-scan agreement across
+  exact-id, exact-path, exact-slug, path-route and substring queries
+  (byte-identical `SearchResult` lists, same order); a forced-no-FTS5 build
+  matches both; reported mode matches what was actually built, with and
+  without trigram, and with no index yet. Unit tests for
+  `lexical_index.py` itself (9 tests) cover every table's write/narrow/
+  delete path directly.
+
+### Phase 4: read-path benchmark
+
+New harness `validation/knowledge-v3/read_path_benchmark.py`, mirroring
+`write_path_benchmark.py`'s conventions (disposable `mktemp -d` Git fixtures
+outside this checkout, a correctness gate before any latency figure counts,
+5 warmups + 30 samples, nearest-rank p50/p95). Correctness gates passed at
+both 1,000 and 10,000 documents before any benchmark ran.
+
+Measured on Linux 7.0.0-31-generic, AMD Ryzen 7 7730U, Python 3.12.3, SQLite
+3.45.1 (same machine as the Phase 1 finding):
+
+| Gate | p50 | p95 | Target | Verdict |
+| --- | ---: | ---: | --- | --- |
+| engine clean, 1,000 docs | 21.51 ms | 24.76 ms | p50<=50, p95<=100 | met |
+| engine clean, 10,000 docs | 83.96 ms | 88.45 ms | p50<=50, p95<=100 | **missed** (p50 only) |
+| CLI clean, 1,000 docs | 200.29 ms | 214.03 ms | p50<=300, p95<=400 | met |
+| CLI clean, 10,000 docs | 295.72 ms | 321.17 ms | p50<=300, p95<=400 | met |
+
+Three of four gates fully met. The engine-10k gate's p95 is met; only p50
+misses, by 34ms, against a pre-fix baseline of p50 692.82ms at the same
+scale -- roughly an 8x improvement, not a full pass. See Blockers for why
+this is not attributed to this task's changes.
+
+Before/after `route-prompt` measurement on this repository (403 documents),
+same command as the Phase 1 probe
+(`hydra.py route-prompt --prompt "how do I checkpoint a task record"`):
+`fingerprint(git) calls=3 total=45.0ms` before, `calls=2 total=31.0ms` after.
+
+### Validation run at completion
+
+- `PYTHONPATH=.hydra-framework/engine/src python3 -m unittest discover -s
+  .hydra-framework/engine/tests/unit -p "test_*.py"` (run from
+  `.hydra-framework/engine`): 1475 tests, all passed.
+- `python3 .hydra-framework/scripts/hydra.py selftest`: 1633 tests, all
+  passed.
+- `python3 .hydra-framework/scripts/hydra.py validate`: `Hydra validate: ok`
+  (only pre-existing provider-compatibility and telemetry-volume advisory
+  notes, unrelated to this work).
+- `wc -l` at completion: `index_cache.py` 369, `search_index.py` 382,
+  `lexical_index.py` 119, `commands/knowledge.py` 308 -- all under the
+  400-line cap.
+- `python3 .hydra-framework/validation/knowledge-v3/read_path_benchmark.py
+  gate --size 1000|10000`: both passed (correctness gate, run before any
+  benchmark).
+
+### Outcome
+
+P13, P14 and P15 moved from `problems.md`'s Open section to Resolved as R12,
+R13 and R14 respectively, each recording its own measured evidence. This task
+record and its checkpoint are removed on completion per
+`hydra.py task complete`; this section is their durable archive.
