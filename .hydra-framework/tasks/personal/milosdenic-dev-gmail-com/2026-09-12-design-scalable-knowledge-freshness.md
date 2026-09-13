@@ -5,9 +5,11 @@ Owner: milosdenic-dev-gmail-com
 Created: 2026-09-12
 Updated: 2026-09-13
 
-All six implementation phases in section 9 are done; see Readiness and
-Blockers for the two carried-forward, non-blocking benchmark/latency items
-still open (not part of any phase's stated acceptance).
+All six implementation phases in section 9 are done. The section 8
+whole-operation benchmark (carried-forward, non-blocking, not part of any
+phase's stated acceptance) has now been run: correctness passes at 1k/10k,
+but all six section 8 latency gates miss at 10k. See Readiness, Validation
+and Blockers.
 
 ## Goal
 
@@ -687,10 +689,13 @@ Report both separately; never average across harnesses.
 ## Readiness
 
 Status: phase-6-complete -- all six phases in section 9 are implemented and
-their own stated acceptance criteria pass. Section 8's provisional
-whole-operation benchmark matrix and Phase 4's component latency gate remain
-open, carried-forward, non-blocking follow-up (see Blockers); they are not
-part of any phase's stated acceptance and were never claimed as met.
+their own stated acceptance criteria pass, unaffected by anything below.
+Section 8's whole-operation benchmark matrix has now been run (2026-09-13,
+carried-forward, non-blocking, not part of any phase's stated acceptance):
+correctness passes at 1k and 10k, but all six section 8 latency gates miss
+at 10k (see Validation and Blockers for numbers and the full-DB-backup
+diagnostic). This was never claimed as met, and is now measured rather than
+merely open.
 
 - Branch or workspace assumptions: preserve unrelated existing edits in
   `.hydra-framework/repo/knowledge/spaces/hydra-framework/problems.md` and
@@ -966,6 +971,65 @@ part of any phase's stated acceptance and were never claimed as met.
   unchanged by this phase (verified byte-for-byte against their Phase 5
   state): Phase 6 never modified `search_index.py`'s or `migration_v2.py`'s
   internals, and did not need to.
+- Section 8 whole-operation benchmark matrix, run 2026-09-13 (this record's
+  previously carried-forward, non-blocking follow-up; not part of any
+  phase's stated acceptance). Machine: Linux 7.0.0-31-generic, AMD Ryzen 7
+  7730U with Radeon Graphics, 16 CPUs, Python 3.12.3, Git 2.43.0, SQLite
+  3.45.1. Method: two disposable Hydra Git repositories built under a fresh
+  `mktemp -d` outside this checkout (cleaned up on exit), each containing a
+  real copy of `.hydra-framework/engine/src`, `scripts/hydra.py`, a minimal
+  `manifest.yaml`, one Knowledge-v3 space (`benchmark`) and node
+  (`benchmark/selected`), and 1,000 or 10,000 generated valid Knowledge-v3
+  unit envelopes (block-style YAML only) under that node's `units/`,
+  git-init'd and committed. Fixed governed overhead per fixture (not counted
+  in the 1k/10k figure): 206 engine `.py` files + 8 fixed docs (`AI_SYSTEM.md`,
+  `spaces.yaml`, space/node envelopes and their `state.md`/`overview.md`).
+  Before any timing, each fixture's private SQLite publication was built and
+  verified: `run_context_providers(ProviderRequest(node_values=("benchmark/selected",), ...), include_families=("Knowledge",))`
+  hydrated the selected node; an unstaged edit to one governed unit went
+  stale then updated touching only that document's row; the same for a
+  staged edit; deleting one unit went stale then updated and removed exactly
+  that row; the operation stayed valid (selected node still hydrated) after
+  every case. All ten correctness checks passed at both 1,000 and 10,000.
+  Engine timings called the real `run_context_providers` in-process (5
+  warmups, 30 measured, nearest-rank `ceil(0.95*30)`=rank 29 for p95, median
+  for p50); CLI timings shelled out to that fixture's own
+  `scripts/hydra.py route-prompt --prompt "selected benchmark" --json` as a
+  real subprocess, same warmup/sample counts. Results (ms):
+
+  | Series | 1k p50 | 1k p95 | 10k p50 | 10k p95 |
+  | --- | ---: | ---: | ---: | ---: |
+  | engine clean | 235.96 | 244.80 | 692.82 | 703.59 |
+  | engine full rebuild | 1998.23 | 2045.28 | 15910.49 | 16437.83 |
+  | engine incremental (1 doc) | 1491.36 | 1541.48 | 11544.09 | 12042.02 |
+  | CLI clean | 325.19 | 338.10 | 1373.75 | 1409.92 |
+
+  Section 8 gates, evaluated honestly against 10k: engine clean p50<=50ms
+  **missed** (692.82); engine clean p95<=100ms **missed** (703.59); CLI clean
+  p50<=300ms **missed** (1373.75); CLI clean p95<=400ms **missed**
+  (1409.92); full rebuild p95<=5000ms **missed** (16437.83); single-doc
+  incremental p95<=100ms **missed** (12042.02), by roughly two orders of
+  magnitude. None of the six section 8 gates are met at 10k. Correctness
+  passing does not offset this, and this benchmark does not claim it does.
+  Diagnostic per this record's own instruction ("determine whether full DB
+  backup dominates; do not fix implementation"): `index_cache.update_index`
+  (`.hydra-framework/engine/src/hydra_engine/knowledge/index_cache.py`)
+  builds every incremental update by opening the current publication and
+  calling `source_conn.backup(conn)` -- a full-database copy -- before
+  applying the one-document delta, then `publish_versioned` fsyncs and
+  `os.replace`s the entire resulting file. The published 10k database is
+  approximately 20 MB. Incremental cost (11.5s p50 at 10k) tracks full
+  rebuild's order of magnitude (15.9s p50) rather than staying flat as
+  corpus size grows, even though only one document actually changed; at a
+  20-document smoke fixture the same single-document incremental call
+  already cost ~290ms, far more than parsing one small file should ever
+  cost. Both observations are consistent with the whole-database backup and
+  whole-file fsync/replace dominating incremental cost, not fingerprinting
+  (a few ms, per section 7) or parsing (one document). No implementation
+  change was made in this pass.
+  Hooks: `core.hooksPath=.hydra-framework/hooks` confirmed set in this
+  worktree throughout; unrelated to the benchmark, which used disposable
+  fixtures with no hooks installed.
 
 ## Blockers
 
@@ -977,12 +1041,20 @@ None for Phase 1-5 correctness: each phase's own stated correctness
 acceptance is met and tested, as recorded above and unchanged since the
 Phase 5 checkpoint.
 
-Carried forward from Phase 4/5, still open, and NOT part of any phase's
-stated acceptance -- do not treat either as blocking or as met by anything
-recorded here: Phase 4's provisional 10k component latency measurements
-still miss the thresholds in section 8, and the section 8 whole-operation
-(`engine`/`end-to-end`) benchmark matrix has still not been run. These are
-the only remaining open items for this task; Phase 6 does not add to them.
+Carried forward from Phase 4/5, and NOT part of any phase's stated
+acceptance -- do not treat this as blocking Phase 1-6 completion, which
+already stands on its own recorded acceptance: the section 8 whole-operation
+benchmark matrix has now been run (2026-09-13, see Validation) with real
+correctness-gated evidence at 1k and 10k, and all six section 8 gates are
+missed at 10k, some by roughly two orders of magnitude. This is worse than
+"still open" -- it is now a measured, honest miss, not an untested
+assumption. The diagnostic in Validation attributes the incremental and
+full-rebuild misses to whole-database copy/fsync in
+`index_cache.update_index`/`publish_versioned`, not to fingerprinting or
+parsing; no implementation change was made to address it. Fixing this
+latency gap, if undertaken, is new work outside this task's six phases and
+needs its own task record rather than reopening this one's Phase 1-6
+acceptance, which is unaffected. Phase 6 does not add to this.
 
 Two items need explicit behavior before Phase 4 rather than accidental reliance:
 sparse checkout, and submodules. Neither blocks the fingerprint module.
@@ -992,8 +1064,9 @@ sparse checkout, and submodules. Neither blocks the fingerprint module.
 What another model or developer needs to continue safely.
 
 - Running state: none. All six implementation phases in section 9 are done;
-  the only remaining work is the separate, non-blocking benchmark/latency
-  follow-up in Blockers.
+  the section 8 benchmark/latency follow-up in Blockers is now measured
+  (not merely "outstanding"): all six gates miss at 10k. Any fix for that
+  latency gap is new, separate work.
 - Resume check: run
   `python3 .hydra-framework/scripts/hydra.py board --owner milosdenic-dev-gmail-com`
   and `git status --short`; expect this freshness task (now complete, not yet
