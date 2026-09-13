@@ -88,13 +88,9 @@ def command_hook_reindex_knowledge(args, paths: ContextCompilerPaths, resolver_p
     outcome = knowledge_migration.refresh_knowledge_index(paths, resolver_paths, local, command_ids)
     if outcome is None:
         return CommandResult(0)
-    count, features = outcome
+    count, _features = outcome
     db_path = search_index.default_db_path(local)
-    mode = "FTS5"
-    if not features.fts5:
-        mode = "substring fallback"
-    elif features.trigram:
-        mode = "FTS5 trigram"
+    mode = "FTS5 trigram" if search_index.lexical_mode(local) == "fts5-trigram" else "substring fallback"
     display = db_path.relative_to(paths.root) if db_path is not None else local / "index"
     print(f"Hydra knowledge index: {count} documents indexed at {display} ({mode})")
     return CommandResult(0)
@@ -114,7 +110,7 @@ def command_knowledge_search(
     search_index.record_command_usage(local, "knowledge-search")
     budget = args.budget if args.budget is not None else default_budget
     limit = args.limit if args.limit is not None else default_limit
-    results, features, source = search_index.search(
+    results, _features, source = search_index.search(
         args.text, paths=paths, resolver_paths=resolver_paths, local=local,
         command_ids=command_ids, path_refs=tuple(args.path or ()), limit=max(limit, 1),
     )
@@ -137,8 +133,7 @@ def command_knowledge_search(
     note = f"{total} approx tokens across {len(selected)} results, budget {max(budget, 0)}"
     if len(results) > len(selected):
         note += f"; {len(results) - len(selected)} lower-ranked result(s) omitted"
-    capability = "fts5-trigram" if features.fts5 and features.trigram else "fts5" if features.fts5 else "substring"
-    print(f"budget note: {note}; source={source}; lexical={capability}", file=sys.stderr)
+    print(f"budget note: {note}; source={source}; lexical={search_index.lexical_mode(local)}", file=sys.stderr)
     return CommandResult(0)
 
 

@@ -10,6 +10,7 @@ import uuid
 from collections.abc import Callable
 from pathlib import Path
 
+from hydra_engine.knowledge import lexical_index
 from hydra_engine.knowledge.freshness import (
     CorpusDelta, FreshnessError, GuardResult, delta, evaluate_guard, fingerprint, fingerprint_digest,
 )
@@ -106,7 +107,7 @@ def read_generation(conn: sqlite3.Connection) -> str | None:
 
 
 def _reset_index_tables(conn: sqlite3.Connection) -> None:
-    for table in ("knowledge_relations", "knowledge_objects", "documents", "meta"):
+    for table in ("knowledge_relations", "knowledge_objects", "documents", "meta", *lexical_index.TABLE_NAMES):
         conn.execute(f"DROP TABLE IF EXISTS {table}")
     create_index_tables(conn)
 

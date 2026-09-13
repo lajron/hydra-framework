@@ -11,10 +11,10 @@ from hydra_engine.documents.tokens import display_path, is_relative_to
 from hydra_engine.identity.slugs import slugify
 from hydra_engine.knowledge.candidates import APPROX_CHARS_PER_TOKEN, approx_tokens
 from hydra_engine.knowledge.packages import ContextCompilerPaths
-from hydra_engine.knowledge import index_cache, index_collection
+from hydra_engine.knowledge import index_cache, index_collection, lexical_index
 from hydra_engine.telemetry.writer import event_growth_notes as knowledge_events_growth_notes, events_path as telemetry_events_path, knowledge_counts as telemetry_counts, record_knowledge_command_usage as record_command_usage, record_knowledge_route as record_route
 
-SCHEMA_VERSION = "hydra-framework.knowledge-store.v3"
+SCHEMA_VERSION = "hydra-framework.knowledge-store.v4"
 DEFAULT_RESULT_LIMIT = 20
 DEFAULT_BUDGET = 2000
 DEFAULT_PREVIEW_CHARS = 280
@@ -78,7 +78,9 @@ def build_index(paths: ContextCompilerPaths, resolver_paths: ObjectLocations, lo
     def populate(conn: sqlite3.Connection) -> None:
         storage = __import__("hydra_engine.knowledge.storage", fromlist=("write_sqlite_store",))
         storage.write_sqlite_store(conn, index_collection.build_knowledge_store(paths))
+        lexical_index.create_tables(conn, trigram=features.trigram)
         _write_documents(conn, docs)
+        _write_lexical_rows(conn, docs, features.trigram)
         _write_meta(conn, command_ids, features)
 
     index_cache.rebuild_index(local, populate)
@@ -89,8 +91,34 @@ def _write_documents(conn: sqlite3.Connection, docs: list[SearchDocument]) -> No
     index_cache.write_documents(conn, docs, _row_for_document)
 
 
+def _write_lexical_rows(conn: sqlite3.Connection, docs: list[SearchDocument], trigram: bool) -> None:
+    lexical_index.write_rows(conn, docs, trigram=trigram, slugify=slugify, normal_path=_normal_path)
+
+
+def _stored_trigram_flag(conn: sqlite3.Connection) -> bool:
+    row = conn.execute("SELECT value FROM meta WHERE key = 'trigram'").fetchone()
+    return row is not None and row[0] == "yes"
+
+
 def _write_meta(conn: sqlite3.Connection, command_ids: tuple[str, ...], features: SqliteFeatures) -> None:
     index_cache.write_meta(conn, command_ids, features, SCHEMA_VERSION)
+def lexical_mode(local: Path) -> str:
+    """The lexical mode the *published* index actually contains (D11) --
+    never the host-capability probe, which reports what could be built, not
+    what was."""
+    db_path = default_db_path(local)
+    conn = index_cache.open_published(db_path) if db_path is not None else None
+    if conn is None:
+        return lexical_index.mode_label(False)
+    try:
+        row = conn.execute("SELECT value FROM meta WHERE key = 'trigram'").fetchone()
+        return lexical_index.mode_label(row is not None and row[0] == "yes")
+    except sqlite3.Error:
+        return lexical_index.mode_label(False)
+    finally:
+        conn.close()
+
+
 def index_status(paths: ContextCompilerPaths, resolver_paths: ObjectLocations, local: Path, command_ids: tuple[str, ...] = ()) -> str:
     state = _cache_state(paths, local)
     if isinstance(state, index_cache.SourceOnly):
@@ -115,9 +143,13 @@ def _update_index(paths, resolver_paths, local: Path, command_ids: tuple[str, ..
         nodes = index_collection.discover_nodes_or_empty(paths)
         docs = collect_search_documents(paths, resolver_paths, content_ids=current, only_paths=frozenset(changed), _nodes=nodes)
         replacements = index_collection.collect_changed_knowledge_objects(paths, changed, _nodes=nodes)
+        trigram = _stored_trigram_flag(conn)
         if removed:
+            removed_keys = lexical_index.keys_for_paths(conn, removed)
+            lexical_index.delete_rows_for_keys(conn, removed_keys, trigram=trigram)
             conn.execute(f"DELETE FROM documents WHERE path IN ({', '.join('?' for _ in removed)})", removed)
         _write_documents(conn, docs)
+        _write_lexical_rows(conn, docs, trigram)
         index_cache.replace_changed_knowledge_rows(conn, removed, replacements)
 
     return index_cache.apply_index_delta(
@@ -205,7 +237,9 @@ def _search_outcome(
     except (OSError, sqlite3.Error, ValueError):
         state = index_cache.SourceOnly("index-update-failed")
     if isinstance(state, index_cache.Fresh):
-        docs = _load_documents(state.db_path)
+        docs = _narrowed_documents(state.db_path, query, path_refs)
+        if docs is None:
+            docs = _load_documents(state.db_path)
         source = "sqlite" if docs is not None else "source"
     else:
         docs = None
@@ -285,6 +319,36 @@ def _load_documents(db_path: Path | None) -> list[SearchDocument] | None:
         db_path, schema=SCHEMA_VERSION, columns=_DOCUMENT_COLUMNS,
         decode=_document_from_row,
     )
+
+
+def _narrowed_documents(db_path: Path | None, query: str, path_refs: tuple[str, ...]) -> list[SearchDocument] | None:
+    """Candidate documents from the persisted lookup/FTS5 tables (P13), or
+    `None` when narrowing is not available (a host without the trigram
+    tokenizer, or any storage error) so the caller falls back to
+    `_load_documents`'s whole-corpus read. `exact_matches` and
+    `substring_search` then run unchanged over whichever set comes back, so a
+    narrowing miss can only cost speed, never correctness, and only their own
+    later re-check decides which channel each document actually belongs to."""
+    if db_path is None:
+        return None
+    conn = index_cache.open_published(db_path)
+    if conn is None:
+        return None
+    try:
+        row = conn.execute("SELECT value FROM meta WHERE key = 'trigram'").fetchone()
+        if row is None or row[0] != "yes":
+            return None
+        wanted = {value.lower().strip() for value in _HYDRA_URI_RE.findall(query)}
+        wanted.update(_normal_path(value) for value in path_refs if value)
+        wanted.update(_normal_path(match.group(1)) for match in _PATH_RE.finditer(query))
+        query_slug = slugify(query.strip())
+        terms = [token.lower() for token in _TOKEN_RE.findall(query) if len(token) > 2]
+        keys = lexical_index.narrow_by_exact(conn, wanted, query_slug) | lexical_index.narrow_by_terms(conn, terms)
+        return lexical_index.read_documents_by_keys(conn, keys, _document_from_row)
+    except sqlite3.Error:
+        return None
+    finally:
+        conn.close()
 
 def _with_explicit_path_docs(docs: list[SearchDocument], query: str, path_refs: tuple[str, ...], paths: ContextCompilerPaths, resolver_paths: ObjectLocations) -> list[SearchDocument]:
     by_path = {_normal_path(doc.path): doc for doc in docs}
