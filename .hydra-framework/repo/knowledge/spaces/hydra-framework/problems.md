@@ -18,7 +18,7 @@ provenance:
 # Problems
 
 Status: active
-Updated: 2026-09-09
+Updated: 2026-09-12
 
 Concrete unresolved concerns for Hydra's own machinery. Each needs evidence, not
 opinion. Resolve or close with a reason; do not let entries rot.
@@ -39,21 +39,23 @@ opinion. Resolve or close with a reason; do not let entries rot.
 - Resolution: deliberate, not pending. Codex exposes concrete model slugs rather than stable aliases, and the only available source is the local account's model catalog — machine- and plan-specific state that does not belong in shared framework truth, and that would override the host's own `model` setting. Revisit if Codex publishes stable aliases.
 - Certainty: confirmed
 
-### P2: `diff-base` needs a base checkout on disk
-
-- Evidence: `command_diff_base` requires `--base <path>`.
-- Impact: reconciliation cannot run in a repository that has no local copy of the base seed.
-- Resolution: unresolved. Fetching a base by Git ref or URL would remove the requirement but adds network and trust surface. Wait for a real second repository before designing it.
-- Certainty: inferred
-
-### P3: Promotion metadata is a guess
-
-- Evidence: `promote_surface` writes `capability_class: fast-default` and `effort: standard` for any promoted agent.
-- Impact: a promoted subagent runs at default routing until a human reviews it.
-- Resolution: acceptable by design — the metadata is marked `certainty: inferred` and `scope: repo-local` so review is expected. Revisit only if reviews are routinely skipped.
-- Certainty: confirmed
-
 ## Resolved
+
+### R10: `diff-base` required a local base checkout (2026-09-12)
+
+Resolved as intentional workflow. `diff-base --base <path>` makes the operator
+choose the trusted comparison base; reconciliation is a deliberate maintenance
+activity, and a local base checkout is normal setup for it. Automatic fetching
+would add network, trust, revision-pinning, and offline-behavior policy without
+a demonstrated need.
+
+### R11: Promoted-agent metadata starts as inferred defaults (2026-09-12)
+
+Resolved as accepted behavior. `promote_surface` labels generated metadata
+`certainty: inferred` and `scope: repo-local`, while the command explicitly
+asks the operator to review each promoted file. Humans can adjust the generic
+`fast-default` and `standard` values before broader use. Reopen only if
+promotions repeatedly ship without that review.
 
 ### R1: Adapter drift was undetectable (2026-07-30)
 
