@@ -18,12 +18,19 @@ provenance:
 # Problems
 
 Status: active
-Updated: 2026-09-12
+Updated: 2026-09-13
 
 Concrete unresolved concerns for Hydra's own machinery. Each needs evidence, not
 opinion. Resolve or close with a reason; do not let entries rot.
 
 ## Open
+
+### P12: Incremental knowledge-index update cost scales with corpus size, not with the changed document (2026-09-13)
+
+- Evidence: section 8 benchmark in `.hydra-framework/tasks/personal/milosdenic-dev-gmail-com/2026-09-12-design-scalable-knowledge-freshness.md` (correctness-gated, 5 warmups + 30 samples, disposable 1k/10k Git fixtures). At 10,000 governed documents, editing exactly one document costs p50 11544ms / p95 12042ms to reach the published index -- the same order of magnitude as a full rebuild (p50 15910ms / p95 16438ms), not a small constant. `index_cache.update_index` (`.hydra-framework/engine/src/hydra_engine/knowledge/index_cache.py`) opens the current publication and calls `source_conn.backup(conn)` -- a full-database copy -- before applying the one-document delta, then `publish_versioned` (`ports/sqlite_db.py`) fsyncs and atomically replaces the whole resulting file (about 20MB at 10k documents). Cost is O(database size), not O(changed rows).
+- Impact: none of section 8's six latency gates are met at 10k (engine clean read, CLI clean read, full rebuild, and single-document incremental all miss; the incremental miss is roughly 120x). The freshness mechanism itself (fingerprint, guard, delta detection in `freshness.py`) is correct and fast; the SQLite publication layer built on top of it is what does not scale.
+- Resolution: unresolved. This is a deliberate consequence of the immutable-versioned-publication design (`sqlite_db.py`'s `publish_versioned`), chosen in this same task's Phase 2 to fix a real earlier hazard (replacing a file live WAL readers held open gave no portable old-or-new boundary). The believed fix is to switch the published index to one persistent SQLite file in WAL mode, mutated in place for incremental updates via real row-level `DELETE`/`INSERT` instead of a full-file copy, while keeping full rebuild on the existing temp-file-then-atomic-replace path. This preserves the same reader-safety property (no reader ever observes a torn or mixed generation) through WAL's native snapshot isolation instead of through "never touch a published file twice." Not yet implemented; needs its own task record rather than reopening the completed six-phase task above.
+- Certainty: confirmed
 
 ### P5: The warm KnowledgeStore read path is still repo-linear per invocation (file-stat pass)
 
