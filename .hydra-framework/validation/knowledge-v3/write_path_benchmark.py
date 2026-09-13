@@ -136,13 +136,25 @@ def run_provider_and_capture_source(paths, resolver_paths, selected_id) -> tuple
     from hydra_engine.knowledge import context_support
     sources: list[str] = []
     real_search = context_support.search
+    real_search_for_context_provider = context_support.search_for_context_provider
 
     def _spy(*args, **kwargs):
         results, features, source = real_search(*args, **kwargs)
         sources.append(source)
         return results, features, source
 
-    with mock.patch("hydra_engine.knowledge.context_providers.context_support.search", side_effect=_spy):
+    def _spy_for_context_provider(*args, **kwargs):
+        results, features, source, stamp = real_search_for_context_provider(*args, **kwargs)
+        sources.append(source)
+        return results, features, source, stamp
+
+    with (
+        mock.patch("hydra_engine.knowledge.context_providers.context_support.search", side_effect=_spy),
+        mock.patch(
+            "hydra_engine.knowledge.context_providers.context_support.search_for_context_provider",
+            side_effect=_spy_for_context_provider,
+        ),
+    ):
         output = context_providers.run_context_providers(
             provider_request(paths, resolver_paths, selected_id), include_families=("Knowledge",),
         )

@@ -363,5 +363,100 @@ class SearchIndexTests(unittest.TestCase):
         self.assertEqual(search_index.sorted_results([lexical, exact]), [exact, lexical])
 
 
+class SearchForContextProviderTests(unittest.TestCase):
+    """D20: the internal context-provider search entry point may return a
+    reusable opening `OperationStamp` only when the settled cache state is
+    `Fresh` and the search actually answered from that publication; every
+    other case must return `None` so the caller pins its own fresh stamp."""
+
+    def test_fresh_cache_hit_returns_a_stamp_matching_a_fresh_capture(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        results, _features, source, stamp = search_index.search_for_context_provider(
+            "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+        )
+        self.assertEqual(source, "sqlite")
+        self.assertTrue(results)
+        self.assertIsNotNone(stamp)
+        from hydra_engine.knowledge import index_cache
+        self.assertEqual(stamp, index_cache.capture_stamp(_paths(root), local))
+
+    def test_incremental_update_settling_fresh_shares_final_state_as_stamp(self):
+        """The exact D20 scenario: a single-document incremental update
+        settles to `Fresh`, and the stamp returned is built from that same
+        settled state, never from a fresh independent Git read."""
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        overview = root / ".hydra-framework/repo/knowledge/knowledge-packages/example/overview.md"
+        overview.write_text(overview.read_text(encoding="utf-8") + "incremental phrase\n", encoding="utf-8")
+        from hydra_engine.knowledge import index_cache
+
+        with mock.patch.object(index_cache, "stamp_from_fresh", wraps=index_cache.stamp_from_fresh) as stamp_from_fresh:
+            results, _features, source, stamp = search_index.search_for_context_provider(
+                "incremental phrase", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "sqlite")
+        self.assertTrue(results)
+        stamp_from_fresh.assert_called_once()
+        (settled_state,), _kwargs = stamp_from_fresh.call_args
+        self.assertIsInstance(settled_state, index_cache.Fresh)
+        self.assertEqual(stamp, index_cache.OperationStamp(settled_state.fingerprint, settled_state.db_path, settled_state.generation))
+
+    def test_force_source_never_shares_a_stamp(self):
+        """`search_for_context_provider` never itself forces source, but the
+        stamp-sharing rule it applies (`state is Fresh and source == "sqlite"`)
+        must reject a forced-source outcome even though `state` may still be
+        a stale `Fresh` object left over from a prior settle."""
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        outcome = search_index._search_outcome(
+            "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local, force_source=True,
+        )
+        self.assertEqual(outcome.source, "source")
+        from hydra_engine.knowledge import index_cache
+        self.assertNotIsInstance(outcome.state, index_cache.Fresh)
+
+    def test_failed_update_never_shares_a_stamp(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        overview = root / ".hydra-framework/repo/knowledge/knowledge-packages/example/overview.md"
+        overview.write_text(overview.read_text(encoding="utf-8") + "incremental phrase\n", encoding="utf-8")
+        with mock.patch.object(search_index, "_update_index", side_effect=OSError("update failed")):
+            results, _features, source, stamp = search_index.search_for_context_provider(
+                "incremental phrase", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "source")
+        self.assertIsNone(stamp)
+
+    def test_reentrant_canonical_retry_never_shares_a_stamp(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        with mock.patch.object(search_index, "_hydrate_cached_candidates", return_value=None):
+            results, _features, source, stamp = search_index.search_for_context_provider(
+                "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+            )
+        self.assertEqual(source, "source")
+        self.assertTrue(results)
+        self.assertIsNone(stamp)
+
+    def test_public_search_return_shape_is_unchanged(self):
+        root = _repo()
+        local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local)
+        outcome = search_index.search(
+            "adapter exports", paths=_paths(root), resolver_paths=_resolver(root), local=local,
+        )
+        self.assertEqual(len(outcome), 3)
+        results, features, source = outcome
+        self.assertTrue(results)
+        self.assertEqual(source, "sqlite")
+        self.assertIsInstance(features, search_index.SqliteFeatures)
+
+
 if __name__ == "__main__":
     unittest.main()

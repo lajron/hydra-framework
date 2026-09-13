@@ -306,12 +306,16 @@ def run_context_providers(
     operation_stamp = None
     snapshot_scope = contextlib.nullcontext()
     if active and request.knowledge_snapshot is None:
-        results, _features, _source = context_support.search(
+        results, _features, _source, reusable_stamp = context_support.search_for_context_provider(
             request.task, paths=request.paths, resolver_paths=request.resolver_paths,
             local=request.resolver_paths.local, command_ids=request.command_ids,
             path_refs=request.path_values, limit=PROVIDER_SEARCH_RESULT_LIMIT,
         )
-        operation_stamp = _capture_stamp(request.paths, request.resolver_paths.local)
+        # Reuse the search's own settled `Fresh` classification as the
+        # opening stamp only when it answered from that publication; every
+        # other case (source fallback, rebuild failure, ...) still pins a
+        # fresh, independent observation exactly as before (D20).
+        operation_stamp = reusable_stamp if reusable_stamp is not None else _capture_stamp(request.paths, request.resolver_paths.local)
         try:
             snapshot = open_knowledge_snapshot(request.paths, operation_stamp.publication, _source, stamp=operation_stamp)
         except ValueError as error:

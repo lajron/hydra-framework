@@ -125,6 +125,14 @@ def _update_index(paths, resolver_paths, local: Path, command_ids: tuple[str, ..
         expected_fingerprint=state.fingerprint, apply_update=apply_update,
     )
 
+@dataclasses.dataclass(frozen=True)
+class _SearchOutcome:
+    results: list[SearchResult]
+    features: SqliteFeatures
+    source: str
+    state: index_cache.CacheState
+
+
 def search(
     query: str,
     *,
@@ -136,6 +144,53 @@ def search(
     limit: int = DEFAULT_RESULT_LIMIT,
     force_source: bool = False,
 ) -> tuple[list[SearchResult], SqliteFeatures, str]:
+    outcome = _search_outcome(
+        query, paths=paths, resolver_paths=resolver_paths, local=local, command_ids=command_ids,
+        path_refs=path_refs, limit=limit, force_source=force_source,
+    )
+    return outcome.results, outcome.features, outcome.source
+
+
+def search_for_context_provider(
+    query: str,
+    *,
+    paths: ContextCompilerPaths,
+    resolver_paths: ObjectLocations,
+    local: Path,
+    command_ids: tuple[str, ...] = (),
+    path_refs: tuple[str, ...] = (),
+    limit: int = DEFAULT_RESULT_LIMIT,
+) -> tuple[list[SearchResult], SqliteFeatures, str, "index_cache.OperationStamp | None"]:
+    """Like `search`, but also returns a reusable opening `OperationStamp`.
+
+    The stamp is derived, with no further Git read, only when the settled
+    cache classification was `Fresh` and the search actually answered from
+    that publication (`source == "sqlite"`) -- never on a forced-source call,
+    an update/rebuild failure, or a canonical-snapshot retry, all of which
+    leave `source == "source"` regardless of what `state` was."""
+    outcome = _search_outcome(
+        query, paths=paths, resolver_paths=resolver_paths, local=local, command_ids=command_ids,
+        path_refs=path_refs, limit=limit, force_source=False,
+    )
+    stamp = (
+        index_cache.stamp_from_fresh(outcome.state)
+        if isinstance(outcome.state, index_cache.Fresh) and outcome.source == "sqlite"
+        else None
+    )
+    return outcome.results, outcome.features, outcome.source, stamp
+
+
+def _search_outcome(
+    query: str,
+    *,
+    paths: ContextCompilerPaths,
+    resolver_paths: ObjectLocations,
+    local: Path,
+    command_ids: tuple[str, ...] = (),
+    path_refs: tuple[str, ...] = (),
+    limit: int = DEFAULT_RESULT_LIMIT,
+    force_source: bool = False,
+) -> _SearchOutcome:
     state: index_cache.CacheState = index_cache.SourceOnly("force-source") if force_source else _cache_state(paths, local)
     try:
         if isinstance(state, index_cache.Stale) and index_cache.command_ids_match(state.db_path, command_ids):
@@ -163,18 +218,21 @@ def search(
         # A cache may legitimately miss an implicit ranking candidate, but an
         # explicit id/path is an authority request and must never be answered
         # from a derived negative.
-        return _search_from_canonical_snapshot(query, paths, resolver_paths, command_ids, path_refs, limit)
+        results, features, canonical_source = _search_from_canonical_snapshot(query, paths, resolver_paths, command_ids, path_refs, limit)
+        return _SearchOutcome(results, features, canonical_source, state)
     if exact:
         exact = _hydrate_cached_candidates(exact[:limit], paths, state.db_path if isinstance(state, index_cache.Fresh) else None, source)
         if exact is None:
-            return _search_from_canonical_snapshot(query, paths, resolver_paths, command_ids, path_refs, limit)
-        return exact, probe_sqlite_features(), source
+            results, features, canonical_source = _search_from_canonical_snapshot(query, paths, resolver_paths, command_ids, path_refs, limit)
+            return _SearchOutcome(results, features, canonical_source, state)
+        return _SearchOutcome(exact, probe_sqlite_features(), source, state)
     features = probe_sqlite_features()
     results = substring_search(query, docs)[:limit]
     hydrated = _hydrate_cached_candidates(results, paths, state.db_path if isinstance(state, index_cache.Fresh) else None, source)
     if hydrated is None:
-        return _search_from_canonical_snapshot(query, paths, resolver_paths, command_ids, path_refs, limit)
-    return hydrated, features, source
+        results, features, canonical_source = _search_from_canonical_snapshot(query, paths, resolver_paths, command_ids, path_refs, limit)
+        return _SearchOutcome(results, features, canonical_source, state)
+    return _SearchOutcome(hydrated, features, source, state)
 def _search_from_canonical_snapshot(
     query: str, paths: ContextCompilerPaths, resolver_paths: ObjectLocations, command_ids: tuple[str, ...],
     path_refs: tuple[str, ...], limit: int,

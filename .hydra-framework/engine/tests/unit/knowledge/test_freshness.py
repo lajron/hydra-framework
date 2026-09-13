@@ -269,6 +269,44 @@ class FreshnessTests(unittest.TestCase):
         self.write_governed("ignored.md", "ignored\n")
         self.assertEqual(freshness.evaluate_guard(self.root).reason, "governed-path-ignored")
 
+    def test_fingerprint_classifies_the_full_mutation_matrix_in_one_pass(self):
+        """A combined-scenario companion to the individual fingerprint
+        tests above: unstaged/staged modification, added, staged/unstaged
+        deletion, a staged rename, an ignored path and a non-governed path
+        change all in the same worktree, verified against directly computed
+        Git blob ids (never a second copy of `fingerprint`'s own logic)."""
+        algo = freshness.object_format(self.root)
+        unstaged_src = self.write_governed("unstaged.md", "before\n")
+        staged_src = self.write_governed("staged.md", "before\n")
+        deleted_staged = self.write_governed("deleted-staged.md", "gone\n")
+        deleted_unstaged = self.write_governed("deleted-unstaged.md", "gone-too\n")
+        rename_src = self.write_governed("rename-me.md", "rename target\n")
+        self.write_governed("non-governed-suffix.exe", "not governed\n")
+        self.commit_all("baseline")
+
+        unstaged_src.write_text("after\n", encoding="utf-8")
+        staged_src.write_text("after\n", encoding="utf-8")
+        self.git("add", ".hydra-framework/core/staged.md")
+        self.write_governed("added.md", "new\n")
+        deleted_staged.unlink()
+        self.git("add", "-u", "--", ".hydra-framework/core/deleted-staged.md")
+        deleted_unstaged.unlink()
+        self.git("mv", str(rename_src.relative_to(self.root)), ".hydra-framework/core/renamed.md")
+        (self.root / ".gitignore").write_text("*.ignored\n", encoding="utf-8")
+        self.write_governed("skip.ignored", "ignored\n")
+        (self.root / "unrelated-root.txt").write_text("stray\n", encoding="utf-8")
+
+        actual = freshness.fingerprint(self.root)
+        self.assertEqual(actual[".hydra-framework/core/unstaged.md"], freshness.blob_id(b"after\n", algo))
+        self.assertEqual(actual[".hydra-framework/core/staged.md"], freshness.blob_id(b"after\n", algo))
+        self.assertEqual(actual[".hydra-framework/core/added.md"], freshness.blob_id(b"new\n", algo))
+        self.assertNotIn(".hydra-framework/core/deleted-staged.md", actual)
+        self.assertNotIn(".hydra-framework/core/deleted-unstaged.md", actual)
+        self.assertNotIn(".hydra-framework/core/rename-me.md", actual)
+        self.assertEqual(actual[".hydra-framework/core/renamed.md"], freshness.blob_id(b"rename target\n", algo))
+        self.assertNotIn(".hydra-framework/core/skip.ignored", actual)
+        self.assertNotIn("unrelated-root.txt", actual)
+
     def test_no_governed_path_is_ignored_in_live_checkout(self):
         repository_root = Path(__file__).resolve().parents[5]
         result = freshness.evaluate_guard(repository_root)

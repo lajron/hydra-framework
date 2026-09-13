@@ -276,17 +276,23 @@ class KnowledgeCollectorTests(unittest.TestCase):
                 source_output = context_providers.run_context_providers(request, include_families=("Knowledge",))
 
             search_index.build_index(paths, _resolver_paths(root), local)
-            with mock.patch(
-                "hydra_engine.knowledge.context_support.search",
-                wraps=context_providers.context_support.search,
-            ) as search:
+            with (
+                mock.patch(
+                    "hydra_engine.knowledge.context_support.search_for_context_provider",
+                    wraps=context_providers.context_support.search_for_context_provider,
+                ) as search_provider,
+                mock.patch(
+                    "hydra_engine.knowledge.context_support.search",
+                    wraps=context_providers.context_support.search,
+                ) as search,
+            ):
                 cached_output = context_providers.run_context_providers(request, include_families=("Knowledge",))
 
             self.assertEqual(cached_output.nodes, source_output.nodes)
             self.assertEqual(cached_output.candidates, source_output.candidates)
-            self.assertEqual(len(search.call_args_list), 2)
-            self.assertFalse(search.call_args_list[0].kwargs.get("force_source", False))
-            self.assertTrue(search.call_args_list[1].kwargs["force_source"])
+            search_provider.assert_called_once()
+            search.assert_called_once()
+            self.assertTrue(search.call_args.kwargs["force_source"])
 
 
 class RunContextProvidersTests(unittest.TestCase):
@@ -294,7 +300,10 @@ class RunContextProvidersTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             request = _request(root, task="anything")
-            with mock.patch("hydra_engine.knowledge.context_support.search", return_value=((), None, "source")) as search:
+            with mock.patch(
+                "hydra_engine.knowledge.context_support.search_for_context_provider",
+                return_value=((), None, "source", None),
+            ) as search:
                 context_providers.run_context_providers(request, include_families=("Source", "Capability", "Work"))
             search.assert_called_once()
 
@@ -313,6 +322,84 @@ class RunContextProvidersTests(unittest.TestCase):
                     context_providers.run_context_providers(
                         _request(Path(tmp), knowledge_snapshot=object()), include_families=("Knowledge",)
                     )
+
+
+class FingerprintCallCountTests(unittest.TestCase):
+    """D20/D21 acceptance: one steady-state incremental
+    `run_context_providers` operation (a single governed document changed
+    since the last publish) costs exactly five `freshness.fingerprint`
+    calls, down from six, while the closing revalidation remains a fresh,
+    independent Git observation rather than a reused value."""
+
+    def _fixture(self, root: Path):
+        paths = paths_for(root, ("demo",))
+        write_node(paths, "demo", keywords=("demo",))
+        write_unit(paths, "demo", "guide")
+        _commit(root)
+        return paths
+
+    def _one_document_incremental_setup(self, root: Path):
+        paths = self._fixture(root)
+        local = root / ".hydra-framework.local"
+        resolver_paths = _resolver_paths(root)
+        search_index.build_index(paths, resolver_paths, local)
+        # One additional governed unit, committed, is exactly the single-
+        # document incremental delta this task's benchmark measured.
+        write_unit(paths, "demo", "second")
+        subprocess.run(["git", "add", "-A"], cwd=root, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(["git", "commit", "-q", "-m", "incremental edit"], cwd=root, check=True)
+        return paths, local
+
+    def test_incremental_provider_operation_makes_exactly_five_fingerprint_calls(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths, local = self._one_document_incremental_setup(root)
+
+            real_fingerprint = index_cache.fingerprint
+            calls: list = []
+            with mock.patch(
+                "hydra_engine.knowledge.index_cache.fingerprint",
+                side_effect=lambda *a, **k: (calls.append(1), real_fingerprint(*a, **k))[1],
+            ):
+                output = context_providers.run_context_providers(
+                    _request(root, paths=paths, task="demo"), include_families=("Knowledge",),
+                )
+
+            self.assertEqual(len(calls), 5)
+            self.assertEqual(output.nodes[0]["node"], "demo")
+
+    def test_final_cache_state_is_reused_only_for_the_opening_stamp(self):
+        """The exact D20 boundary: the settled `Fresh` state that the
+        incremental update produces is turned into the opening stamp with no
+        extra Git read (`stamp_from_fresh`, not another `capture_stamp`), and
+        that helper is used exactly once, for the opening pin only."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths, local = self._one_document_incremental_setup(root)
+
+            with mock.patch.object(index_cache, "stamp_from_fresh", wraps=index_cache.stamp_from_fresh) as stamp_from_fresh:
+                context_providers.run_context_providers(
+                    _request(root, paths=paths, task="demo"), include_families=("Knowledge",),
+                )
+            stamp_from_fresh.assert_called_once()
+
+    def test_closing_revalidation_is_the_one_remaining_capture_stamp_call(self):
+        """`_capture_stamp` (the fresh, independent Git read) must still be
+        called exactly once per operation -- for the closing revalidation
+        only, since the opening pin is now satisfied from the reused settled
+        state instead. Combined with the five-call count above, this proves
+        the closing observation is a real fingerprint call, not skipped."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths, local = self._one_document_incremental_setup(root)
+            with mock.patch(
+                "hydra_engine.knowledge.context_providers._capture_stamp",
+                wraps=context_providers._capture_stamp,
+            ) as capture_stamp:
+                context_providers.run_context_providers(
+                    _request(root, paths=paths, task="demo"), include_families=("Knowledge",),
+                )
+            capture_stamp.assert_called_once()
 
 
 class StampRevalidationTests(unittest.TestCase):
@@ -347,8 +434,12 @@ class StampRevalidationTests(unittest.TestCase):
             with (
                 mock.patch(
                     "hydra_engine.knowledge.context_providers._capture_stamp",
-                    side_effect=[real_stamp, moved_stamp],
+                    side_effect=[moved_stamp],
                 ),
+                mock.patch(
+                    "hydra_engine.knowledge.context_support.search_for_context_provider",
+                    wraps=context_providers.context_support.search_for_context_provider,
+                ) as search_provider,
                 mock.patch(
                     "hydra_engine.knowledge.context_support.search",
                     wraps=context_providers.context_support.search,
@@ -358,9 +449,9 @@ class StampRevalidationTests(unittest.TestCase):
                     _request(root, paths=paths, task="demo"), include_families=("Knowledge",),
                 )
 
-            self.assertEqual(len(search.call_args_list), 2)
-            self.assertFalse(search.call_args_list[0].kwargs.get("force_source", False))
-            self.assertTrue(search.call_args_list[1].kwargs["force_source"])
+            search_provider.assert_called_once()
+            search.assert_called_once()
+            self.assertTrue(search.call_args.kwargs["force_source"])
             self.assertEqual(output.nodes[0]["node"], "demo")
 
     def test_no_mixed_cache_and_source_graph(self):
@@ -378,7 +469,7 @@ class StampRevalidationTests(unittest.TestCase):
 
             with mock.patch(
                 "hydra_engine.knowledge.context_providers._capture_stamp",
-                side_effect=[real_stamp, moved_stamp],
+                side_effect=[moved_stamp],
             ):
                 racy_output = context_providers.run_context_providers(request, include_families=("Knowledge",))
 

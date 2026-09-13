@@ -166,7 +166,21 @@ def evaluate_guard(root: Path) -> GuardResult:
 
 
 def fingerprint(root: Path) -> dict[str, str]:
-    """Map governed worktree paths to their current Git blob identities."""
+    """Map governed worktree paths to their current Git blob identities.
+
+    D21 tried folding this into one `git ls-files -s -m -d -o` call (see the
+    superseded parity test in `test_freshness.py` for the exact replacement
+    that was measured). It was semantically correct -- parity held across
+    the full mutation matrix -- but empirically slower, not faster: `-m`/`-d`
+    detection inside `ls-files` does a brute-force per-path stat compare with
+    none of `git status`'s untracked-cache/fsmonitor fast paths, so the
+    combined single call cost about 2x the paired calls below on a 10k-file
+    governed corpus (~55ms vs ~27ms, measured 2026-09-13). The task's own
+    fallback for exactly this case ("if [it] cannot [win], retain the
+    existing two-command implementation and land only D20") applies: this
+    stays the two-call form, and only the call-COUNT reduction (D20, six
+    calls to five per incremental operation) is landed.
+    """
     algo = object_format(root)
     ids: dict[str, str] = {}
     unmerged: set[str] = set()

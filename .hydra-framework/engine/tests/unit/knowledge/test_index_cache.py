@@ -90,6 +90,32 @@ class OperationStampTests(unittest.TestCase):
             stamp = index_cache.capture_stamp(paths, root / ".hydra-framework.local")
         self.assertEqual(stamp, index_cache.OperationStamp({}, None))
 
+    def test_stamp_from_fresh_matches_a_fresh_capture_with_no_extra_git_read(self):
+        from hydra_engine.knowledge import search_index
+        from hydra_engine.objects.discovery import ObjectLocations
+
+        resolver_paths = ObjectLocations(
+            self.root, self.root / ".hydra-framework", self.root / ".hydra-framework.local",
+            "tasks/personal", self.root / ".hydra-framework/cognition/graph/registry.yaml",
+        )
+        search_index.build_index(self.paths, resolver_paths, self.local)
+        state = index_cache.cache_state(
+            self.paths, self.local, guard=index_cache.guard_for(self.paths.root.resolve()),
+            schema=search_index.SCHEMA_VERSION, columns=search_index._DOCUMENT_COLUMNS,
+        )
+        self.assertIsInstance(state, index_cache.Fresh)
+        derived = index_cache.stamp_from_fresh(state)
+        real = index_cache.capture_stamp(self.paths, self.local)
+        self.assertEqual(derived, real)
+
+    def test_stamp_from_fresh_is_unpinnable_for_every_non_fresh_state(self):
+        for state in (
+            index_cache.SourceOnly("force-source"),
+            index_cache.Absent({}),
+            index_cache.Stale(self.local / "index" / "knowledge.db", {}, index_cache.CorpusDelta((), (), ())),
+        ):
+            self.assertEqual(index_cache.stamp_from_fresh(state), index_cache.OperationStamp({}, None, None))
+
 
 class PersistentTransactionTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -147,6 +173,54 @@ class PersistentTransactionTests(unittest.TestCase):
                 self.paths, self.local, expected_generation="stale", expected_fingerprint=expected,
                 apply_update=lambda _conn, _current: self.fail("must not apply"),
             )
+
+    def test_corpus_moved_before_delta_rolls_back_and_does_not_advance_generation(self):
+        """The pre-callback fingerprint, taken after `BEGIN IMMEDIATE`, must
+        catch a governed edit that lands before the writer even starts
+        computing its delta, roll the transaction back, and never call the
+        update callback at all."""
+        path = index_cache.rebuild_index(self.local, self._populate("a"))
+        with index_cache.open_published(path) as reader:
+            generation = index_cache.read_generation(reader)
+        stale_expected_fingerprint = index_cache.fingerprint(self.root)
+        (self.root / "AI_SYSTEM.md").write_text("# moved before delta\n", encoding="utf-8")
+
+        callback_calls = []
+        with self.assertRaises(index_cache.CorpusMovedError):
+            index_cache.apply_index_delta(
+                self.paths, self.local, expected_generation=generation,
+                expected_fingerprint=stale_expected_fingerprint,
+                apply_update=lambda conn, current: callback_calls.append(current),
+            )
+        self.assertEqual(callback_calls, [])
+        with index_cache.open_published(path) as check:
+            self.assertEqual(check.execute("SELECT key FROM documents").fetchone()[0], "a")
+            self.assertEqual(index_cache.read_generation(check), generation)
+
+    def test_corpus_moved_during_delta_rolls_back_and_does_not_advance_generation(self):
+        """The post-callback fingerprint must catch a governed edit that
+        lands while the callback is computing and writing the delta, even
+        though the pre-callback check already passed, and roll the whole
+        transaction back rather than commit a delta computed against a
+        corpus that has since moved."""
+        path = index_cache.rebuild_index(self.local, self._populate("a"))
+        with index_cache.open_published(path) as reader:
+            generation = index_cache.read_generation(reader)
+        expected_fingerprint = index_cache.fingerprint(self.root)
+
+        def apply_update(conn, current):
+            conn.execute("DELETE FROM documents")
+            conn.execute("INSERT INTO documents VALUES ('b', '', '', 'b', '', '', '', '', '', '', '', 'b', '', 'b')")
+            (self.root / "AI_SYSTEM.md").write_text("# moved during delta\n", encoding="utf-8")
+
+        with self.assertRaises(index_cache.CorpusMovedError):
+            index_cache.apply_index_delta(
+                self.paths, self.local, expected_generation=generation,
+                expected_fingerprint=expected_fingerprint, apply_update=apply_update,
+            )
+        with index_cache.open_published(path) as check:
+            self.assertEqual(check.execute("SELECT key FROM documents").fetchone()[0], "a")
+            self.assertEqual(index_cache.read_generation(check), generation)
 
     def test_corrupt_file_is_recreated(self):
         path = self.local / "index" / "knowledge.db"

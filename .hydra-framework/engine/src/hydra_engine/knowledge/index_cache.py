@@ -243,6 +243,21 @@ def cache_state(paths, local: Path, *, guard: GuardResult, schema: str, columns:
     return Fresh(db_path, current, generation) if change.is_empty() else Stale(db_path, current, change, generation)
 
 
+def stamp_from_fresh(state: CacheState) -> OperationStamp:
+    """Turn an already-settled `Fresh` cache classification into the same
+    `OperationStamp` a fresh `capture_stamp` call would produce, with no
+    further Git or SQLite read.
+
+    Valid only immediately after the caller itself observed *state*: this
+    performs no guard, generation or fingerprint check of its own, so it must
+    never be called against a stale, cached, or reconstructed `Fresh` value.
+    Every non-`Fresh` classification (source fallback, absent, stale) yields
+    the same unpinnable stamp `capture_stamp` returns when it cannot pin."""
+    if isinstance(state, Fresh):
+        return OperationStamp(state.fingerprint, state.db_path, state.generation)
+    return OperationStamp({}, None, None)
+
+
 def command_ids_match(db_path: Path, command_ids: tuple[str, ...]) -> bool:
     conn = open_published(db_path)
     if conn is None:
