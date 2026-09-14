@@ -18,12 +18,19 @@ provenance:
 # Problems
 
 Status: active
-Updated: 2026-09-13
+Updated: 2026-09-14
 
 Concrete unresolved concerns for Hydra's own machinery. Each needs evidence, not
 opinion. Resolve or close with a reason; do not let entries rot.
 
 ## Open
+
+### P16: No documentation surface can be asked whether a source it depends on has changed (2026-09-14)
+
+- Evidence: `knowledge stale` asks exactly that of the 7 knowledge units and reports 2 stale on `main` at 7801b1d, reading `provenance.sources` + `source_digests` + `checked_on` through `knowledge/freshness.py:287-314`. No wiki page carries that contract: 0 of 40 pages under `project-wiki/` is a registered object, so none is in `provenance`, and `citers_of_source_path` (`objects/store_queries.py:105-112`) returns nothing for a source a wiki page describes. `project-wiki/hydra-framework/reference/source-map.md` records the dependency by hand in 19 prose rows covering 23 pages; `wiki/links.py:44` checks those links resolve and nothing checks whether the targets changed. Measured drift with no detector today: 5 of 70 registered commands are absent from `command-surface.md`, and `checks/validator_registry.py:21` describes `validate`/`doctor`'s "ten checks" where `len(VALIDATORS)` is 19.
+- Impact: documentation dependency is maintainer memory rather than repository state, so drift is found by someone noticing. It is not a wiki-only gap: 4 of the 8 drift items measured during the review are inside the engine, in files that are themselves Hydra objects, and a mechanism scoped to `project-wiki/` would catch none of them. Current drift is small, which is the condition under which a detector can be built and validated against a corpus still worth trusting.
+- Resolution: unresolved, and the mechanism is decided. Reviewed across four phases in `.hydra-framework/evolution/candidates/repository-intelligence-review.md`, now `captured`; the reviewed proposal `2026-09-14-repository-intelligence-and-wiki-projections` is `superseded` by the MVP in that review's `03-architecture-and-mvp.md` section 4 as amended by its `04-decision.md` section 1. Wiki pages become objects through an object sidecar under `.hydra-framework/surfaces/wiki/`, carrying the same `provenance` contract knowledge units already use, under one `Documentation` object family that is deliberately not in `SEARCH_FAMILIES`: it carries a non-retrieving context provider, so a page is addressable without its prose ever becoming a `compile-context` candidate. No schema change, no store change, no envelope change, and no change to `knowledge/freshness.py`; measured at 1633 tests passing in an isolated clone. Owned by `.hydra-framework/tasks/personal/milosdenic-dev-gmail-com/2026-09-14-repository-documentation-dependency-mvp.md`. Two questions stay open inside it: the false-positive rate of page-level digest staleness, which has never run anywhere and which `wiki audit` is what measures, and whether `ref index` stays inside the 30 s hook budget as the object count grows, which P5 and P12 own.
+- Certainty: confirmed
 
 ### P12: Incremental knowledge-index update cost scales with corpus size, not with the changed document (2026-09-13)
 
