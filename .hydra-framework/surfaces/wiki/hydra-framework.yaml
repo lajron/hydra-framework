@@ -50,7 +50,7 @@ objects:
         - source: .hydra-framework/repo/knowledge/state-tiers.md
           digest: sha256:a75d3a2d4cd0233f6f543c396162ac9c115e08b09616ef0d0066213af7f029dd
         - source: .hydra-framework/surfaces/README.md
-          digest: sha256:a03398d9136c07c761414f1406df0101622ad2f4ec00774ab4e2e2977fea159a
+          digest: sha256:0b8e12555efe0c31a44d92993befa77a222450d7ad3e61d254193c3f16d2213e
     relations: []
   page-architecture:
     hydra_id: hydra://documentation/page/architecture
@@ -378,9 +378,9 @@ objects:
         - .hydra-framework/capabilities/skills/wiki-authoring/skill.md
       source_digests:
         - source: .hydra-framework/surfaces/README.md
-          digest: sha256:a03398d9136c07c761414f1406df0101622ad2f4ec00774ab4e2e2977fea159a
+          digest: sha256:0b8e12555efe0c31a44d92993befa77a222450d7ad3e61d254193c3f16d2213e
         - source: .hydra-framework/capabilities/skills/wiki-authoring/skill.md
-          digest: sha256:3f33aaac9822fa6290fba5f9fdaaa0e84616d57a628c47d25220c049013be596
+          digest: sha256:cb62cab9b7fc838a5e87855934fdc61b25b553e0c7152efa5b393725eb95422d
     relations: []
   page-validation:
     hydra_id: hydra://documentation/page/validation
@@ -760,7 +760,7 @@ objects:
         - .hydra-framework/engine/src/hydra_engine/wiki/links.py
       source_digests:
         - source: .hydra-framework/capabilities/skills/wiki-authoring/skill.md
-          digest: sha256:3f33aaac9822fa6290fba5f9fdaaa0e84616d57a628c47d25220c049013be596
+          digest: sha256:cb62cab9b7fc838a5e87855934fdc61b25b553e0c7152efa5b393725eb95422d
         - source: .hydra-framework/engine/src/hydra_engine/commands/knowledge.py
           digest: sha256:2b91d0fa121d5d993663e5cc195b46f2ab4145de4f719a75ca404372ad0edf88
         - source: .hydra-framework/engine/src/hydra_engine/commands/validation.py

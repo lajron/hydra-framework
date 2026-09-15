@@ -276,7 +276,7 @@ objects:
   hydra://capability/skill/wiki-authoring:
     uid: a76ccc61-44e6-4beb-bd58-bc285659692b
     path: .hydra-framework/capabilities/skills/wiki-authoring/metadata.yaml
-    digest: sha256:415b655f624189fbd622203a5b59ae964c95c387c2281f2aa1e4773dd1b61602
+    digest: sha256:ac2e86bcaa79bdaf097678edbfa8af7e9b04ba725618243b0b974b6919d87ab2
     family: Capability
     kind: skill
     status: seed
@@ -487,7 +487,7 @@ objects:
   hydra://documentation/page/documentation-authoring:
     uid: e2138356-5c44-4648-ae6d-12a6a16f4a1d
     path: project-wiki/hydra-framework/reference/documentation-authoring.md
-    digest: sha256:52e7993a70d169832af5e214ef0494217cd7b8dc3599513efddb0fd33e10b042
+    digest: sha256:445de64aa3af15978a1181539333c5c41fbb33180b28f1aab615e0919c42aa80
     family: Documentation
     kind: documentation-page
     status: active

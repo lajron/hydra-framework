@@ -5,7 +5,7 @@ schema_version: 3
 hydra_object_kind: skill
 kind: procedure
 name: wiki-authoring
-description: Draft or update a project-wiki page as an AI agent, with correct citation, source-of-truth, and validation discipline.
+description: Draft or update a reader-first project-wiki page with traceable sources, honest evidence, and validation discipline.
 scope: common-seed
 maturity: seed
 owners:
