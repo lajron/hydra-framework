@@ -254,6 +254,7 @@ def _search_outcome(
         # from a derived negative.
         results, features, canonical_source = _search_from_canonical_snapshot(query, paths, resolver_paths, command_ids, path_refs, limit)
         return _SearchOutcome(results, features, canonical_source, state)
+    exact = _filter_automatic_results(query, exact, path_refs)
     if exact:
         exact = _hydrate_cached_candidates(exact[:limit], paths, state.db_path if isinstance(state, index_cache.Fresh) else None, source)
         if exact is None:
@@ -261,7 +262,7 @@ def _search_outcome(
             return _SearchOutcome(results, features, canonical_source, state)
         return _SearchOutcome(exact, probe_sqlite_features(), source, state)
     features = probe_sqlite_features()
-    results = substring_search(query, docs)[:limit]
+    results = _filter_automatic_results(query, substring_search(query, docs), path_refs)[:limit]
     hydrated = _hydrate_cached_candidates(results, paths, state.db_path if isinstance(state, index_cache.Fresh) else None, source)
     if hydrated is None:
         results, features, canonical_source = _search_from_canonical_snapshot(query, paths, resolver_paths, command_ids, path_refs, limit)
@@ -277,10 +278,27 @@ def _search_from_canonical_snapshot(
     )
     exact = exact_matches(query, docs, path_refs)
     features = probe_sqlite_features()
-    return (exact or substring_search(query, docs))[:limit], features, "source"
+    results = _filter_automatic_results(query, exact or substring_search(query, docs), path_refs)
+    return results[:limit], features, "source"
 def _hydrate_cached_candidates(results: list[SearchResult], paths: ContextCompilerPaths, db_path: Path | None, source: str) -> list[SearchResult] | None:
     storage = __import__("hydra_engine.knowledge.storage", fromlist=("hydrate_search_candidates",))
     return storage.hydrate_search_candidates(paths, db_path, results) if source == "sqlite" and db_path is not None else results
+def _filter_automatic_results(query: str, results: list[SearchResult], path_refs: tuple[str, ...]) -> list[SearchResult]:
+    """Keep non-automatic families only for literal identity/path requests."""
+    family_registry = __import__("hydra_engine.identity.object_families", fromlist=("family_automatically_retrievable", "family_for"))
+    requested_ids = {value.lower().strip() for value in _HYDRA_URI_RE.findall(query)}
+    requested_paths = {_normal_path(value) for value in path_refs if value}
+    requested_paths.update(_normal_path(match.group(1)) for match in _PATH_RE.finditer(query))
+    filtered: list[SearchResult] = []
+    for result in results:
+        document = result.document
+        if family_registry.family_automatically_retrievable(family_registry.family_for(document.hydra_id, document.kind)):
+            filtered.append(result)
+            continue
+        document_ids = {document.hydra_id.lower(), *(alias.lower() for alias in document.aliases)}
+        if requested_ids & document_ids or _normal_path(document.path) in requested_paths:
+            filtered.append(result)
+    return filtered
 def exact_matches(query: str, docs: list[SearchDocument], path_refs: tuple[str, ...] = ()) -> list[SearchResult]:
     wanted = {value.lower().strip() for value in _HYDRA_URI_RE.findall(query)}
     wanted.update(_normal_path(value) for value in path_refs if value)

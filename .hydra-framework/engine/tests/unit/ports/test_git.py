@@ -103,6 +103,35 @@ class GitTests(unittest.TestCase):
     def test_last_commit_iso_returns_empty_string_on_failure(self):
         self.assertEqual(git.last_commit_iso(self.root / "does-not-exist", "tracked.txt"), "")
 
+    def test_commit_changed_paths_on_a_root_commit(self):
+        root_commit = subprocess.check_output(
+            ["git", "rev-list", "--max-parents=0", "HEAD"],
+            cwd=str(self.root),
+            text=True,
+        ).strip()
+        self.assertEqual(git.commit_changed_paths(self.root, root_commit), ["tracked.txt"])
+
+    def test_commit_changed_paths_on_a_merge_commit(self):
+        base_branch = subprocess.check_output(
+            ["git", "branch", "--show-current"],
+            cwd=str(self.root),
+            text=True,
+        ).strip()
+        subprocess.run(["git", "checkout", "-q", "-b", "feature"], cwd=str(self.root), check=True)
+        (self.root / "feature.txt").write_text("feature\n", encoding="utf-8")
+        subprocess.run(["git", "add", "feature.txt"], cwd=str(self.root), check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "feature"], cwd=str(self.root), check=True)
+        subprocess.run(["git", "checkout", "-q", base_branch], cwd=str(self.root), check=True)
+        (self.root / "base.txt").write_text("base\n", encoding="utf-8")
+        subprocess.run(["git", "add", "base.txt"], cwd=str(self.root), check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "base"], cwd=str(self.root), check=True)
+        subprocess.run(["git", "merge", "--no-ff", "-q", "feature", "-m", "merge"], cwd=str(self.root), check=True)
+        merge_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(self.root), text=True).strip()
+        self.assertEqual(git.commit_changed_paths(self.root, merge_commit), ["feature.txt", "base.txt"])
+
+    def test_commit_changed_paths_returns_empty_outside_a_git_repo(self):
+        self.assertEqual(git.commit_changed_paths(self.root / "does-not-exist", "HEAD"), [])
+
 
 if __name__ == "__main__":
     unittest.main()

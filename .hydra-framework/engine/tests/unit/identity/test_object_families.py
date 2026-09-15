@@ -91,6 +91,13 @@ class RegistryConsistencyTests(unittest.TestCase):
         # workspaces instead of reusing the older integration-ledger concept.
         self.assertEqual(object_families.family_for("", "source-integration"), "Source")
 
+    def test_documentation_is_registered_but_not_automatically_retrievable(self):
+        self.assertEqual(object_families.family_for("hydra://documentation/wiki", ""), "Documentation")
+        self.assertEqual(object_families.family_for("", "documentation-wiki"), "Documentation")
+        self.assertEqual(object_families.family_for("", "documentation-page"), "Documentation")
+        self.assertFalse(object_families.family_automatically_retrievable("Documentation"))
+        self.assertTrue(object_families.family_automatically_retrievable("Knowledge"))
+
     def test_runtime_module_stays_unregistered(self):
         # Load-bearing: `runtime-module` is this suite's canonical unregistered
         # prefix (see UnregisteredTokenTests below and test_references.py).

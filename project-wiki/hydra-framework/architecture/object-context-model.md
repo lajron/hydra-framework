@@ -31,9 +31,10 @@ because a similarly named file exists.
 ## Forms And Derived Stores
 
 The object-handler registry decides which document forms can contribute an
-envelope and where they are scanned. Today it covers Markdown, YAML, and
-Python under the engine source root. An unclaimed file form is not an error;
-it simply has no registered envelope reader.
+envelope and where they are scanned. Today it covers Markdown and YAML across
+the broader Hydra root, with YAML excluding `cognition/`, while Python is
+rooted at `engine/src`. An unclaimed file form is not an error; it simply has
+no registered envelope reader.
 
 `ref index` exports the derived registry from validated canonical metadata.
 The optional query store is local operational state. Its object, alias,

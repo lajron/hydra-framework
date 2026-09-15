@@ -8,6 +8,56 @@ from .fixtures import assert_golden, run_golden
 
 
 class WikiGoldenTests(unittest.TestCase):
+    def test_wiki_audit_json(self):
+        outcome = run_golden(
+            ["wiki", "audit", "--json"],
+            extra_fixture={
+                "source.py": "x = 1\n",
+                ".hydra-framework/surfaces/wiki/fixture.yaml": (
+                    "schema: hydra-framework.object-sidecar.v1\n"
+                    "title: Fixture Wiki\n"
+                    "objects:\n"
+                    "  page:\n"
+                    "    hydra_id: hydra://documentation/page/page\n"
+                    "    path: project-wiki/page.md\n"
+                    "    checked_on: 2026-01-01\n"
+                    "    provenance:\n"
+                    "      sources:\n"
+                    "        - source.py\n"
+                    "  nav:\n"
+                    "    hydra_id: hydra://documentation/page/nav\n"
+                    "    path: project-wiki/nav.md\n"
+                    "    provenance:\n"
+                    "      sources: []\n"
+                ),
+            },
+        )
+        assert_golden(self, "wiki-audit", outcome)
+
+    def test_wiki_audit_stale_json(self):
+        outcome = run_golden(
+            ["wiki", "audit", "--json"],
+            extra_fixture={
+                "source.py": "x = 1\n",
+                ".hydra-framework/surfaces/wiki/fixture.yaml": (
+                    "schema: hydra-framework.object-sidecar.v1\n"
+                    "title: Fixture Wiki\n"
+                    "objects:\n"
+                    "  page:\n"
+                    "    hydra_id: hydra://documentation/page/page\n"
+                    "    path: project-wiki/page.md\n"
+                    "    checked_on: 2026-01-01\n"
+                    "    provenance:\n"
+                    "      sources:\n"
+                    "        - source.py\n"
+                    "      source_digests:\n"
+                    "        - source: source.py\n"
+                    "          digest: sha256:0000000000000000000000000000000000000000000000000000000000000000\n"
+                ),
+            },
+        )
+        assert_golden(self, "wiki-audit-stale", outcome)
+
     def test_validate_wiki_happy_path(self):
         outcome = run_golden(["validate-wiki"], extra_fixture={"project-wiki/.gitkeep": ""})
         assert_golden(self, "wiki-validate-wiki", outcome)

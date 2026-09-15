@@ -105,6 +105,18 @@ class FamilySearchCollectorTests(unittest.TestCase):
             )
             self.assertEqual([item["path"] for item in output.candidates], [".hydra-framework/repo/source/a.md"])
 
+    def test_documentation_provider_returns_no_candidates(self):
+        result = SearchResult(
+            _doc("project-wiki/wiki.md", kind="documentation-page", hydra_id="hydra://documentation/wiki"),
+            "exact",
+            0,
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            output = context_providers.PROVIDERS_BY_FAMILY["Documentation"].collect(
+                _request(Path(tmp), search_results=(result,)),
+            )
+        self.assertEqual(output.candidates, [])
+
 
 class KnowledgeCollectorTests(unittest.TestCase):
     def _fixture(self, root: Path):

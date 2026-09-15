@@ -337,10 +337,798 @@ objects:
     provenance_sources:
       - .hydra-framework/core/placement-rules.md
       - .hydra-framework/repo/knowledge/state-tiers.md
+  hydra://documentation/page/adopt-a-repository:
+    uid: 17ba219f-f14c-49e9-8617-b34aa5ce6ac3
+    path: project-wiki/hydra-framework/start-here/adopt-a-repository.md
+    digest: sha256:e1f729aa0d8458740bc05a807a85789bc0b6ef365898a88e3cb059672f87a8cd
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Seed And Adopt Hydra In A New Repository"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/capabilities/workflows/material-migration.md
+      - .hydra-framework/repo/knowledge/intake-lifecycle.md
+      - .hydra-framework/capabilities/skills/adoption/skill.md
+  hydra://documentation/page/architecture:
+    uid: 55371fbf-d8da-4e53-b892-605e27dc3fde
+    path: project-wiki/hydra-framework/architecture/architecture.md
+    digest: sha256:59f3cc54ace6bbf5e9db6564479306c632bb26a3ed31f25691e8a2b2410712d9
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Architecture"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/core/architecture.md
+      - .hydra-framework/core/lifecycle.md
+      - .hydra-framework/repo/knowledge/execution-harness.md
+  hydra://documentation/page/capabilities:
+    uid: e4b162b0-c683-4b87-b7fd-b26ba9073d84
+    path: project-wiki/hydra-framework/extending-hydra/capabilities.md
+    digest: sha256:aae5590ec06a8b33f1cfa0d71fa7329ac4493e2e609eeb1791f1f73dc1abf3be
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Capabilities"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/capabilities/README.md
+      - .hydra-framework/adapters/providers/README.md
+      - .hydra-framework/engine/src/hydra_engine/providers/adapter_plan.py
+      - .hydra-framework/engine/src/hydra_engine/providers/capabilities.py
+      - .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
+      - .hydra-framework/engine/src/hydra_engine/providers/selection.py
+  hydra://documentation/page/command-output-reducers:
+    uid: fb958187-591b-47bd-9a2d-81a3f71ade4e
+    path: project-wiki/hydra-framework/architecture/command-output-reducers.md
+    digest: sha256:9d014f87f73c3569a1ec5dcb97374be9ca8039d3108e811ce6b92db1fd284a42
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Command-Output Reducers"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/engine/src/hydra_engine/command_output/__init__.py
+      - .hydra-framework/engine/src/hydra_engine/command_output/adapters.py
+      - .hydra-framework/engine/src/hydra_engine/command_output/hook_telemetry.py
+      - .hydra-framework/engine/src/hydra_engine/command_output/model.py
+      - .hydra-framework/engine/src/hydra_engine/command_output/registry.py
+      - .hydra-framework/engine/src/hydra_engine/command_output/rendering.py
+      - .hydra-framework/engine/src/hydra_engine/command_output/shell.py
+      - .hydra-framework/engine/src/hydra_engine/command_output/telemetry.py
+  hydra://documentation/page/command-surface:
+    uid: 48aa32de-e9ca-4d22-ab9a-9eeffec8a310
+    path: project-wiki/hydra-framework/reference/command-surface.md
+    digest: sha256:10fc96da50000de52ec326aebfe1a00499a038dc90a88910c59227fb0e715aaa
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Command Surface"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/scripts/README.md
+      - .hydra-framework/scripts/hydra.py
+  hydra://documentation/page/common-questions:
+    uid: 6722e049-2742-425e-80c6-7e21f54cb56c
+    path: project-wiki/hydra-framework/start-here/common-questions.md
+    digest: sha256:ba71443f486287f18b920189905d090a4135adb24a2b83fd7d5e2b4c77053887
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "FAQ"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/core/unresolved-questions.md
+  hydra://documentation/page/concepts:
+    uid: 36ccfe79-7b63-483f-af15-b35ccfb9e006
+    path: project-wiki/hydra-framework/concepts/concepts.md
+    digest: sha256:2f0f9ec1564bc769e18c945530516fcd2276db7b830c4512dd669a8456c4a626
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Concepts"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources: []
+  hydra://documentation/page/context-retrieval:
+    uid: fd518239-5061-44bb-9894-02d154b69a80
+    path: project-wiki/hydra-framework/architecture/context-retrieval.md
+    digest: sha256:c38493b3b5acc74f8bee55fa7b72fe865ae66fff89cebf004dc45bd1c3bbdecc
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Context Retrieval"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/engine/src/hydra_engine/knowledge/context_packets.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/context_providers.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/freshness.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/search_index.py
+  hydra://documentation/page/documentation-authoring:
+    uid: e2138356-5c44-4648-ae6d-12a6a16f4a1d
+    path: project-wiki/hydra-framework/reference/documentation-authoring.md
+    digest: sha256:52e7993a70d169832af5e214ef0494217cd7b8dc3599513efddb0fd33e10b042
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Documentation Authoring"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/surfaces/README.md
+      - .hydra-framework/capabilities/skills/wiki-authoring/skill.md
+  hydra://documentation/page/engine:
+    uid: ef18fbcd-0403-4667-99fd-b8ed1dd70234
+    path: project-wiki/hydra-framework/architecture/engine.md
+    digest: sha256:5e9caf4425c699086e38010f4129542dd8bc10af29978a3bf6bc80dee2888888
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Engine"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - AI_SYSTEM.md
+      - .hydra-framework/core/architecture.md
+      - .hydra-framework/core/placement-rules.md
+      - .hydra-framework/scripts/hydra.py
+      - .hydra-framework/engine/src/hydra_engine/architecture.py
+      - .hydra-framework/engine/src/hydra_engine/checks/architecture_check.py
+      - .hydra-framework/engine/src/hydra_engine/checks/validator_registry.py
+      - .hydra-framework/engine/src/hydra_engine/cli/dispatch.py
+      - .hydra-framework/engine/src/hydra_engine/cli/parser.py
+      - .hydra-framework/engine/src/hydra_engine/cli/rendering.py
+      - .hydra-framework/engine/src/hydra_engine/commands/__init__.py
+      - .hydra-framework/engine/src/hydra_engine/commands/validation.py
+      - .hydra-framework/engine/tests/repository/test_architecture_bounds.py
+  hydra://documentation/page/evidence-and-telemetry:
+    uid: c2d33d99-681f-4ce7-8fc1-5d89ca6fff82
+    path: project-wiki/hydra-framework/operations/evidence-and-telemetry.md
+    digest: sha256:dc96e828d4d411971a26c5c8f06916445415abe8a8fc1a461f492bde971fa620
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Evidence and Telemetry"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/repo/telemetry/README.md
+      - .hydra-framework/repo/knowledge/telemetry-redaction-contract.md
+  hydra://documentation/page/evolution:
+    uid: ca9cd5da-bf2c-48d3-8d57-e0cd16150f8f
+    path: project-wiki/hydra-framework/evolution/evolution.md
+    digest: sha256:bdfbfd36fce5355d525ec6008a81ef9d780a9eac19c82be60ecf9ee487b5ff7d
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Evolution"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/evolution/README.md
+      - .hydra-framework/evolution/adaptations.md
+  hydra://documentation/page/execution-flow:
+    uid: c53ab665-b51b-47a1-ab01-32f557166bed
+    path: project-wiki/hydra-framework/architecture/execution-flow.md
+    digest: sha256:36172c8d4f8c04e7febb1e181141e023fb4de711781ebd0970d038d5a29d61fc
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Execution Flow"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/core/architecture.md
+      - .hydra-framework/core/lifecycle.md
+      - .hydra-framework/engine/src/hydra_engine/agent_hooks/subagent_context.py
+      - .hydra-framework/engine/src/hydra_engine/cli/route_prompt.py
+      - .hydra-framework/engine/src/hydra_engine/commands/agent_hooks.py
+      - .hydra-framework/engine/src/hydra_engine/commands/context.py
+      - .hydra-framework/engine/src/hydra_engine/commands/validation.py
+      - .hydra-framework/engine/src/hydra_engine/commands/work.py
+  hydra://documentation/page/execution-stack:
+    uid: d47ddd43-a0fb-43d7-8cfe-57307078e473
+    path: project-wiki/hydra-framework/architecture/execution-stack.md
+    digest: sha256:c297f1b2d33d7612f2cc3282743a79fe642072e80deff7d29f2a639dea51f947
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Execution Stack"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/core/architecture.md
+      - .hydra-framework/engine/src/hydra_engine/agent_hooks/subagent_context.py
+      - .hydra-framework/engine/src/hydra_engine/cli/dispatch.py
+      - .hydra-framework/engine/src/hydra_engine/cli/route_prompt.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/context_packets.py
+      - .hydra-framework/engine/src/hydra_engine/work/board.py
+  hydra://documentation/page/extending-hydra:
+    uid: a9d146be-c35b-40e1-ae5b-bb3c2cbe60c3
+    path: project-wiki/hydra-framework/extending-hydra/extending-hydra.md
+    digest: sha256:eb63539e7d13122777cd51f37d43f6bb56d0c671716ccd57bad393117a407c5e
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Extending Hydra"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources: []
+  hydra://documentation/page/extension-points:
+    uid: f76b7f31-8605-47e1-8e99-81bbf495b973
+    path: project-wiki/hydra-framework/extending-hydra/extension-points.md
+    digest: sha256:e9ab729c105631395d93a22c325884e5b6b1e8e5f75f8764c736e4ed9a4fac5f
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Extension Points"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/engine/src/hydra_engine/architecture.py
+      - .hydra-framework/engine/src/hydra_engine/objects/object_handlers.py
+      - .hydra-framework/engine/src/hydra_engine/identity/object_families.py
+  hydra://documentation/page/extension-recipes:
+    uid: 08cdfac6-ce0d-4f6a-a467-190ff6dbcca5
+    path: project-wiki/hydra-framework/extending-hydra/extension-recipes.md
+    digest: sha256:5241ab3925fc4fdf1ec8ded112a37433c9f9bc654299a9679336747988a6d56f
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Safe Extension Recipes"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/engine/src/hydra_engine/architecture.py
+      - .hydra-framework/engine/src/hydra_engine/objects/object_handlers.py
+      - .hydra-framework/engine/src/hydra_engine/identity/object_families.py
+  hydra://documentation/page/first-task:
+    uid: 782c9418-a361-4ea1-b100-ec30069bce89
+    path: project-wiki/hydra-framework/working-with-hydra/first-task.md
+    digest: sha256:7d6f5f634f33002fca778154983976110ebc3adb59f1f5afc88f73aa927b8493
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "First Task"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/capabilities/skills/wiki-authoring/skill.md
+      - .hydra-framework/engine/src/hydra_engine/commands/knowledge.py
+      - .hydra-framework/engine/src/hydra_engine/commands/validation.py
+      - .hydra-framework/engine/src/hydra_engine/commands/wiki.py
+      - .hydra-framework/engine/src/hydra_engine/commands/work.py
+      - .hydra-framework/engine/src/hydra_engine/wiki/links.py
+  hydra://documentation/page/glossary:
+    uid: a54b517c-6c0c-49a5-ad40-bd5b60bcd4e1
+    path: project-wiki/hydra-framework/reference/glossary.md
+    digest: sha256:11793ad2c22a2d440022d98320ebece64039e4ec32c842783c6765ebf514f34f
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Glossary"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/core/architecture.md
+      - .hydra-framework/core/placement-rules.md
+      - .hydra-framework/engine/src/hydra_engine/installation/adopt.py
+      - .hydra-framework/engine/src/hydra_engine/intake/ledger.py
+      - .hydra-framework/engine/src/hydra_engine/intake/takeover_scan.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/contracts.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/nodes.py
+      - .hydra-framework/engine/src/hydra_engine/providers/adapter_plan.py
+      - .hydra-framework/engine/src/hydra_engine/providers/capabilities.py
+      - .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
+      - .hydra-framework/engine/src/hydra_engine/providers/selection.py
+      - .hydra-framework/engine/src/hydra_engine/work/task_records.py
+  hydra://documentation/page/home:
+    uid: 0301577f-3e9c-40a9-be38-e2336da05317
+    path: project-wiki/home.md
+    digest: sha256:d419bc89263e888373f29a6c0da484a26d5b9e38d2bb9918512da2d145e6c6fe
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Hydra Project Wiki"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources: []
+  hydra://documentation/page/intake:
+    uid: 4ad1c2b0-b625-464c-b6fb-3ed71be46f85
+    path: project-wiki/hydra-framework/extending-hydra/intake.md
+    digest: sha256:d17b472af1df2204983ba8e2da9a4f46081ef96a1ad556c3d0226a83c24b95b8
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Intake"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/core/architecture.md
+      - .hydra-framework/core/placement-rules.md
+      - .hydra-framework/capabilities/workflows/material-migration.md
+      - .hydra-framework/engine/src/hydra_engine/commands/intake.py
+      - .hydra-framework/engine/src/hydra_engine/installation/private_tier.py
+      - .hydra-framework/engine/src/hydra_engine/intake/__init__.py
+      - .hydra-framework/engine/src/hydra_engine/intake/approval.py
+      - .hydra-framework/engine/src/hydra_engine/intake/approval_actions.py
+      - .hydra-framework/engine/src/hydra_engine/intake/approval_state.py
+      - .hydra-framework/engine/src/hydra_engine/intake/classification.py
+      - .hydra-framework/engine/src/hydra_engine/intake/integration.py
+      - .hydra-framework/engine/src/hydra_engine/intake/inventory.py
+      - .hydra-framework/engine/src/hydra_engine/intake/ledger.py
+      - .hydra-framework/engine/src/hydra_engine/intake/paths.py
+      - .hydra-framework/engine/src/hydra_engine/intake/staging.py
+  hydra://documentation/page/intake-and-migration:
+    uid: f225f4bc-d48e-4208-b758-257e90f6b567
+    path: project-wiki/hydra-framework/extending-hydra/intake-and-migration.md
+    digest: sha256:c3808459ecfb7b208cb5e13f10aeb72885cdabd3a81276c1fd1bbe41c0bad86a
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Intake, Migration, And Adoption"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/capabilities/workflows/material-migration.md
+      - .hydra-framework/repo/knowledge/intake-lifecycle.md
+      - .hydra-framework/capabilities/skills/adoption/skill.md
+  hydra://documentation/page/knowledge-spaces:
+    uid: 138d59a5-4be0-4398-8ba3-ea28b74447ed
+    path: project-wiki/hydra-framework/extending-hydra/knowledge-spaces.md
+    digest: sha256:3b535a809c4ea87c9f5f962e5150190cf972e63bed7f124942be66549e3e1b13
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Knowledge Spaces"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/core/knowledge-architecture.md
+      - .hydra-framework/engine/src/hydra_engine/knowledge/nodes.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/package_checks.py
+  hydra://documentation/page/migration:
+    uid: f2526b34-cc07-4c9a-992e-ef7da68331cc
+    path: project-wiki/hydra-framework/extending-hydra/migration.md
+    digest: sha256:7c6d0c6aaa06e7f98c2d00974e57ae857d70013a36b391d6a96328b05ef42fbf
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Migrate A Bounded Source Area"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/capabilities/workflows/material-migration.md
+      - .hydra-framework/repo/knowledge/intake-lifecycle.md
+      - .hydra-framework/capabilities/skills/adoption/skill.md
+  hydra://documentation/page/new-contributor:
+    uid: 85fd18f2-53bd-4219-b85e-2eeec7df82cf
+    path: project-wiki/hydra-framework/start-here/new-contributor.md
+    digest: sha256:35a79dbb57d1501c7fc8e7e8ebc7627164edecdd130481de575ccfaaa8646871
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "New Contributor"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/engine/src/hydra_engine/cli/dispatch.py
+      - .hydra-framework/engine/src/hydra_engine/commands/installation.py
+      - .hydra-framework/engine/src/hydra_engine/commands/private_tier.py
+      - .hydra-framework/engine/src/hydra_engine/commands/providers.py
+      - .hydra-framework/engine/src/hydra_engine/commands/validation.py
+      - .hydra-framework/engine/src/hydra_engine/commands/wiki.py
+      - .hydra-framework/engine/src/hydra_engine/installation/adopt.py
+      - .hydra-framework/engine/src/hydra_engine/installation/git_hooks.py
+      - .hydra-framework/engine/src/hydra_engine/installation/private_tier.py
+      - .hydra-framework/engine/src/hydra_engine/providers/adapter_plan.py
+      - .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
+      - .hydra-framework/engine/src/hydra_engine/providers/selection.py
+      - .hydra-framework/engine/src/hydra_engine/wiki/links.py
+  hydra://documentation/page/object-context-model:
+    uid: 44c268a7-8483-46ed-8efb-2c9a402a96e5
+    path: project-wiki/hydra-framework/architecture/object-context-model.md
+    digest: sha256:782c93f5df8fb28af77b97e6b02d8a0e5cfc6384e6d14a67223559b55e50cc68
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Object and Context Model"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/engine/src/hydra_engine/identity/object_families.py
+      - .hydra-framework/engine/src/hydra_engine/objects/discovery.py
+      - .hydra-framework/engine/src/hydra_engine/objects/envelopes.py
+      - .hydra-framework/engine/src/hydra_engine/objects/moves.py
+      - .hydra-framework/engine/src/hydra_engine/objects/object_handlers.py
+      - .hydra-framework/engine/src/hydra_engine/objects/references.py
+      - .hydra-framework/engine/src/hydra_engine/objects/registry.py
+      - .hydra-framework/engine/src/hydra_engine/objects/store_build.py
+      - .hydra-framework/engine/src/hydra_engine/objects/store_queries.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/context_packets.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/context_providers.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/index_cache.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/index_collection.py
+      - .hydra-framework/engine/src/hydra_engine/knowledge/search_index.py
+  hydra://documentation/page/operations:
+    uid: 43a0cfab-e6e2-4e90-8bb9-7dbf93b6e43a
+    path: project-wiki/hydra-framework/operations/operations.md
+    digest: sha256:e352dad5bd0ff93fc32eca25afa713478ec659ebe25032cf4ae022ba12905b89
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Operations"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources: []
+  hydra://documentation/page/private-workspace:
+    uid: 7ce90a6b-0571-4c68-b6ee-24b7af1d168f
+    path: project-wiki/hydra-framework/working-with-hydra/private-workspace.md
+    digest: sha256:b1325b4c54b598d01a714a1599ac0329eddfd4195f0efc67f9b4982d00c43238
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Private Workspace"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/core/placement-rules.md
+      - .hydra-framework/engine/src/hydra_engine/commands/private_tier.py
+      - .hydra-framework/engine/src/hydra_engine/installation/private_tier.py
+      - .hydra-framework/engine/src/hydra_engine/installation/private_tier_templates.py
+      - .hydra-framework/engine/src/hydra_engine/work/tiers.py
+  hydra://documentation/page/provider-adapters:
+    uid: c441ea3a-b06d-480e-80a9-c8d4849dc40a
+    path: project-wiki/hydra-framework/extending-hydra/provider-adapters.md
+    digest: sha256:1e590ecdba6abf9b8cb24c6b2241b523e8ea19cf07582ed5769eebf88e8b2242
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Provider Adapters"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/adapters/README.md
+      - .hydra-framework/adapters/lifecycle/README.md
+      - .hydra-framework/adapters/providers/README.md
+      - .hydra-framework/adapters/providers/claude/README.md
+      - .hydra-framework/adapters/providers/claude/capability-map.yaml
+      - .hydra-framework/adapters/providers/codex/README.md
+      - .hydra-framework/adapters/providers/codex/capability-map.yaml
+      - .hydra-framework/engine/src/hydra_engine/providers/adapter_plan.py
+      - .hydra-framework/engine/src/hydra_engine/providers/capabilities.py
+      - .hydra-framework/engine/src/hydra_engine/providers/paths.py
+      - .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
+      - .hydra-framework/engine/src/hydra_engine/providers/selection.py
+  hydra://documentation/page/public-positioning:
+    uid: f5d33312-e292-4607-b3c2-7b4371fc9155
+    path: project-wiki/hydra-framework/reference/public-positioning.md
+    digest: sha256:6f5de3647f6b26a36b578b588c83aa794bdeec21a4c217ceaa9294ced778e9a4
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Public Positioning Brief"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/repo/knowledge/spaces/hydra-framework/overview.md
+      - .hydra-framework/repo/knowledge/spaces/hydra-framework/units/build-status.md
+  hydra://documentation/page/reference:
+    uid: 2e742c60-1d89-4be8-9b6f-b8ee56a19d07
+    path: project-wiki/hydra-framework/reference/reference.md
+    digest: sha256:fc8cb404704783d9b17bbd2df9194e62f41f7ca3e9903df590a5d70a24522b6d
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Reference"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources: []
+  hydra://documentation/page/source-map:
+    uid: 833ae832-43f4-462a-b1bd-51b806aac732
+    path: project-wiki/hydra-framework/reference/source-map.md
+    digest: sha256:2ea8f98ef4d1fc9f86937c7cb14642580bc98c8cad85c0333372fe1d9abc70cd
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Source Map"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources: []
+  hydra://documentation/page/start-here:
+    uid: ad142d5f-0964-49b4-bfde-eae7262117fa
+    path: project-wiki/hydra-framework/start-here/start-here.md
+    digest: sha256:7fd8fb470f8dab6ff42e2ddcc9175d6edc56f7b94dc0b94c685ec6d4c0be4bd7
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Start Here"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources: []
+  hydra://documentation/page/state-tiers:
+    uid: e5f6bb6d-7e64-451c-b14d-5ee99bef4752
+    path: project-wiki/hydra-framework/concepts/state-tiers.md
+    digest: sha256:52384dce5c43eea4d722754e402f16be794a7b29a1f2ff5a80ef2507927328e8
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "State Tiers"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/core/placement-rules.md
+      - .hydra-framework/repo/knowledge/state-tiers.md
+      - .hydra-framework/surfaces/README.md
+  hydra://documentation/page/task-lifecycle:
+    uid: 2f8f0937-ecf7-4408-ab4c-df6b139793c2
+    path: project-wiki/hydra-framework/working-with-hydra/task-lifecycle.md
+    digest: sha256:87038f08369cac2339692d13ea4bf05e08e2626129f4a23ecdda383ed4b61972
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Task Lifecycle"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/core/lifecycle.md
+      - .hydra-framework/core/placement-rules.md
+      - .hydra-framework/capabilities/workflows/task-lifecycle.md
+      - .hydra-framework/engine/src/hydra_engine/checks/task_contract_docs.py
+      - .hydra-framework/engine/src/hydra_engine/commands/work.py
+      - .hydra-framework/engine/src/hydra_engine/work/board.py
+      - .hydra-framework/engine/src/hydra_engine/work/owners.py
+      - .hydra-framework/engine/src/hydra_engine/work/paths.py
+      - .hydra-framework/engine/src/hydra_engine/work/task_records.py
+  hydra://documentation/page/telemetry:
+    uid: 2d2e0df1-bd41-456e-8060-7031d90f622c
+    path: project-wiki/hydra-framework/architecture/telemetry.md
+    digest: sha256:0544635498ac2d7422854dbae13b0da7c46680191a9f375eb1aba75391e3554e
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Telemetry Pipeline"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/engine/src/hydra_engine/telemetry/evidence.py
+      - .hydra-framework/engine/src/hydra_engine/telemetry/evidence_mint.py
+      - .hydra-framework/engine/src/hydra_engine/telemetry/gate.py
+      - .hydra-framework/engine/src/hydra_engine/telemetry/redaction.py
+      - .hydra-framework/engine/src/hydra_engine/telemetry/reporting.py
+      - .hydra-framework/engine/src/hydra_engine/telemetry/transcripts.py
+      - .hydra-framework/engine/src/hydra_engine/telemetry/writer.py
+      - .hydra-framework/repo/knowledge/telemetry-redaction-contract.md
+  hydra://documentation/page/troubleshooting:
+    uid: 9f2290d6-6667-4806-81a1-8fda46dd4fc0
+    path: project-wiki/hydra-framework/operations/troubleshooting.md
+    digest: sha256:9fb2fde169abd690efa6b000338b53c81fcba546c7c77fc0044e8135bb47f2df
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Troubleshooting"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/validation/README.md
+      - .hydra-framework/engine/src/hydra_engine/checks/validator_registry.py
+      - .hydra-framework/validation/rules/metadata-and-placement.md
+      - .hydra-framework/validation/rules/task-readiness-and-state.md
+  hydra://documentation/page/validation:
+    uid: 80dbe078-6d3d-4f48-aaa1-d65191ec49ba
+    path: project-wiki/hydra-framework/operations/validation.md
+    digest: sha256:9b77299a87e0617867f0007c9c2e4e86d3957e2fa3247942ca4a1c6635f76044
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Validation"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/validation/README.md
+      - .hydra-framework/engine/src/hydra_engine/checks/validator_registry.py
+      - .hydra-framework/validation/rules/metadata-and-placement.md
+      - .hydra-framework/validation/rules/task-readiness-and-state.md
+  hydra://documentation/page/working-with-hydra:
+    uid: db8d63db-abbc-4243-bc0f-d55280f63c54
+    path: project-wiki/hydra-framework/working-with-hydra/working-with-hydra.md
+    digest: sha256:42b9d714cc2d0127e5cebf106741379dfca110346e8cce3747c28af069b75c1a
+    family: Documentation
+    kind: documentation-page
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Working With Hydra"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - .hydra-framework/capabilities/workflows/task-lifecycle.md
+      - .hydra-framework/repo/knowledge/task-step-state.md
+      - .hydra-framework/core/placement-rules.md
+  hydra://documentation/wiki/hydra-framework:
+    uid: 45dff86c-a3cb-4777-b268-2c050594289a
+    path: project-wiki/hydra-framework/hydra-framework.md
+    digest: sha256:5df9f0265b90c62066aedb6542d74b2d5222d9b44a5b89c9208e8e41c9c5570e
+    family: Documentation
+    kind: documentation-wiki
+    status: active
+    tier: external
+    scope: repo-local
+    schema_version: 3
+    title: "Hydra Framework Wiki"
+    aliases: []
+    envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
+    relations: []
+    provenance_sources:
+      - AI_SYSTEM.md
+      - .hydra-framework/README.md
+      - .hydra-framework/core/placement-rules.md
   hydra://engine-module/object-family-registry:
     uid: 1eb7694e-2810-4fbf-a0f2-f4f4f2ee284a
     path: .hydra-framework/engine/src/hydra_engine/identity/object_families.py
-    digest: sha256:3b805e7cf31c41262b65b38473133c746155608b33cdce2e2f644ab023b3e7b5
+    digest: sha256:d042e6b2079cb2ba1366d1c5a5fb2f14ff9b2d556955743ad0ff7346d94486dc
     family: Runtime/Engine
     kind: engine-module
     status: active
@@ -356,7 +1144,7 @@ objects:
   hydra://engine-module/object-handler-registry:
     uid: 01d1a598-c313-445e-a594-e8330c58a537
     path: .hydra-framework/engine/src/hydra_engine/objects/object_handlers.py
-    digest: sha256:2a2173adef2301d74e077861a5466bd14cc7540c7f4fa4e5e04e26ec9566399f
+    digest: sha256:949f43eb40cc5d43dace9f3f4c1c2a5e7fe0bad00a06a5ff22c813be501c559d
     family: Runtime/Engine
     kind: engine-module
     status: active
@@ -372,7 +1160,7 @@ objects:
   hydra://engine-module/validator-registry:
     uid: 031b520a-a7b1-41b3-bc3b-f2cd5291d01c
     path: .hydra-framework/engine/src/hydra_engine/checks/validator_registry.py
-    digest: sha256:e0e70f09033c37d453afe1c6a8bcbbde7a0301a9d1a518256fc0dce33496c0b1
+    digest: sha256:93fcb9061bdb1f6723638f0c2b682b3dd0968c730c948dc28a128508d866fa4e
     family: Runtime/Engine
     kind: engine-module
     status: active
@@ -467,7 +1255,7 @@ objects:
   hydra://knowledge-slice/hydra-framework/problems:
     uid: 3b5cdad3-e87f-4af2-b8c6-c5353c7a6d6e
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/problems.md
-    digest: sha256:d83f6085cb3d53eeb9361cc9db32ad62b75e7e02d087897ce730d3d7786f5a56
+    digest: sha256:49afe373f5d0560197f1dcd05f4b26b58bdef41e34cbfcfc9dddd9e2ebdc58d8
     family: Knowledge
     kind: knowledge-slice
     status: active

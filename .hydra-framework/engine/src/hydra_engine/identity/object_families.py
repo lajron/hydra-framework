@@ -80,6 +80,7 @@ class ObjectFamily:
     name: str
     id_prefixes: tuple[str, ...]
     kinds: tuple[str, ...]
+    automatically_retrievable: bool = True
 
 
 # The ten tokens the flat map carried appear in *both* tuples of their family.
@@ -140,6 +141,12 @@ OBJECT_FAMILIES = (
         id_prefixes=("telemetry-evidence",),
         kinds=("telemetry-evidence",),
     ),
+    ObjectFamily(
+        name="Documentation",
+        id_prefixes=("documentation",),
+        kinds=("documentation-wiki", "documentation-page"),
+        automatically_retrievable=False,
+    ),
 )
 
 
@@ -181,3 +188,11 @@ def unregistered_family_tokens(hydra_id: str, kind: str) -> list[str]:
     if kind and not any(kind in family.kinds for family in OBJECT_FAMILIES):
         problems.append(f"kind `{kind}`")
     return problems
+
+
+def family_automatically_retrievable(name: str) -> bool:
+    """Whether a family participates in ordinary agent retrieval."""
+    return next(
+        (family.automatically_retrievable for family in OBJECT_FAMILIES if family.name == name),
+        True,
+    )

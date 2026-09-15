@@ -4,13 +4,21 @@ This command calls nothing `agent_hooks` owns -- its work is entirely
 composing already-moved domain logic from `providers`,
 `work`, and `knowledge` -- so it lives in its own
 module rather than `commands/agent_hooks.py`: cramming it in there would have
-pushed that module's fan-out (already 7) well past check 5's cap of 8. This
-module's own fan-out stays at 7 because every dependency below is a complete,
-self-contained function: an earlier deferral (a
+pushed that module's fan-out beyond check 5's cap of 8. This module imported
+eight internal modules before the M6 object-registry wiring, not seven. M6
+removes three annotation-only imports and adds two object-model
+imports, leaving a runtime fan-out of seven because every dependency below is
+a complete, self-contained function. An earlier deferral (a
 not-yet-available `classify_surfaces`, reached only through conditional,
 mid-control-flow calls that could not be expressed as precomputed data) no
 longer applies now that both forward dependencies are real functions this
 module can call directly.
+
+The wired hook now refreshes one derived tracked file,
+`cognition/graph/registry.yaml`, when an edited path is already registered. It
+validates object references before writing and remains best-effort. The
+`.hydra-framework/hooks/post-merge` hook already performs the same class of
+registry refresh after Git changes.
 """
 
 from __future__ import annotations
@@ -21,15 +29,56 @@ import sys
 from pathlib import Path
 
 from hydra_engine.commands import CommandResult
-from hydra_engine.finding import Finding
 from hydra_engine.knowledge.package_checks import PACKAGE_FILE_FAIL_TOKENS, validate_package_root
 from hydra_engine.knowledge.node_catalog import discover_knowledge_nodes, knowledge_node_for_path, node_root
-from hydra_engine.providers.paths import ProvidersPaths
+from hydra_engine.objects.references import validate_object_references
+from hydra_engine.objects.registry import registry_object_entries, write_object_registry
 from hydra_engine.providers.reclaim import provider_surface_notice
-from hydra_engine.work.paths import WorkPaths
 from hydra_engine.work.placement import tier_placement_notice
 
 PACKAGE_GATE_REPORT_LIMIT = 8
+
+
+def _reindex_registered_object(root: Path, edited: Path, resolver_paths: ObjectLocations) -> None:
+    try:
+        entries, errors = registry_object_entries(resolver_paths.object_registry, root)
+        if errors:
+            return
+        edited_rel = edited.relative_to(root).as_posix()
+    except (OSError, UnicodeError, ValueError):
+        return
+
+    registered_paths = {
+        Path(str(entry["path"])).as_posix()
+        for entry in entries.values()
+        if entry.get("path")
+    }
+    if edited_rel not in registered_paths:
+        return
+
+    try:
+        findings = validate_object_references(resolver_paths)
+        if findings:
+            print(
+                f"Hydra object registry refresh skipped after editing {edited_rel}; "
+                "run `hydra.py ref check` or `hydra.py ref index` after fixing the findings.",
+                file=sys.stderr,
+            )
+            return
+        count = write_object_registry(resolver_paths)
+    except (OSError, UnicodeError, ValueError):
+        print(
+            f"Hydra object registry refresh failed after editing {edited_rel}; "
+            "run `hydra.py ref index`.",
+            file=sys.stderr,
+        )
+        return
+    if count is None:
+        print(
+            f"Hydra object registry refresh refused after editing {edited_rel}; "
+            "run `hydra.py ref index` again.",
+            file=sys.stderr,
+        )
 
 
 def command_hook_post_edit(
@@ -59,6 +108,8 @@ def command_hook_post_edit(
     edited = Path(file_value)
     if not edited.is_absolute():
         edited = root / edited
+
+    _reindex_registered_object(root, edited, resolver_paths)
 
     # A write into a provider directory is the most common way Hydra gets
     # bypassed: someone adds a skill or subagent where their runtime expects it

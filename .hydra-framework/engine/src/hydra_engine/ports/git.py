@@ -3,7 +3,9 @@
 The sole source of git-derived state: config values and tracked-file
 listings. Parameterized by `root` instead of a module global, so a golden
 fixture points these at a fixture tree the same way `RepoContext` does for
-the rest of command dispatch.
+the rest of command dispatch. `commit_changed_paths` is the last M6 addition
+and the last available importer slot for this port under the architecture
+bounds.
 """
 
 from __future__ import annotations
@@ -52,6 +54,36 @@ def last_commit_iso(root: Path, path: str) -> str:
     if result.returncode != 0:
         return ""
     return result.stdout.strip()
+
+
+def commit_changed_paths(root: Path, revision: str) -> list[str]:
+    """Return repository-relative paths changed by `revision`, or `[]`.
+
+    The command includes root and merge commits and compares merges against
+    their first parent. It never raises because commit reporting is a
+    best-effort convenience for hooks and audit output.
+    """
+    try:
+        result = subprocess.run(
+            [
+                "git", "diff-tree", "--no-commit-id", "--name-status", "-r",
+                "-m", "--first-parent", "--root", revision,
+            ],
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=GIT_DIFF_TIMEOUT_SECONDS,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if result.returncode != 0:
+        return []
+    paths: list[str] = []
+    for line in result.stdout.splitlines():
+        _status, separator, path = line.partition("\t")
+        if separator and path:
+            paths.append(path)
+    return list(dict.fromkeys(paths))
 
 
 def tracked_files(root: Path, prefix: str) -> list[str]:

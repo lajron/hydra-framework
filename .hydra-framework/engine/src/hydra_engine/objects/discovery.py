@@ -65,8 +65,10 @@ def extract_hydra_object(path: Path, paths: ObjectLocations) -> tuple[dict | Non
 def extract_sidecar_objects(path: Path, paths: ObjectLocations) -> tuple[list[dict], list[str]]:
     # Not a document-form switch: OBJECT_SIDECAR_SCHEMA defines a sidecar as a
     # YAML file, so this asks whether `path` could be one at all, not which
-    # handler owns it. Sidecars are how a form with nowhere to put an envelope
-    # -- a `.txt`, a `.sh`, a directory -- becomes an object.
+    # handler owns it. Sidecars allow a form with nowhere to put an envelope,
+    # such as a `.txt` or `.sh` file, to become an object. Directories cannot
+    # become valid objects because sidecar construction fingerprints and reads
+    # the target as text.
     if path.suffix not in {".yaml", ".yml"}:
         return [], []
     try:

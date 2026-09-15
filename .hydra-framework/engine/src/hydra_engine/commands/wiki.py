@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from hydra_engine.commands import CommandResult
+from hydra_engine.commands.wiki_audit import command_wiki_audit
+from hydra_engine.commands.wiki_fingerprint import command_wiki_fingerprint
 from hydra_engine.documents.tokens import is_relative_to, write_text
 from hydra_engine.identity.slugs import slugify
 from hydra_engine.wiki.links import validate_wiki
@@ -44,7 +46,7 @@ def command_wiki_scaffold(args, paths: WikiPaths) -> CommandResult:
 
 
 def register(subparsers) -> None:
-    """Add `validate-wiki` and `wiki scaffold`."""
+    """Add wiki validation, scaffolding, audit, and fingerprint commands."""
     wiki_validate = subparsers.add_parser("validate-wiki", help="Validate project-wiki Markdown and Obsidian links")
     wiki_validate.add_argument("--path", help="Explicit wiki root path; defaults to project-wiki")
     wiki_validate.set_defaults(func=_dispatch_validate_wiki)
@@ -56,6 +58,14 @@ def register(subparsers) -> None:
     scaffold.add_argument("--title", default="")
     scaffold.add_argument("--force", action="store_true")
     scaffold.set_defaults(func=_dispatch_wiki_scaffold)
+    audit = wiki_sub.add_parser("audit", help="Report wiki source freshness and provenance gaps")
+    audit.add_argument("--wiki", help="Limit the audit to one sidecar name")
+    audit.add_argument("--changed-in", help="Limit the audit to sources changed by a Git revision")
+    audit.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+    audit.set_defaults(func=_dispatch_wiki_audit)
+    fingerprint = wiki_sub.add_parser("fingerprint", help="Write source digests for one wiki page")
+    fingerprint.add_argument("--page", required=True, help="Documentation hydra_id to fingerprint")
+    fingerprint.set_defaults(func=_dispatch_wiki_fingerprint)
 
 
 def _dispatch_validate_wiki(args, ctx) -> int:
@@ -64,3 +74,11 @@ def _dispatch_validate_wiki(args, ctx) -> int:
 
 def _dispatch_wiki_scaffold(args, ctx) -> int:
     return command_wiki_scaffold(args, ctx.wiki_paths()).exit_code
+
+
+def _dispatch_wiki_audit(args, ctx) -> int:
+    return command_wiki_audit(args, ctx.context_compiler_paths()).exit_code
+
+
+def _dispatch_wiki_fingerprint(args, ctx) -> int:
+    return command_wiki_fingerprint(args, ctx.context_compiler_paths()).exit_code

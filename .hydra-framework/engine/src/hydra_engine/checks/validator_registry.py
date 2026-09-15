@@ -18,20 +18,18 @@ provenance:
 
 The validator registry is the third explicit extension registry.
 
-Before this, `validate`/`doctor`'s ten checks existed as anonymous zero-arg
-lambdas built in two places -- `checks.repo_findings.build` (seven of them)
-and three free functions in `checks.package_and_task_findings` -- and
-`cli.dispatch._validate_checks` was the only place that wrote down the original
-order, by manually interleaving calls into both modules. Nothing named an
-individual check, and nothing but that one function in the composition root
-recorded where a new validator's call had to be spliced relative to the
-other nine. That is exactly the "editing several central switchboards"
-failure the architecture avoids, even though the two source modules were
-already split to respect check 5's fan-out cap.
+Before this, `validate`/`doctor` checks existed as anonymous zero-arg
+callables built in two places, and `cli.dispatch._validate_checks` was the only
+place that wrote down their original order by manually interleaving calls into
+both modules. Nothing named an individual check, and nothing but that one
+function in the composition root recorded where a new validator's call had to
+be spliced relative to the others. That is exactly the "editing several central
+switchboards" failure the architecture avoids, even though the two source
+modules were already split to respect check 5's fan-out cap.
 
 This module is the deliberately simple registry: a `Validator` is
 a name plus the same one-argument `check(ctx)` shape every validator already
-had, and `VALIDATORS` is the one place the full ten-check order is written
+had, and `VALIDATORS` is the one place the full 19-validator order is written
 down. `cli.dispatch._validate_checks` now reads as `checks_for(ctx)` --
 composing the registry, not authoring the order.
 
@@ -40,9 +38,9 @@ Registering here does not move where a validator is implemented.
 the reason recorded in `repo_findings`'s own docstring (check 5's fan-out
 cap), and this module deliberately does not re-import their domain
 dependencies (`module_metadata`, `capabilities`, `architecture_check`, and so
-on) -- it only names the seven-tuple `repo_findings.NAMED_CHECKS` already
-exports and the three functions `package_and_task_findings` already exports,
-which is why its own fan-out is two imports, not ten.
+on) -- it only names the nine-entry `repo_findings.NAMED_CHECKS` tuple and the
+five functions `package_and_task_findings` exports, which keeps its own
+fan-out at two domain imports.
 
 Order is locked by byte-identical `validate`/`doctor` contract goldens --
 `command_validate` prints findings in this order, not sorted -- so

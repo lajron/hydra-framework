@@ -6,7 +6,7 @@ import dataclasses
 import contextlib
 from typing import Callable
 
-from hydra_engine.identity.object_families import family_for
+from hydra_engine.identity.object_families import OBJECT_FAMILIES, family_for
 from hydra_engine.knowledge.bindings import BindingResolutionError, bound_nodes_for_paths, bindings_root, load_bindings
 from hydra_engine.knowledge import context_support
 from hydra_engine.knowledge.nodes import discover_knowledge_nodes, resolve_inheritance
@@ -271,9 +271,18 @@ def _family_search_collector(family: str):
     return _collect
 
 
+def _collect_no_candidates(_request: ProviderRequest) -> ProviderOutput:
+    return ProviderOutput(candidates=[])
+
+
 CONTEXT_PROVIDERS: tuple[ContextProvider, ...] = (
     ContextProvider(KNOWLEDGE_FAMILY, _collect_knowledge),
     *(ContextProvider(family, _family_search_collector(family)) for family in SEARCH_FAMILIES),
+    *(
+        ContextProvider(family.name, _collect_no_candidates)
+        for family in OBJECT_FAMILIES
+        if family.name != KNOWLEDGE_FAMILY and family.name not in SEARCH_FAMILIES
+    ),
 )
 PROVIDERS_BY_FAMILY = {provider.family: provider for provider in CONTEXT_PROVIDERS}
 

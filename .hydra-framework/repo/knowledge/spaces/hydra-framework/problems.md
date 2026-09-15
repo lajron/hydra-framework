@@ -18,7 +18,7 @@ provenance:
 # Problems
 
 Status: active
-Updated: 2026-09-14
+Updated: 2026-09-15
 
 Concrete unresolved concerns for Hydra's own machinery. Each needs evidence, not
 opinion. Resolve or close with a reason; do not let entries rot.
@@ -55,6 +55,21 @@ opinion. Resolve or close with a reason; do not let entries rot.
 - Certainty: confirmed
 
 ## Resolved
+
+### R15: Documentation and implementation claims need reconciliation (2026-09-15, was P17)
+
+- Evidence:
+  - Page `project-wiki/hydra-framework/architecture/object-context-model.md` says the object handlers cover Markdown, YAML, and Python "under the engine source root." `.hydra-framework/engine/src/hydra_engine/objects/object_handlers.py:97-123` shows Markdown and YAML use the whole Hydra root, while only Python is rooted at `engine/src`.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/objects/discovery.py:67-69`, says a sidecar can make a directory an object. `.hydra-framework/engine/src/hydra_engine/objects/envelopes.py:156` always fingerprints the object path, and `.hydra-framework/engine/src/hydra_engine/documents/digests.py:11-13` reads it as text, so a directory cannot pass object construction.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/commands/hooks.py:1-14`, says its module fan-out is 7. Imports at `.hydra-framework/engine/src/hydra_engine/commands/hooks.py:23-30` total 8, and `.hydra-framework/engine/src/hydra_engine/architecture.py:21` sets the fan-out cap to 8.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/cli/parser.py:12-13`, says `scripts/hydra.py` registers ten commands, but `.hydra-framework/scripts/hydra.py:48-51` registers only `selftest` through its extra hook.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/checks/validator_registry.py:21,34-35,47`, describes ten validators, while `.hydra-framework/engine/src/hydra_engine/checks/validator_registry.py:94-106` defines 19 `VALIDATORS`.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/objects/object_handlers.py:44-47`, says two engine modules declare envelopes. Frontmatter in `.hydra-framework/engine/src/hydra_engine/identity/object_families.py:1-15`, `.hydra-framework/engine/src/hydra_engine/objects/object_handlers.py:1-15`, and `.hydra-framework/engine/src/hydra_engine/checks/validator_registry.py:1-16` establishes three.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/commands/references.py:96-98`, describes `ref rdeps` as serving the `refs` index, but `.hydra-framework/engine/src/hydra_engine/commands/references.py:99-110` calls `store_queries.citers_of`, whose implementation at `.hydra-framework/engine/src/hydra_engine/objects/store_queries.py:95-103` queries `relations`.
+- Impact: The affected documentation and engine maintenance prose can direct readers to the wrong scope, count, or dependency table. The ten content-page provenance entries are now auditable, but they do not correct these claims.
+- Resolution: Corrected the wiki and engine claims without changing behavior. The object-context page now states the broader Markdown and YAML root, YAML's `cognition/` exclusion, and Python's `engine/src` root. Sidecar discovery now states that target construction fingerprints and reads text, so directories are not valid objects. The hook documentation records the verified pre-M6 fan-out of 8 and the post-M6 runtime fan-out of 7, the parser documents dynamic module registration plus the separate `selftest` hook, the validator registry records 19 validators, the object-handler registry records three envelope-declaring modules, and `ref rdeps` documents `store_queries.citers_of` over relations rather than the refs table.
+- Validation: Focused hook, Git, wiki-audit, and agent-hook contract suites pass 14, 23, 15, and 8 tests. Each of the eight affected pages was fingerprinted once after the corrections.
+- Certainty: confirmed
 
 ### R12: Every knowledge query materialized and scanned the entire corpus in Python (2026-09-13, was P13)
 
