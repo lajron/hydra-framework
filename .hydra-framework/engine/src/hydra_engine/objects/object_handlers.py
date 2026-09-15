@@ -43,8 +43,9 @@ registration gap, and it is deliberately narrow in two ways:
   scanned file to resolve.
 - A module is an object only if it declares an envelope, exactly as a
   Markdown file is. Registering this form did not turn all 103 engine
-  modules into objects; it turned the two that declare one into objects. See
-  the slice's task record for the measured before/after count.
+  modules into objects; envelope declarations currently live in three modules:
+  `identity/object_families.py`, `objects/object_handlers.py`, and
+  `checks/validator_registry.py`.
 """
 
 from __future__ import annotations

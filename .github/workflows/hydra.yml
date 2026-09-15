@@ -61,6 +61,12 @@ jobs:
       - name: Wiki links
         run: python3 .hydra-framework/scripts/hydra.py validate-wiki
 
+      # Reported, not enforced: a page can be stale on purpose. Exits 0 by
+      # design. Existing knowledge-unit digest validation does not cover
+      # Documentation sidecar entries; this step is their freshness signal.
+      - name: Wiki source freshness
+        run: python3 .hydra-framework/scripts/hydra.py wiki audit
+
       # Reported, not enforced: this repository has no agreed budget yet.
       # Add --fail-over <tokens> once the team picks one from a measured baseline.
       - name: Context surface size

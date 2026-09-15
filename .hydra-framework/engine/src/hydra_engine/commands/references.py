@@ -93,9 +93,12 @@ def command_ref_resolve(args, resolver_paths) -> CommandResult:
 
 
 def command_ref_rdeps(args, resolver_paths) -> CommandResult:
-    """Reverse references: no scan-based equivalent worth building (a full-tree scan per query
-    would repeat exactly the search `refs`'s index exists to avoid), so a
-    missing/stale store is reported rather than degraded to a scan."""
+    """Reverse relations through the object store's `citers_of` query.
+
+    The command does not query the store's `refs` table. A missing or stale
+    store is reported rather than degraded to a scan because reverse relation
+    lookup has no scan-based equivalent here.
+    """
     conn = store_queries.open_fresh_store(resolver_paths, resolver_paths.local)
     if conn is None:
         print("Hydra ref store: not available (missing, stale, or disabled); run `hydra.py ref store rebuild`.", file=sys.stderr)

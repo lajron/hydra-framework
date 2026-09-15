@@ -1,0 +1,21 @@
+{
+  "exit_code": 0,
+  "manifest": {
+    ".hydra-framework/README.md": "0de5f42b131305a48c4775ac871045712943998891b583e4381784801df42f4b",
+    ".hydra-framework/adapters/providers/claude/capability-map.yaml": "b003af671c56a0420ad81e7ad9b88a94b6f78d330e086a7d8fd61f6e1b9e23b6",
+    ".hydra-framework/adapters/providers/codex/capability-map.yaml": "b7477930e8b873de520503637055733760efabf4afe99e83739eda30ea03b632",
+    ".hydra-framework/capabilities/agents/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".hydra-framework/capabilities/skills/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".hydra-framework/core/placement-rules.md": "5ccfd85befd6aa3ff7d5dd0fc1417b21ae5e3186839a360348c8b8ed51dfb60b",
+    ".hydra-framework/manifest.yaml": "bc74566ab21d13c108337058c3db644e60fd8036887039425542e79efcb73c93",
+    ".hydra-framework/surfaces/wiki/fixture.yaml": "ae6e5bdf8cb17b73f711d2539b4b2dd8dc7f2f69ae1c46d8bab79063cb6c51b5",
+    ".hydra-framework/tasks/personal/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".hydra-framework/tasks/templates/checkpoint.md": "25f014f86a8490b4c636b360b343e8d2a8cc818c68948a3d4d243d928b7c0d99",
+    ".hydra-framework/tasks/templates/task.md": "32dd805b125370ccb27117f3984a894c773d0685fcd378aa6cbce3da715dba10",
+    "AGENTS.md": "a52ae73fc0a471d277c57a8c65af99c0b3e814f984b2ead607c36d5115eb12bb",
+    "AI_SYSTEM.md": "5a1cc2ad0944ad277aa08fe46d44c654ef5fa0256d6ca91925a2af23d6dfa5d6",
+    "source.py": "9e26bf369911c45c243c684147b23fc9e1dcfcf257d299a1c632016a6fcd33f4"
+  },
+  "stderr": "",
+  "stdout": "{\n  \"sidecars\": [\n    {\n      \"name\": \"fixture\",\n      \"path\": \".hydra-framework/surfaces/wiki/fixture.yaml\",\n      \"status\": \"ok\",\n      \"pages\": [\n        {\n          \"name\": \"page\",\n          \"hydra_id\": \"hydra://documentation/page/page\",\n          \"path\": \"project-wiki/page.md\",\n          \"checked_on\": \"2026-01-01\",\n          \"sources\": [\n            \"source.py\"\n          ],\n          \"source_digests\": [\n            {\n              \"source\": \"source.py\",\n              \"digest\": \"sha256:0000000000000000000000000000000000000000000000000000000000000000\"\n            }\n          ],\n          \"status\": \"finding\",\n          \"findings\": [\n            {\n              \"category\": \"digest-mismatch\",\n              \"source\": \"source.py\",\n              \"detail\": \"digest mismatch: source.py\",\n              \"remediation\": \"re-verify the page against its sources, then: hydra.py wiki fingerprint --page hydra://documentation/page/page\"\n            }\n          ]\n        }\n      ]\n    }\n  ],\n  \"summary\": {\n    \"sidecars\": 1,\n    \"pages\": 1,\n    \"stale_pages\": 1,\n    \"no_source_pages\": 0,\n    \"unverifiable_pages\": 0,\n    \"finding_pages\": 1,\n    \"findings\": 1,\n    \"unreadable_sidecars\": 0\n  }\n}\n"
+}

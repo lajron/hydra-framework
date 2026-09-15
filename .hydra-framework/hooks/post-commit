@@ -12,3 +12,4 @@ script="$root/.hydra-framework/scripts/hydra.py"
 
 python3 "$script" hook-reindex-knowledge --if-exists >/dev/null 2>&1 || true
 python3 "$script" ref store rebuild --if-exists >/dev/null 2>&1 || true
+python3 "$script" wiki audit --changed-in HEAD || true

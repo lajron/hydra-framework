@@ -65,6 +65,17 @@ class Bundle:
 
 
 class CommandHookPostEditTests(unittest.TestCase):
+    def _register_path(self, bundle: Bundle, path: str) -> None:
+        _write(bundle.root, path, "# Registered object\n")
+        _write(
+            bundle.root,
+            ".hydra-framework/cognition/graph/registry.yaml",
+            "schema: hydra-framework.object-registry.v1\n"
+            "objects:\n"
+            "  hydra://fixture/object:\n"
+            f"    path: {path}\n",
+        )
+
     def test_empty_stdin_is_silent_success(self):
         bundle = Bundle()
         with mock.patch("sys.stdin", stdlib_io.StringIO("")):
@@ -79,6 +90,72 @@ class CommandHookPostEditTests(unittest.TestCase):
                 "",
             )
         self.assertEqual(result.exit_code, 0)
+
+    def test_registered_path_reindexes_silently(self):
+        bundle = Bundle()
+        self._register_path(bundle, "project-wiki/registered.md")
+        with mock.patch.object(hooks, "validate_object_references", return_value=[]) as validate, mock.patch.object(
+            hooks, "write_object_registry", return_value=1
+        ) as write:
+            result, out, err = bundle.run({"tool_input": {"file_path": "project-wiki/registered.md"}})
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(out, "")
+        self.assertEqual(err, "")
+        validate.assert_called_once_with(bundle.resolver_paths)
+        write.assert_called_once_with(bundle.resolver_paths)
+
+    def test_unregistered_path_does_not_reindex(self):
+        bundle = Bundle()
+        self._register_path(bundle, "project-wiki/registered.md")
+        _write(bundle.root, "project-wiki/other.md", "# Other\n")
+        with mock.patch.object(hooks, "validate_object_references") as validate, mock.patch.object(
+            hooks, "write_object_registry"
+        ) as write:
+            result, out, err = bundle.run({"tool_input": {"file_path": "project-wiki/other.md"}})
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(out, "")
+        self.assertEqual(err, "")
+        validate.assert_not_called()
+        write.assert_not_called()
+
+    def test_missing_registry_is_not_created(self):
+        bundle = Bundle()
+        _write(bundle.root, "project-wiki/registered.md", "# Registered object\n")
+        with mock.patch.object(hooks, "validate_object_references") as validate, mock.patch.object(
+            hooks, "write_object_registry"
+        ) as write:
+            result, out, err = bundle.run({"tool_input": {"file_path": "project-wiki/registered.md"}})
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(out, "")
+        self.assertEqual(err, "")
+        self.assertFalse(bundle.resolver_paths.object_registry.exists())
+        validate.assert_not_called()
+        write.assert_not_called()
+
+    def test_registered_path_with_broken_object_references_does_not_rewrite_registry(self):
+        bundle = Bundle()
+        self._register_path(bundle, "project-wiki/registered.md")
+        before = bundle.resolver_paths.object_registry.read_text(encoding="utf-8")
+        with mock.patch.object(hooks, "validate_object_references", return_value=[object()]) as validate, mock.patch.object(
+            hooks, "write_object_registry"
+        ) as write:
+            result, out, err = bundle.run({"tool_input": {"file_path": "project-wiki/registered.md"}})
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(out, "")
+        self.assertIn("hydra.py ref check", err)
+        self.assertIn("hydra.py ref index", err)
+        self.assertEqual(bundle.resolver_paths.object_registry.read_text(encoding="utf-8"), before)
+        validate.assert_called_once_with(bundle.resolver_paths)
+        write.assert_not_called()
+
+    def test_hook_post_edit_still_exits_zero_after_the_import_swap(self):
+        bundle = Bundle()
+        edited = bundle.root / "AI_SYSTEM.md"
+        _write(bundle.root, "AI_SYSTEM.md", "content\n")
+        result, out, err = bundle.run({"tool_input": {"file_path": str(edited)}})
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(out, "")
+        self.assertEqual(err, "")
 
     def test_provider_surface_write_prints_a_promotion_notice(self):
         bundle = Bundle()

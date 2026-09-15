@@ -85,6 +85,14 @@ against the wiki root; it does not validate backtick path citations. Run it
 after any page move or rename. Agent authoring procedure for wiki pages lives
 in `capabilities/skills/wiki-authoring/skill.md`.
 
+Each managed wiki page has a declaration in
+`.hydra-framework/surfaces/wiki/<wiki>.yaml`. New and changed pages must name
+their canonical source files there. Re-read those sources before running
+`hydra.py wiki fingerprint --page <hydra-id>`, which writes their current
+digests and `checked_on` value. After content changes, run `hydra.py wiki audit`
+and resolve stale, missing, or unverifiable findings honestly. A fingerprint is
+evidence of re-verification, not a substitute for it.
+
 ## Developer Docs Surface
 
 Developer-facing documentation aligned with canonical repository knowledge. If a

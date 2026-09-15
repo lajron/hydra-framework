@@ -8,6 +8,31 @@ from pathlib import Path
 from hydra_engine.knowledge.packages import ContextCompilerPaths
 
 
+def add_documentation_object(root: Path) -> Path:
+    page = root / "project-wiki/wiki.md"
+    page.parent.mkdir(parents=True)
+    page.write_text("# Routing Guide\nhuman-facing documentation\n", encoding="utf-8")
+    (root / ".hydra-framework/wiki-fixture.yaml").write_text(
+        """schema: hydra-framework.object-sidecar.v1
+objects:
+  routing-guide:
+    hydra_id: hydra://documentation/wiki
+    aliases:
+      - hydra://alias/wiki
+    kind: documentation-page
+    title: Routing Guide
+    status: active
+    scope: repo
+    path: project-wiki/wiki.md
+    relations: []
+    provenance:
+      sources: []
+""",
+        encoding="utf-8",
+    )
+    return root
+
+
 def paths_for(root: Path, spaces: tuple[str, ...] = ("demo",)) -> ContextCompilerPaths:
     hydra = root / ".hydra-framework"
     knowledge = hydra / "repo/knowledge"

@@ -18,12 +18,19 @@ provenance:
 # Problems
 
 Status: active
-Updated: 2026-09-13
+Updated: 2026-09-15
 
 Concrete unresolved concerns for Hydra's own machinery. Each needs evidence, not
 opinion. Resolve or close with a reason; do not let entries rot.
 
 ## Open
+
+### P16: No documentation surface can be asked whether a source it depends on has changed (2026-09-14)
+
+- Evidence: `knowledge stale` asks exactly that of the 7 knowledge units and reports 2 stale on `main` at 7801b1d, reading `provenance.sources` + `source_digests` + `checked_on` through `knowledge/freshness.py:287-314`. No wiki page carries that contract: 0 of 40 pages under `project-wiki/` is a registered object, so none is in `provenance`, and `citers_of_source_path` (`objects/store_queries.py:105-112`) returns nothing for a source a wiki page describes. `project-wiki/hydra-framework/reference/source-map.md` records the dependency by hand in 19 prose rows covering 23 pages; `wiki/links.py:44` checks those links resolve and nothing checks whether the targets changed. Measured drift with no detector today: 5 of 70 registered commands are absent from `command-surface.md`, and `checks/validator_registry.py:21` describes `validate`/`doctor`'s "ten checks" where `len(VALIDATORS)` is 19.
+- Impact: documentation dependency is maintainer memory rather than repository state, so drift is found by someone noticing. It is not a wiki-only gap: 4 of the 8 drift items measured during the review are inside the engine, in files that are themselves Hydra objects, and a mechanism scoped to `project-wiki/` would catch none of them. Current drift is small, which is the condition under which a detector can be built and validated against a corpus still worth trusting.
+- Resolution: unresolved, and the mechanism is decided. Reviewed across four phases in `.hydra-framework/evolution/candidates/repository-intelligence-review.md`, now `captured`; the reviewed proposal `2026-09-14-repository-intelligence-and-wiki-projections` is `superseded` by the MVP in that review's `03-architecture-and-mvp.md` section 4 as amended by its `04-decision.md` section 1. Wiki pages become objects through an object sidecar under `.hydra-framework/surfaces/wiki/`, carrying the same `provenance` contract knowledge units already use, under one `Documentation` object family that is deliberately not in `SEARCH_FAMILIES`: it carries a non-retrieving context provider, so a page is addressable without its prose ever becoming a `compile-context` candidate. No schema change, no store change, no envelope change, and no change to `knowledge/freshness.py`; measured at 1633 tests passing in an isolated clone. Owned by `.hydra-framework/tasks/personal/milosdenic-dev-gmail-com/2026-09-14-repository-documentation-dependency-mvp.md`. Two questions stay open inside it: the false-positive rate of page-level digest staleness, which has never run anywhere and which `wiki audit` is what measures, and whether `ref index` stays inside the 30 s hook budget as the object count grows, which P5 and P12 own.
+- Certainty: confirmed
 
 ### P12: Incremental knowledge-index update cost scales with corpus size, not with the changed document (2026-09-13)
 
@@ -48,6 +55,21 @@ opinion. Resolve or close with a reason; do not let entries rot.
 - Certainty: confirmed
 
 ## Resolved
+
+### R15: Documentation and implementation claims need reconciliation (2026-09-15, was P17)
+
+- Evidence:
+  - Page `project-wiki/hydra-framework/architecture/object-context-model.md` says the object handlers cover Markdown, YAML, and Python "under the engine source root." `.hydra-framework/engine/src/hydra_engine/objects/object_handlers.py:97-123` shows Markdown and YAML use the whole Hydra root, while only Python is rooted at `engine/src`.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/objects/discovery.py:67-69`, says a sidecar can make a directory an object. `.hydra-framework/engine/src/hydra_engine/objects/envelopes.py:156` always fingerprints the object path, and `.hydra-framework/engine/src/hydra_engine/documents/digests.py:11-13` reads it as text, so a directory cannot pass object construction.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/commands/hooks.py:1-14`, says its module fan-out is 7. Imports at `.hydra-framework/engine/src/hydra_engine/commands/hooks.py:23-30` total 8, and `.hydra-framework/engine/src/hydra_engine/architecture.py:21` sets the fan-out cap to 8.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/cli/parser.py:12-13`, says `scripts/hydra.py` registers ten commands, but `.hydra-framework/scripts/hydra.py:48-51` registers only `selftest` through its extra hook.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/checks/validator_registry.py:21,34-35,47`, describes ten validators, while `.hydra-framework/engine/src/hydra_engine/checks/validator_registry.py:94-106` defines 19 `VALIDATORS`.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/objects/object_handlers.py:44-47`, says two engine modules declare envelopes. Frontmatter in `.hydra-framework/engine/src/hydra_engine/identity/object_families.py:1-15`, `.hydra-framework/engine/src/hydra_engine/objects/object_handlers.py:1-15`, and `.hydra-framework/engine/src/hydra_engine/checks/validator_registry.py:1-16` establishes three.
+  - The engine claim in scope through `project-wiki/hydra-framework/architecture/engine.md`, `.hydra-framework/engine/src/hydra_engine/commands/references.py:96-98`, describes `ref rdeps` as serving the `refs` index, but `.hydra-framework/engine/src/hydra_engine/commands/references.py:99-110` calls `store_queries.citers_of`, whose implementation at `.hydra-framework/engine/src/hydra_engine/objects/store_queries.py:95-103` queries `relations`.
+- Impact: The affected documentation and engine maintenance prose can direct readers to the wrong scope, count, or dependency table. The ten content-page provenance entries are now auditable, but they do not correct these claims.
+- Resolution: Corrected the wiki and engine claims without changing behavior. The object-context page now states the broader Markdown and YAML root, YAML's `cognition/` exclusion, and Python's `engine/src` root. Sidecar discovery now states that target construction fingerprints and reads text, so directories are not valid objects. The hook documentation records the verified pre-M6 fan-out of 8 and the post-M6 runtime fan-out of 7, the parser documents dynamic module registration plus the separate `selftest` hook, the validator registry records 19 validators, the object-handler registry records three envelope-declaring modules, and `ref rdeps` documents `store_queries.citers_of` over relations rather than the refs table.
+- Validation: Focused hook, Git, wiki-audit, and agent-hook contract suites pass 14, 23, 15, and 8 tests. Each of the eight affected pages was fingerprinted once after the corrections.
+- Certainty: confirmed
 
 ### R12: Every knowledge query materialized and scanned the entire corpus in Python (2026-09-13, was P13)
 

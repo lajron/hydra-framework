@@ -17,6 +17,7 @@ if str(_SRC) not in sys.path:
 
 from hydra_engine.knowledge import index_collection, packages, search_index  # noqa: E402
 from hydra_engine.objects.discovery import ObjectLocations  # noqa: E402
+from v3_fixtures import add_documentation_object  # noqa: E402
 
 
 def _paths(root: Path) -> packages.ContextCompilerPaths:
@@ -90,6 +91,45 @@ def _repo() -> Path:
 
 
 class SearchIndexTests(unittest.TestCase):
+    def test_documentation_is_suppressed_for_ordinary_queries_in_source_and_sqlite(self):
+        root = add_documentation_object(_repo())
+        paths, resolver, local = _paths(root), _resolver(root), root / ".hydra-framework.local"
+        source_results, _features, source = search_index.search(
+            "Routing Guide", paths=paths, resolver_paths=resolver, local=local, force_source=True,
+        )
+        self.assertEqual(source, "source")
+        self.assertFalse(any(result.document.hydra_id == "hydra://documentation/wiki" for result in source_results))
+
+        search_index.build_index(paths, resolver, local)
+        sqlite_results, _features, source = search_index.search(
+            "human documentation", paths=paths, resolver_paths=resolver, local=local,
+        )
+        self.assertEqual(source, "sqlite")
+        self.assertFalse(any(result.document.hydra_id == "hydra://documentation/wiki" for result in sqlite_results))
+
+    def test_suppressed_documentation_does_not_consume_result_limit(self):
+        root = add_documentation_object(_repo())
+        results, _features, _source = search_index.search(
+            "routing", paths=_paths(root), resolver_paths=_resolver(root), local=root / ".hydra-framework.local", limit=1,
+        )
+        self.assertEqual(len(results), 1)
+        self.assertNotEqual(results[0].document.hydra_id, "hydra://documentation/wiki")
+
+    def test_documentation_id_alias_and_path_are_explicit_search_authority(self):
+        root = add_documentation_object(_repo())
+        paths, resolver, local = _paths(root), _resolver(root), root / ".hydra-framework.local"
+        search_index.build_index(paths, resolver, local)
+        for query, path_refs in (
+            ("hydra://documentation/wiki", ()),
+            ("hydra://alias/wiki", ()),
+            ("anything", ("project-wiki/wiki.md",)),
+        ):
+            with self.subTest(query=query, path_refs=path_refs):
+                results, _features, _source = search_index.search(
+                    query, paths=paths, resolver_paths=resolver, local=local, path_refs=path_refs,
+                )
+                self.assertTrue(results)
+                self.assertEqual(results[0].document.hydra_id, "hydra://documentation/wiki")
     def test_same_stat_cache_mutation_abandons_cached_routing_candidate(self):
         root = Path(tempfile.mkdtemp(prefix="search-index-v3-"))
         hydra = root / ".hydra-framework"

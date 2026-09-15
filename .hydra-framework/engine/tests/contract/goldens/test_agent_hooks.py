@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import unittest
 
-from .fixtures import assert_golden, external_file, run_golden
+from .fixtures import assert_golden, external_file, hydra_object_markdown, run_golden
 
 LOG_TEXT = "hello\nworld\n"
 
@@ -47,6 +47,28 @@ class AgentHooksGoldenTests(unittest.TestCase):
         """Empty stdin: the hook's own no-op path."""
         outcome = run_golden(["hook-post-edit"], stdin="")
         assert_golden(self, "agent-hooks-hook-post-edit", outcome)
+
+    def test_hook_post_edit_registered_object_path(self):
+        """A registered object path refreshes the derived registry silently."""
+        path = ".hydra-framework/README.md"
+        registry = (
+            "schema: hydra-framework.object-registry.v1\n"
+            "objects:\n"
+            "  hydra://knowledge-unit/fixture-readme:\n"
+            f"    path: {path}\n"
+        )
+        outcome = run_golden(
+            ["hook-post-edit"],
+            extra_fixture={
+                path: hydra_object_markdown(
+                    hydra_id="hydra://knowledge-unit/fixture-readme",
+                    title="Fixture Readme",
+                ),
+                ".hydra-framework/cognition/graph/registry.yaml": registry,
+            },
+            stdin='{"tool_input": {"file_path": ".hydra-framework/README.md"}}',
+        )
+        assert_golden(self, "agent-hooks-hook-post-edit-registered", outcome)
 
     def test_hook_post_edit_provider_surface_orphaned(self):
         """A hand-authored `.claude/skills/...` file with no canonical Hydra

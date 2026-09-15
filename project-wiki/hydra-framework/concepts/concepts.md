@@ -1,22 +1,35 @@
-# Concepts
+# Where to start with Hydra's concepts
 
-Hydra is a repository-owned operating layer for AI-assisted engineering. It
-makes the context, instructions, tools, state, feedback, and handoffs around a
-model explicit so work can continue across sessions and providers instead of
-depending on raw chat history. The runtime model and its responsibilities are
-explained in [Architecture](/project-wiki/hydra-framework/architecture/architecture.md).
+Start with the question you need to answer. If you are deciding where a finding
+belongs, read [State Tiers](/project-wiki/hydra-framework/concepts/state-tiers.md).
+If you are tracing how a task gets prepared and verified, read
+[Architecture](/project-wiki/hydra-framework/architecture/architecture.md).
 
-For canonical ownership and maintainer evidence, see the [Source Map](/project-wiki/hydra-framework/reference/source-map.md#maintainer-evidence).
+## A concrete situation
 
-Hydra exists to make AI-assisted work recoverable and team-owned. The repository
-holds canonical rules and knowledge, personal task state preserves resumable
-work, and private state keeps personal thinking and machine details out of
-shared documentation. The placement boundary is explained in the [State Tiers](/project-wiki/hydra-framework/concepts/state-tiers.md)
-guide.
+You discover a repository rule while working on a change. If the rule should
+guide the team, it belongs in shared state; [State Tiers](/project-wiki/hydra-framework/concepts/state-tiers.md)
+explains that boundary. If you need to understand how a task receives that rule
+and moves through execution and verification, follow
+[Architecture](/project-wiki/hydra-framework/architecture/architecture.md),
+then continue to [Execution Flow](/project-wiki/hydra-framework/architecture/execution-flow.md).
 
-Use this area for the two foundations of the framework:
+## The two foundations
 
-- [State tiers](/project-wiki/hydra-framework/concepts/state-tiers.md) explains where shared, personal, and private
-  state belongs.
-- [Architecture](/project-wiki/hydra-framework/architecture/architecture.md) routes to the runtime stack
-  and the end-to-end execution flow.
+The [placement rules](/.hydra-framework/core/placement-rules.md) define the
+state boundary, and the [architecture rules](/.hydra-framework/core/architecture.md)
+define runtime responsibilities. These version-controlled files own those rules.
+
+- [State Tiers](/project-wiki/hydra-framework/concepts/state-tiers.md) explains
+  where shared, personal, and private state belongs.
+- [Architecture](/project-wiki/hydra-framework/architecture/architecture.md)
+  routes from the runtime responsibility model to the execution stack and
+  detailed flow pages.
+
+## Next action
+
+Choose [State Tiers](/project-wiki/hydra-framework/concepts/state-tiers.md) for
+a placement decision. Choose [Architecture](/project-wiki/hydra-framework/architecture/architecture.md)
+for a runtime question, then continue to [Execution Flow](/project-wiki/hydra-framework/architecture/execution-flow.md).
+
+For maintainers checking a claim's owner, use the [Source Map](/project-wiki/hydra-framework/reference/source-map.md#maintainer-evidence).
