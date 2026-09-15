@@ -354,11 +354,23 @@ objects:
       sources:
         - .hydra-framework/evolution/README.md
         - .hydra-framework/evolution/adaptations.md
+        - .hydra-framework/evolution/candidates/README.md
+        - .hydra-framework/evolution/reflections/README.md
+        - .hydra-framework/repo/knowledge/seed-reconciliation.md
+        - .hydra-framework/scripts/README.md
       source_digests:
         - source: .hydra-framework/evolution/README.md
           digest: sha256:12b73e715b701efc69056e54644d8ae7289d8b848542b23427671302e7b93fe2
         - source: .hydra-framework/evolution/adaptations.md
           digest: sha256:3006e610c6c50f52b0843e5e41eb2955d9e7c9a03248fd0595e9f8344f6e828d
+        - source: .hydra-framework/evolution/candidates/README.md
+          digest: sha256:a645d2354d263dd0ac79c696673579f3600818af6b5e2aa90987ba01f7029f7b
+        - source: .hydra-framework/evolution/reflections/README.md
+          digest: sha256:20661d0f9c5d7d2a4368db94513210635c72126ae8ffde31042392e9b0a7cdfb
+        - source: .hydra-framework/repo/knowledge/seed-reconciliation.md
+          digest: sha256:1f1f42930cb7d7e8df659ef42ac4a2a84ae6f1b21ea33621c285a834026c937d
+        - source: .hydra-framework/scripts/README.md
+          digest: sha256:2848ad39a12f398ad8e0577503231ac83a16742cf10e9d9485e55d64565a68bc
     relations: []
   page-documentation-authoring:
     hydra_id: hydra://documentation/page/documentation-authoring
@@ -948,6 +960,14 @@ objects:
     checked_on: '2026-09-15'
     provenance:
       sources:
+        - README.md
+        - AI_SYSTEM.md
+        - .hydra-framework/README.md
+        - .hydra-framework/core/placement-rules.md
+        - .hydra-framework/repo/knowledge/state-tiers.md
+        - .hydra-framework/scripts/README.md
+        - .hydra-framework/capabilities/workflows/task-lifecycle.md
+        - .hydra-framework/adapters/providers/README.md
         - .hydra-framework/engine/src/hydra_engine/cli/dispatch.py
         - .hydra-framework/engine/src/hydra_engine/commands/installation.py
         - .hydra-framework/engine/src/hydra_engine/commands/private_tier.py
@@ -962,6 +982,22 @@ objects:
         - .hydra-framework/engine/src/hydra_engine/providers/selection.py
         - .hydra-framework/engine/src/hydra_engine/wiki/links.py
       source_digests:
+        - source: README.md
+          digest: sha256:1cf1108af10879b10cb716f5e59e4459de1d067b477e8e9a3772bb41b0ba742d
+        - source: AI_SYSTEM.md
+          digest: sha256:387baac9e6780a2a046f6c27f13e5ae50ef74c7984e55cc73326b0cefcbf7d4a
+        - source: .hydra-framework/README.md
+          digest: sha256:d9a49b2183ace7959938565b4a2bb6918e5de955e2371d558ea64f4a65a36d5a
+        - source: .hydra-framework/core/placement-rules.md
+          digest: sha256:79c93753c06bc23c7a76e2e650dc5c77e8dc74b20adee8fd4f58c3a47f043256
+        - source: .hydra-framework/repo/knowledge/state-tiers.md
+          digest: sha256:a75d3a2d4cd0233f6f543c396162ac9c115e08b09616ef0d0066213af7f029dd
+        - source: .hydra-framework/scripts/README.md
+          digest: sha256:2848ad39a12f398ad8e0577503231ac83a16742cf10e9d9485e55d64565a68bc
+        - source: .hydra-framework/capabilities/workflows/task-lifecycle.md
+          digest: sha256:1c35730d9c438c2508d2d9a91cbefa268d02c862ac6188b40a307acf87cee672
+        - source: .hydra-framework/adapters/providers/README.md
+          digest: sha256:89d4d088b7a3fb181d25760fcdb450d5314223266f8f30663638ccaa7bcea274
         - source: .hydra-framework/engine/src/hydra_engine/cli/dispatch.py
           digest: sha256:e48d6ed7998281c750542696262d711960f640c58a40ec4d1250e6b01887a17a
         - source: .hydra-framework/engine/src/hydra_engine/commands/installation.py
@@ -1105,8 +1141,22 @@ objects:
     path: project-wiki/home.md
     owners:
       team: hydra
+    checked_on: '2026-09-15'
     provenance:
-      sources: []
+      sources:
+        - README.md
+        - .hydra-framework/README.md
+        - .hydra-framework/surfaces/README.md
+        - .hydra-framework/core/placement-rules.md
+      source_digests:
+        - source: README.md
+          digest: sha256:1cf1108af10879b10cb716f5e59e4459de1d067b477e8e9a3772bb41b0ba742d
+        - source: .hydra-framework/README.md
+          digest: sha256:d9a49b2183ace7959938565b4a2bb6918e5de955e2371d558ea64f4a65a36d5a
+        - source: .hydra-framework/surfaces/README.md
+          digest: sha256:0b8e12555efe0c31a44d92993befa77a222450d7ad3e61d254193c3f16d2213e
+        - source: .hydra-framework/core/placement-rules.md
+          digest: sha256:79c93753c06bc23c7a76e2e650dc5c77e8dc74b20adee8fd4f58c3a47f043256
     relations: []
   page-concepts:
     hydra_id: hydra://documentation/page/concepts
@@ -1119,8 +1169,16 @@ objects:
     path: project-wiki/hydra-framework/concepts/concepts.md
     owners:
       team: hydra
+    checked_on: '2026-09-15'
     provenance:
-      sources: []
+      sources:
+        - .hydra-framework/core/placement-rules.md
+        - .hydra-framework/core/architecture.md
+      source_digests:
+        - source: .hydra-framework/core/placement-rules.md
+          digest: sha256:79c93753c06bc23c7a76e2e650dc5c77e8dc74b20adee8fd4f58c3a47f043256
+        - source: .hydra-framework/core/architecture.md
+          digest: sha256:026cd69cf31916ddb74e317af3396fa755eb359f81a6fad9f75660d542d46867
     relations: []
   page-extending-hydra:
     hydra_id: hydra://documentation/page/extending-hydra
@@ -1133,8 +1191,31 @@ objects:
     path: project-wiki/hydra-framework/extending-hydra/extending-hydra.md
     owners:
       team: hydra
+    checked_on: '2026-09-15'
     provenance:
-      sources: []
+      sources:
+        - .hydra-framework/core/ownership-and-composition.md
+        - .hydra-framework/core/placement-rules.md
+        - .hydra-framework/capabilities/README.md
+        - .hydra-framework/adapters/providers/README.md
+        - .hydra-framework/core/knowledge-architecture.md
+        - .hydra-framework/capabilities/workflows/material-migration.md
+        - .hydra-framework/capabilities/skills/adoption/skill.md
+      source_digests:
+        - source: .hydra-framework/core/ownership-and-composition.md
+          digest: sha256:a3fac73af9216474ff4321bb07e1340991d46435647802cede6131b568d088b3
+        - source: .hydra-framework/core/placement-rules.md
+          digest: sha256:79c93753c06bc23c7a76e2e650dc5c77e8dc74b20adee8fd4f58c3a47f043256
+        - source: .hydra-framework/capabilities/README.md
+          digest: sha256:587124406b2447a7436968658adffed32abdeea3362f244fc73e85bdbe427812
+        - source: .hydra-framework/adapters/providers/README.md
+          digest: sha256:89d4d088b7a3fb181d25760fcdb450d5314223266f8f30663638ccaa7bcea274
+        - source: .hydra-framework/core/knowledge-architecture.md
+          digest: sha256:7e77b767508c058f3145f1df1a65d2f6656da138bac645c23cabd85ac332d003
+        - source: .hydra-framework/capabilities/workflows/material-migration.md
+          digest: sha256:8d455b763fb03f38123736fcf8af7de3a434e4c89526047396351320550ffbfa
+        - source: .hydra-framework/capabilities/skills/adoption/skill.md
+          digest: sha256:f6cea6f6b71f5c822b753b5cf62f9e2ed930610057e6029921772fddfc09b682
     relations: []
   page-operations:
     hydra_id: hydra://documentation/page/operations
@@ -1147,8 +1228,25 @@ objects:
     path: project-wiki/hydra-framework/operations/operations.md
     owners:
       team: hydra
+    checked_on: '2026-09-15'
     provenance:
-      sources: []
+      sources:
+        - .hydra-framework/scripts/README.md
+        - .hydra-framework/engine/src/hydra_engine/commands/wiki.py
+        - .hydra-framework/engine/src/hydra_engine/wiki/links.py
+        - .hydra-framework/validation/README.md
+        - .hydra-framework/surfaces/README.md
+      source_digests:
+        - source: .hydra-framework/scripts/README.md
+          digest: sha256:2848ad39a12f398ad8e0577503231ac83a16742cf10e9d9485e55d64565a68bc
+        - source: .hydra-framework/engine/src/hydra_engine/commands/wiki.py
+          digest: sha256:de689b10e59ed8674501ca48b2a17c00e5bc0661a143bd7756b10ddbb82439e2
+        - source: .hydra-framework/engine/src/hydra_engine/wiki/links.py
+          digest: sha256:b9ecd1453434c5210a26fcb0859b1e539875e66051747597fdc49cd75c902794
+        - source: .hydra-framework/validation/README.md
+          digest: sha256:571ac28cfbcc3164d7f9bc7e8af8dc30164a296ab9f02a25ad9b4762dce6ff78
+        - source: .hydra-framework/surfaces/README.md
+          digest: sha256:0b8e12555efe0c31a44d92993befa77a222450d7ad3e61d254193c3f16d2213e
     relations: []
   page-reference:
     hydra_id: hydra://documentation/page/reference
@@ -1175,8 +1273,22 @@ objects:
     path: project-wiki/hydra-framework/reference/source-map.md
     owners:
       team: hydra
+    checked_on: '2026-09-15'
     provenance:
-      sources: []
+      sources:
+        - .hydra-framework/surfaces/README.md
+        - .hydra-framework/core/placement-rules.md
+        - .hydra-framework/repo/knowledge/state-tiers.md
+        - .hydra-framework/capabilities/skills/wiki-authoring/skill.md
+      source_digests:
+        - source: .hydra-framework/surfaces/README.md
+          digest: sha256:0b8e12555efe0c31a44d92993befa77a222450d7ad3e61d254193c3f16d2213e
+        - source: .hydra-framework/core/placement-rules.md
+          digest: sha256:79c93753c06bc23c7a76e2e650dc5c77e8dc74b20adee8fd4f58c3a47f043256
+        - source: .hydra-framework/repo/knowledge/state-tiers.md
+          digest: sha256:a75d3a2d4cd0233f6f543c396162ac9c115e08b09616ef0d0066213af7f029dd
+        - source: .hydra-framework/capabilities/skills/wiki-authoring/skill.md
+          digest: sha256:cb62cab9b7fc838a5e87855934fdc61b25b553e0c7152efa5b393725eb95422d
     relations: []
   page-start-here:
     hydra_id: hydra://documentation/page/start-here

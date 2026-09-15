@@ -4,15 +4,32 @@ For canonical ownership and maintainer evidence, see the [Source Map](/project-w
 
 Status: operating guide
 
-This is the daily route for people and AI agents using Hydra. It connects the
-repository's startup contract to the smallest useful amount of task state,
-relevant context, safe private work, and a verifiable handoff.
+Start with the change in front of you. For a small, self-contained change, keep
+the work lightweight. For non-trivial work, run `board` first and continue an
+existing task record when it covers the objective. If no record covers it,
+create an owner-scoped record, a task file in your own owner directory. Then
+read only the canonical sources, the version-controlled files that own the
+relevant facts, keep unfinished thinking in the [private workspace](/project-wiki/hydra-framework/working-with-hydra/private-workspace.md), and validate before handoff.
+
+## A Concrete Situation
+
+You are asked to update several files and another person may need to continue.
+Run:
+
+```bash
+python3 .hydra-framework/scripts/hydra.py board
+```
+
+Read the matching task record if one exists. Otherwise start a task record. If
+the request is a small, self-contained change, keep it lightweight and validate
+what changed. Next, use [Choose The Work Level](#choose-the-work-level) to
+select the path that fits the change.
 
 ## Choose The Work Level
 
 For a narrow question, one-file inspection, tiny obvious edit, or direct
 command, keep the work lightweight and validate what changed. Do not create a
-formal task for every prompt. This follows the task lifecycle's persistence
+formal task for every request. This follows the task lifecycle's persistence
 triggers in the canonical workflow.
 
 For multi-file work, a framework change, a blocker, a handoff, or work that

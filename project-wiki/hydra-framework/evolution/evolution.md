@@ -2,27 +2,37 @@
 
 For canonical ownership and maintainer evidence, see the [Source Map](/project-wiki/hydra-framework/reference/source-map.md#maintainer-evidence).
 
-Hydra evolves from observed repository use while keeping changes explainable,
-validated, and reversible through review. This page is a landing for the
-channels that capture friction, intentional divergence, and evidence-backed
-framework improvement. The canonical records and procedures remain under
-`.hydra-framework/evolution/`, `core/`, `repo/knowledge/`, and
-`capabilities/`.
+Page type: orientation
+
+If an adopted repository has changed its local `.hydra-framework/`, start by
+deciding whether each difference is repository-local or should return to the
+base seed. Run `adopt`, compare the copy with `diff-base`, and record deliberate
+differences with `evolution record`. The [seed reconciliation lifecycle](/.hydra-framework/repo/knowledge/seed-reconciliation.md#lifecycle)
+defines that route, and the [copy, adopt, and reconcile commands](/.hydra-framework/scripts/README.md#copy-adopt-reconcile)
+show the supported invocations. Reconciliation reports and recommends; it does
+not overwrite either side automatically.
+
+This page routes the evolution queues and their next decisions. Their canonical
+records and procedures remain under `.hydra-framework/evolution/`, `core/`,
+`repo/knowledge/`, and `capabilities/`.
 
 ## The evolution channels
 
 | Channel | Use it for |
 | --- | --- |
-| Candidates | Worked-out improvement proposals, measured evaluations, and historical architecture records. |
-| Adaptations | Intentional divergence from a base seed in an adopted repository. |
-| Reflections | Sanitized observations that are not yet proposals. |
+| [Candidates](/.hydra-framework/evolution/candidates/README.md) | Worked-out improvement proposals, measured evaluations, and historical architecture records. |
+| [Adaptations](/.hydra-framework/evolution/adaptations.md) | Intentional divergence from a base seed in an adopted repository. |
+| [Reflections](/.hydra-framework/evolution/reflections/README.md) | Sanitized observations that are not yet proposals. |
 
-Candidates may be `proposed`, `captured`, or `accepted`, but an accepted
-candidate is not itself the implementation. Durable behavior belongs in its
-canonical knowledge, capability, validation, or engine owner. Reflection
-packets use the governed `open` or `held` states and must reach a terminal
-outcome such as a follow-up, candidate, adaptation, canonical edit, or
-deletion.
+Candidates use `proposed`, `accepted`, `rejected`, `captured`, or `superseded`
+statuses. `proposed` is the only non-terminal status, and an accepted candidate
+is not itself the implementation. Durable behavior belongs in its canonical
+knowledge, capability, validation, or engine owner. Reflection packets use the
+governed `open` or `held` states and must reach a terminal outcome such as a
+follow-up, candidate, adaptation, canonical edit, or deletion. See the
+[candidate contract](/.hydra-framework/evolution/candidates/README.md) and
+[reflection contract](/.hydra-framework/evolution/reflections/README.md) for
+the exact rules.
 
 ## From observation to durable change
 

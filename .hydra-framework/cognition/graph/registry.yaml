@@ -453,7 +453,7 @@ objects:
   hydra://documentation/page/concepts:
     uid: 36ccfe79-7b63-483f-af15-b35ccfb9e006
     path: project-wiki/hydra-framework/concepts/concepts.md
-    digest: sha256:2f0f9ec1564bc769e18c945530516fcd2276db7b830c4512dd669a8456c4a626
+    digest: sha256:d9278fc4f84224475e68692ccd3214a8c1ad303eec0748f819a6017bd55f791e
     family: Documentation
     kind: documentation-page
     status: active
@@ -464,7 +464,9 @@ objects:
     aliases: []
     envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
     relations: []
-    provenance_sources: []
+    provenance_sources:
+      - .hydra-framework/core/placement-rules.md
+      - .hydra-framework/core/architecture.md
   hydra://documentation/page/context-retrieval:
     uid: fd518239-5061-44bb-9894-02d154b69a80
     path: project-wiki/hydra-framework/architecture/context-retrieval.md
@@ -549,7 +551,7 @@ objects:
   hydra://documentation/page/evolution:
     uid: ca9cd5da-bf2c-48d3-8d57-e0cd16150f8f
     path: project-wiki/hydra-framework/evolution/evolution.md
-    digest: sha256:bdfbfd36fce5355d525ec6008a81ef9d780a9eac19c82be60ecf9ee487b5ff7d
+    digest: sha256:eb9e65c86292cbba1affb9f5dd7e3fdc5a44c874b2ac4cfc3841b43e0efe86c0
     family: Documentation
     kind: documentation-page
     status: active
@@ -563,6 +565,10 @@ objects:
     provenance_sources:
       - .hydra-framework/evolution/README.md
       - .hydra-framework/evolution/adaptations.md
+      - .hydra-framework/evolution/candidates/README.md
+      - .hydra-framework/evolution/reflections/README.md
+      - .hydra-framework/repo/knowledge/seed-reconciliation.md
+      - .hydra-framework/scripts/README.md
   hydra://documentation/page/execution-flow:
     uid: c53ab665-b51b-47a1-ab01-32f557166bed
     path: project-wiki/hydra-framework/architecture/execution-flow.md
@@ -610,7 +616,7 @@ objects:
   hydra://documentation/page/extending-hydra:
     uid: a9d146be-c35b-40e1-ae5b-bb3c2cbe60c3
     path: project-wiki/hydra-framework/extending-hydra/extending-hydra.md
-    digest: sha256:eb63539e7d13122777cd51f37d43f6bb56d0c671716ccd57bad393117a407c5e
+    digest: sha256:80674819f71269371259da4942b5dabee24fb72817a8a35bd0a3d097cd504da4
     family: Documentation
     kind: documentation-page
     status: active
@@ -621,7 +627,14 @@ objects:
     aliases: []
     envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
     relations: []
-    provenance_sources: []
+    provenance_sources:
+      - .hydra-framework/core/ownership-and-composition.md
+      - .hydra-framework/core/placement-rules.md
+      - .hydra-framework/capabilities/README.md
+      - .hydra-framework/adapters/providers/README.md
+      - .hydra-framework/core/knowledge-architecture.md
+      - .hydra-framework/capabilities/workflows/material-migration.md
+      - .hydra-framework/capabilities/skills/adoption/skill.md
   hydra://documentation/page/extension-points:
     uid: f76b7f31-8605-47e1-8e99-81bbf495b973
     path: project-wiki/hydra-framework/extending-hydra/extension-points.md
@@ -709,7 +722,7 @@ objects:
   hydra://documentation/page/home:
     uid: 0301577f-3e9c-40a9-be38-e2336da05317
     path: project-wiki/home.md
-    digest: sha256:d419bc89263e888373f29a6c0da484a26d5b9e38d2bb9918512da2d145e6c6fe
+    digest: sha256:0ad7c16beb9d0a7210a267d9044a7749bc78aa028e76986d7bdfe988a8be02c6
     family: Documentation
     kind: documentation-page
     status: active
@@ -720,7 +733,11 @@ objects:
     aliases: []
     envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
     relations: []
-    provenance_sources: []
+    provenance_sources:
+      - README.md
+      - .hydra-framework/README.md
+      - .hydra-framework/surfaces/README.md
+      - .hydra-framework/core/placement-rules.md
   hydra://documentation/page/intake:
     uid: 4ad1c2b0-b625-464c-b6fb-3ed71be46f85
     path: project-wiki/hydra-framework/extending-hydra/intake.md
@@ -808,7 +825,7 @@ objects:
   hydra://documentation/page/new-contributor:
     uid: 85fd18f2-53bd-4219-b85e-2eeec7df82cf
     path: project-wiki/hydra-framework/start-here/new-contributor.md
-    digest: sha256:35a79dbb57d1501c7fc8e7e8ebc7627164edecdd130481de575ccfaaa8646871
+    digest: sha256:6c2e81a0369cf83b3c17d03c28f0ce24f42afb6b15e1655239e2f390f16a9860
     family: Documentation
     kind: documentation-page
     status: active
@@ -820,6 +837,14 @@ objects:
     envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
     relations: []
     provenance_sources:
+      - README.md
+      - AI_SYSTEM.md
+      - .hydra-framework/README.md
+      - .hydra-framework/core/placement-rules.md
+      - .hydra-framework/repo/knowledge/state-tiers.md
+      - .hydra-framework/scripts/README.md
+      - .hydra-framework/capabilities/workflows/task-lifecycle.md
+      - .hydra-framework/adapters/providers/README.md
       - .hydra-framework/engine/src/hydra_engine/cli/dispatch.py
       - .hydra-framework/engine/src/hydra_engine/commands/installation.py
       - .hydra-framework/engine/src/hydra_engine/commands/private_tier.py
@@ -865,7 +890,7 @@ objects:
   hydra://documentation/page/operations:
     uid: 43a0cfab-e6e2-4e90-8bb9-7dbf93b6e43a
     path: project-wiki/hydra-framework/operations/operations.md
-    digest: sha256:e352dad5bd0ff93fc32eca25afa713478ec659ebe25032cf4ae022ba12905b89
+    digest: sha256:fa682076c8b735f10ae7d4334eedd45fcd7f28d0d6fd822fa7cc949a6079e890
     family: Documentation
     kind: documentation-page
     status: active
@@ -876,7 +901,12 @@ objects:
     aliases: []
     envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
     relations: []
-    provenance_sources: []
+    provenance_sources:
+      - .hydra-framework/scripts/README.md
+      - .hydra-framework/engine/src/hydra_engine/commands/wiki.py
+      - .hydra-framework/engine/src/hydra_engine/wiki/links.py
+      - .hydra-framework/validation/README.md
+      - .hydra-framework/surfaces/README.md
   hydra://documentation/page/private-workspace:
     uid: 7ce90a6b-0571-4c68-b6ee-24b7af1d168f
     path: project-wiki/hydra-framework/working-with-hydra/private-workspace.md
@@ -959,7 +989,7 @@ objects:
   hydra://documentation/page/source-map:
     uid: 833ae832-43f4-462a-b1bd-51b806aac732
     path: project-wiki/hydra-framework/reference/source-map.md
-    digest: sha256:2ea8f98ef4d1fc9f86937c7cb14642580bc98c8cad85c0333372fe1d9abc70cd
+    digest: sha256:c04d7e2fba2619080126143a0a01112be5213157443a05d4f26c4db1589added
     family: Documentation
     kind: documentation-page
     status: active
@@ -970,7 +1000,11 @@ objects:
     aliases: []
     envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
     relations: []
-    provenance_sources: []
+    provenance_sources:
+      - .hydra-framework/surfaces/README.md
+      - .hydra-framework/core/placement-rules.md
+      - .hydra-framework/repo/knowledge/state-tiers.md
+      - .hydra-framework/capabilities/skills/wiki-authoring/skill.md
   hydra://documentation/page/start-here:
     uid: ad142d5f-0964-49b4-bfde-eae7262117fa
     path: project-wiki/hydra-framework/start-here/start-here.md
@@ -1092,7 +1126,7 @@ objects:
   hydra://documentation/page/working-with-hydra:
     uid: db8d63db-abbc-4243-bc0f-d55280f63c54
     path: project-wiki/hydra-framework/working-with-hydra/working-with-hydra.md
-    digest: sha256:42b9d714cc2d0127e5cebf106741379dfca110346e8cce3747c28af069b75c1a
+    digest: sha256:0735b1b9e7185816cf2fa0dd92175312c61bc218a0186ec79a8f6beacf166f24
     family: Documentation
     kind: documentation-page
     status: active

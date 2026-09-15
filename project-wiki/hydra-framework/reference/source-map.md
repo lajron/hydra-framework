@@ -1,8 +1,24 @@
 # Source Map
 
-This page routes material wiki claims to the canonical owner that can confirm
-or correct them. The wiki explains and navigates; it does not replace these
-owners.
+Audience: Framework maintainers reviewing a wiki claim
+Reader goal: Locate the canonical owner before changing derived wiki prose
+Page type: reference
+
+If a wiki claim needs checking, find the matching route below, open its
+canonical evidence, and update the owner before changing the wiki. The wiki
+explains and routes; it does not replace those owners. The [wiki surface
+contract](/.hydra-framework/surfaces/README.md) defines that boundary.
+
+## A concrete situation
+
+Suppose a page appears to use a private note as evidence for shared
+documentation. Start with the [State Tiers](/project-wiki/hydra-framework/concepts/state-tiers.md)
+row, then read the [placement rules](/.hydra-framework/core/placement-rules.md)
+and [state tiers](/.hydra-framework/repo/knowledge/state-tiers.md) that own the
+boundary. These linked files are canonical sources, meaning the
+version-controlled files that own a rule, procedure, or behavior. If the page
+and its canonical sources disagree, correct the owner first, then repair the
+wiki page.
 
 ## Maintainer Evidence
 
@@ -32,13 +48,29 @@ checking a claim or updating its owner.
 | [Public Positioning Brief](/project-wiki/hydra-framework/reference/public-positioning.md) | Public claims, terminology, and evidence limits | [Hydra package overview](/.hydra-framework/repo/knowledge/spaces/hydra-framework/overview.md), [build-status unit](/.hydra-framework/repo/knowledge/spaces/hydra-framework/units/build-status.md), and the relevant implementation/test owners |
 | [Common Questions](/project-wiki/hydra-framework/start-here/common-questions.md) | Unresolved surface questions and repository ownership routes | [unresolved questions](/.hydra-framework/core/unresolved-questions.md) and repository ownership records |
 
-## Review Rule
-
-Start with the claim's row, then read the exact canonical file or owning code
-and test. If the owner has changed, update this map and the affected wiki page
-together. Backtick paths are useful for readers but are not link validation, so
-verify every path against the repository when this map changes.
-
 Keep this table concise. If a claim needs more implementation detail than the
 listed owner provides, add it here rather than scattering a raw source link
 through a reader-facing page.
+
+## Important boundary
+
+Start with the claim's row, then read the exact canonical file or owning code
+and test. If the owner has changed, update this map and the affected wiki page
+together. Do not treat this table as a second source of truth, and do not use
+private local material as shared evidence. The [placement rules](/.hydra-framework/core/placement-rules.md)
+and [wiki surface contract](/.hydra-framework/surfaces/README.md) define those
+ownership and citation limits. Backtick paths are useful for readers but are
+not link validation, so verify every path against the repository when this map
+changes.
+
+## Next action
+
+Open the row that matches the claim you are reviewing and follow its canonical
+evidence links. After a page change, use the [wiki authoring contract](/.hydra-framework/capabilities/skills/wiki-authoring/skill.md)
+for source declarations and run `python3 .hydra-framework/scripts/hydra.py validate-wiki`.
+
+## Sources
+
+- [Wiki surface contract](/.hydra-framework/surfaces/README.md)
+- [Placement rules](/.hydra-framework/core/placement-rules.md)
+- [Wiki authoring contract](/.hydra-framework/capabilities/skills/wiki-authoring/skill.md)
