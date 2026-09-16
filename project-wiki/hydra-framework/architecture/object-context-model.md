@@ -44,6 +44,32 @@ when its schema and export digest are current. If it is missing, stale,
 corrupt, or disabled, callers fall back to the scan path instead of treating
 the cache as authority.
 
+## Reference Graph Workflows
+
+Use the graph when a change affects identity, ownership, or relationships:
+
+| Question | First action | Meaning of the result |
+| --- | --- | --- |
+| What object is this ID or alias? | `ref resolve hydra://...` | Shows the canonical identity, UID, path, relations, and provenance sources. It can use the store or fall back to a canonical scan. |
+| Which objects cite this object? | `ref store status`, then `ref rdeps hydra://...` | Lists one-hop reverse relation citations from a fresh derived store. |
+| What can this object affect? | `ref store status`, then `ref impact hydra://... --depth N` | Walks outbound relations to a bounded depth. It is not a prediction of runtime behavior. |
+| Who owns this path? | `explain-path <path> --json` | Combines tier, object, provider-surface, directory-owner, reverse-citation, and provenance-citer evidence. |
+| Is the graph safe to refresh? | `ref check`, then `ref index` | Validates IDs, aliases, relations, and provenance before writing the rebuildable registry. |
+
+For an intentional canonical move, run `move-object <source> <destination>
+--dry-run` first. The move keeps the object's `hydra_id` and `uid`, refuses a
+state-tier change or destination collision, and reports citations that still
+name the old path. Apply only after reviewing that report, then run `ref check`.
+An ambiguous identity, missing UID, unresolved relation, or stale binding is a
+reason to stop and resolve the source decision, not to guess a replacement.
+
+The derived registry and query store are operational projections. `ref index`
+refreshes the registry from canonical envelopes, while `ref store rebuild`
+refreshes the local query store. A missing, corrupt, or stale store does not
+invalidate canonical objects: `ref resolve` and `explain-path` can scan the
+sources, while `ref rdeps` and `ref impact` refuse until a fresh store exists.
+Do not edit a source file to make a cache query pass.
+
 ## How Context Is Routed
 
 `compile-context` begins with any explicit object or path references, then

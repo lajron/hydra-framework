@@ -37,6 +37,8 @@ In scope:
 
 - The export pipeline: canonical modules -> provider wrappers -> provenance sidecars.
 - Capability class and effort budget resolution per provider.
+- Provider-neutral orchestration records, bounded lifecycle operations, and
+  request-only provider adapter boundaries.
 - Adoption, lineage, and seed reconciliation.
 - Provider surface classification and reclamation.
 - Task-record and validation contracts.
@@ -89,6 +91,7 @@ Out of scope:
 | `diff-base --base <path>` | Classify this copy against its base seed |
 | `route-prompt`, `hook-post-edit`, `hook-token` | Hook entry points |
 | `measure-context`, `compile-context`, `summarize-log`, `retry-guard` | Token and context tooling |
+| `orchestration start\|spawn\|message\|collect\|transition\|handoff\|recover\|review\|validate\|status` | Explicit bounded run/worker coordination; provider adapters remain request-only |
 | `task start\|checkpoint\|complete` | Task-state maintenance |
 | `wiki scaffold`, `validate-wiki`, `validate-package-docs` | Documentation surfaces |
 

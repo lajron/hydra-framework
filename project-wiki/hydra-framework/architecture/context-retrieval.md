@@ -26,8 +26,17 @@ Each subject area (a knowledge space, or a node inside one) declares keywords
 and named routes, task shapes like "adding a new skill." When a task's wording
 overlaps enough with a route, that route wins and narrows reading down to the
 handful of files it names instead of the whole space, along with commands to
-verify afterward. Without a matching route, Hydra falls back to considering the
-whole space.
+verify afterward. A route needs at least two normalized term matches. Without
+a matching route, the selected node still contributes its state, overview, and
+ranked units; use an explicit selector when the automatic node choice is not
+the intended boundary.
+
+Prompt routing is deliberately bounded. Implicit wording selects at most two
+routable nodes. A tie at the top-two cutoff is reported as ambiguous and asks
+for `--node` or `--space`; it is not resolved by lexical order. Explicit
+`--node`, `--space`, `--route`, and `--view` selections are not capped. The
+[Knowledge v3 Architecture](/.hydra-framework/core/knowledge-architecture.md)
+owns these limits and the canonical packet contract.
 
 Prompt wording is only the first phase. When known file paths are available,
 verified bindings resolve them to the nodes that own them, and a bound node is
@@ -36,6 +45,15 @@ selected outright even if the wording pointed somewhere else. The exact fields
 in
 [Knowledge Spaces](/project-wiki/hydra-framework/extending-hydra/knowledge-spaces.md);
 this page is about how retrieval runs, not the space shape itself.
+
+Path-informed rerouting is available to `compile-context` through repeated
+`--path` arguments. A verified binding may replace provisional prompt routing,
+and matching route `expand_when` clauses may add required units. A stale or
+unresolved binding fails closed: it cannot authorize automatic path routing,
+route expansion, or provenance freshness. Explicit node selection remains a
+safe fallback. Binding verification and these failure rules belong to the
+[Knowledge v3 Architecture](/.hydra-framework/core/knowledge-architecture.md),
+not to a local search cache.
 
 Everything else Hydra can retrieve (code, in-flight tasks, telemetry
 evidence) has its own family with one retrieval provider, as described in

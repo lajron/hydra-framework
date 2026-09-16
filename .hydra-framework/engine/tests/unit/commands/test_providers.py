@@ -132,6 +132,24 @@ class CommandExportAdaptersTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertIn("up to date", out.getvalue())
 
+    def test_export_reconciles_drifted_generated_surface(self):
+        paths = _paths_with_one_skill()
+        args = argparse.Namespace(check=False, dry_run=False)
+        with contextlib.redirect_stdout(stdlib_io.StringIO()):
+            first = providers.command_export_adapters(args, paths)
+        self.assertEqual(first.exit_code, 0)
+
+        wrapper = paths.root / ".claude/skills/hydra-demo-skill/SKILL.md"
+        original = wrapper.read_text(encoding="utf-8")
+        wrapper.write_text(original + "\nLocal output is disposable.\n", encoding="utf-8")
+
+        out = stdlib_io.StringIO()
+        with contextlib.redirect_stdout(out):
+            result = providers.command_export_adapters(args, paths)
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("update: .claude/skills/hydra-demo-skill/SKILL.md", out.getvalue())
+        self.assertEqual(wrapper.read_text(encoding="utf-8"), original)
+
     def test_profile_preview_is_dry_run_only_and_does_not_write(self):
         paths = _paths_with_profiles()
         args = argparse.Namespace(check=False, dry_run=True, profile="narrow")

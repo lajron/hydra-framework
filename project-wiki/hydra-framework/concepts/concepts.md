@@ -13,6 +13,8 @@ explains that boundary. If you need to understand how a task receives that rule
 and moves through execution and verification, follow
 [Architecture](/project-wiki/hydra-framework/architecture/architecture.md),
 then continue to [Execution Flow](/project-wiki/hydra-framework/architecture/execution-flow.md).
+If several bounded work items need explicit ownership, continue to the
+[Orchestration Boundary](/project-wiki/hydra-framework/architecture/execution-stack.md#orchestration-boundary).
 
 ## The two foundations
 
@@ -31,5 +33,7 @@ define runtime responsibilities. These version-controlled files own those rules.
 Choose [State Tiers](/project-wiki/hydra-framework/concepts/state-tiers.md) for
 a placement decision. Choose [Architecture](/project-wiki/hydra-framework/architecture/architecture.md)
 for a runtime question, then continue to [Execution Flow](/project-wiki/hydra-framework/architecture/execution-flow.md).
+Use the orchestration route only when the run, worker owners, parent
+relationship, limits, and review/validation steps can all be explicit.
 
 For maintainers checking a claim's owner, use the [Source Map](/project-wiki/hydra-framework/reference/source-map.md#maintainer-evidence).

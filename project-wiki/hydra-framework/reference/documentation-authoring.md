@@ -79,6 +79,31 @@ Then run `hydra.py validate-wiki`; run `hydra.py validate` whenever the change
 also affects `.hydra-framework/`. The canonical workflow and reusable page
 template are in `.hydra-framework/capabilities/skills/wiki-authoring/skill.md`.
 
+## Validation and hooks
+
+These checks answer different questions, so a passing result from one does not
+replace the others:
+
+| Question | Check | Boundary |
+| --- | --- | --- |
+| Do wiki links resolve to files? | `hydra.py validate-wiki` | Blocking link and traversal check; heading fragments are not checked. |
+| Are declared sources current and present? | `hydra.py wiki audit` | Report-only freshness and declaration report. |
+| Can sidecar digests be refreshed? | `hydra.py wiki fingerprint --page <hydra-id>` | Writes tracked sidecar metadata only after source re-verification. |
+| Does the framework remain structurally valid? | `hydra.py validate` | Blocking repository-wide Hydra validation. |
+| Did an edited Knowledge package introduce a local issue? | `hydra.py hook-post-edit` | Scoped post-edit feedback; run full validation for the repository result. |
+
+`wiki audit` exiting successfully does not mean that every page has useful
+provenance or that its prose is complete. A fingerprint records what was
+checked, not why the source still supports the claim. Never use fingerprinting
+to silence a finding without reading the source and repairing the page or its
+declared source set.
+
+Hooks are feedback paths, not an alternate source of truth. The optional
+pre-push hook calls the same `validate` command used by CI when installed;
+post-commit, post-merge, post-checkout, and post-rewrite hooks refresh local
+derived state on a best-effort basis. A repository invariant must therefore be
+documented and runnable outside a hook.
+
 ## Visual grammar
 
 Use a table, diagram, or worked example only when it makes a relationship easier

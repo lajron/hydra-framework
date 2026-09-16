@@ -162,6 +162,36 @@ evidence, not Hydra's own build status. `doctor` and `validate` report a
 verification note and flag evidence older than 30 days for rechecking; a stale
 note is advisory and does not claim that the integration is broken.
 
+## Orchestration Request Boundary
+
+The provider-neutral `orchestration` control plane owns run, worker, parent,
+owner, request, result, review, validation, handoff, and recovery state. It
+persists a bounded local ledger and calls one small adapter interface for
+`spawn`, `message`, and `collect`.
+
+The Claude and Codex maps currently declare all three operations as
+`request-only`. That lets a provider adapter queue or acknowledge a structured
+request while keeping the provider name and receipt separate from execution
+evidence. The generated surface may explain this boundary, but it does not
+invoke Claude Code or Codex CLI and does not claim that a worker started, a
+message was delivered, or a result was collected.
+
+Use the orchestration commands when explicit coordination is needed:
+
+```bash
+python3 .hydra-framework/scripts/hydra.py orchestration start --run-id <id> --task <task-record>
+python3 .hydra-framework/scripts/hydra.py orchestration spawn --run-id <id> --request-id <id> --worker-id <id> --worker-owner <owner> --role <role> --task "<bounded task>" --reason <reason>
+python3 .hydra-framework/scripts/hydra.py orchestration message --run-id <id> --worker-id <id> --request-id <id> --message-id <id> --payload '{"instruction":"..."}'
+python3 .hydra-framework/scripts/hydra.py orchestration collect --run-id <id> --worker-id <id> --request-id <id> --result-id <id> --payload '{"finding":"..."}' --complete
+```
+
+The shared delegation policy enforces the configured active-worker and depth
+limits before a spawn is recorded. A parent worker's owner must authorize a
+child spawn. Review, independent validation, lifecycle completion, explicit
+handoff, and owner recovery remain separate operations. There is no automatic
+stale-owner removal or worker reaping. See [Execution Stack](/project-wiki/hydra-framework/architecture/execution-stack.md#orchestration-boundary)
+for the full implementation boundary.
+
 ## Lifecycle Hooks
 
 Lifecycle adapters describe common moments such as prompt routing, post-edit

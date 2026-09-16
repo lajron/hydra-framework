@@ -25,6 +25,18 @@ the request is a small, self-contained change, keep it lightweight and validate
 what changed. Next, use [Choose The Work Level](#choose-the-work-level) to
 select the path that fits the change.
 
+If no record covers a non-trivial request, create one before execution:
+
+```bash
+python3 .hydra-framework/scripts/hydra.py task start <name> \
+  --goal "Describe the engineering objective"
+```
+
+Task creation resolves the owner from `--owner`, `HYDRA_OWNER`, then
+`git config user.email`. If none is available, it fails rather than creating a
+shared or guessed owner. The [Task Lifecycle](/project-wiki/hydra-framework/working-with-hydra/task-lifecycle.md)
+page explains the required record fields and recovery rules.
+
 ## Choose The Work Level
 
 For a narrow question, one-file inspection, tiny obvious edit, or direct
@@ -45,13 +57,29 @@ Start with the repository entry points and current work:
 ```bash
 python3 .hydra-framework/scripts/hydra.py board
 python3 .hydra-framework/scripts/hydra.py knowledge-search "<task question>"
+python3 .hydra-framework/scripts/hydra.py route-prompt --prompt "<task question>"
 python3 .hydra-framework/scripts/hydra.py compile-context --task "<task>"
 ```
 
-Read the relevant canonical owner, not an entire knowledge tree. Use matching
-skills, workflows, agents, and tool capabilities when they apply. Git, code,
-CI, package managers, and external systems remain the source of truth when
-they already own the state. See the [New Contributor](/project-wiki/hydra-framework/start-here/new-contributor.md)
+Use `knowledge-search` for a few ranked, cited snippets. Use `route-prompt` for
+a small pointer to the node and route that own the accountability boundary;
+`route-prompt --json` adds match scores, warnings, exact references, and timing
+for diagnosis without printing the node contents. Use `compile-context` when
+the task needs a bounded reading packet. Its budget controls optional context,
+while required units remain visible even when they create a reported overage.
+The packet records selected and omitted candidates, selection reasons,
+provenance and freshness, route verification commands, and warnings.
+
+If no route matches, do not widen to an unbounded tree read. Start with
+`knowledge-search`, or pass a known `--node`, `--space`, or `--path` to
+`compile-context`. A verified path binding can replace a provisional prompt
+selection; a stale or unresolved binding cannot authorize routing. The
+[Context Retrieval](/project-wiki/hydra-framework/architecture/context-retrieval.md)
+page explains this progression and its fallback behavior. Read the relevant
+canonical owner, not an entire knowledge tree. Use matching skills, workflows,
+agents, and tool capabilities when they apply. Git, code, CI, package managers,
+and external systems remain the source of truth when they already own the
+state. See the [New Contributor](/project-wiki/hydra-framework/start-here/new-contributor.md)
 route for the repository and agent entry points.
 
 ## Work Safely
@@ -85,5 +113,13 @@ python3 .hydra-framework/scripts/hydra.py validate
 
 Record the exact result in the task state when a task record exists. The
 [Task Lifecycle](/project-wiki/hydra-framework/working-with-hydra/task-lifecycle.md)
-defines continuation and completion; the [Documentation Authoring](/project-wiki/hydra-framework/reference/documentation-authoring.md)
+defines continuation and completion. For an ownership change, checkpoint first
+and then use `task handoff <record> --to <owner>` so the record and checkpoints
+move together. The handoff refuses a different destination record and does not
+infer ownership from a stale date. The [Documentation Authoring](/project-wiki/hydra-framework/reference/documentation-authoring.md)
 page defines the wiki's citation and validation boundary.
+
+The [Task Lifecycle Workflow](/.hydra-framework/capabilities/workflows/task-lifecycle.md),
+[Knowledge v3 Architecture](/.hydra-framework/core/knowledge-architecture.md),
+and [Placement Rules](/.hydra-framework/core/placement-rules.md) own the
+durable task, retrieval, and state-tier rules summarized here.

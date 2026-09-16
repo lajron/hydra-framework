@@ -55,6 +55,15 @@ model aliases. It records a `verified` date and a `certainty` label because
 provider aliases and effort levels can change. `hydra.py validate` fails if a
 capability class or effort budget used by any canonical agent has no entry here.
 
+## Orchestration Request Boundary
+
+The Claude capability map declares `spawn`, `message`, and `collect` as
+`request-only`. Generated agent instructions may describe that boundary, but
+the exporter does not invoke Claude Code or claim that Claude accepted,
+started, delivered, or completed an orchestration request. A runtime adapter
+must provide any actual submission and status evidence. If an operation is not
+declared, treat it as unsupported.
+
 ## Hook And Permission Wiring
 
 The working configuration is checked in at `.claude/settings.json`. Read that

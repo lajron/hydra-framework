@@ -15,12 +15,12 @@ the change complete.
 
 | Need | Make the reviewed change | Focused proof |
 | --- | --- | --- |
-| Recognize a new identity family | Add one `ObjectFamily` with non-overlapping identifier prefixes and kinds. Add its one context provider and define whether it uses knowledge routing or bounded search. | `test_object_families.py`, `test_context_providers.py`, then `hydra.py ref check` and `hydra.py ref index`. |
-| Read a new object document form | Add one `ObjectHandler` with its suffixes, reader, field spellings, roots, and exclusions. Do not broaden scan roots without a concrete need. | `test_object_handlers.py`, then `hydra.py ref check`. |
+| Recognize a new identity family | Add one `ObjectFamily` to `OBJECT_FAMILIES` with non-overlapping identifier prefixes and kinds. Add its one context provider to `CONTEXT_PROVIDERS` and define whether it uses knowledge routing or bounded search. | `test_object_families.py`, `test_context_providers.py`, then `hydra.py ref check` and `hydra.py ref index`. |
+| Read a new object document form | Add one `ObjectHandler` to `OBJECT_HANDLERS` with its suffixes, reader, field spellings, roots, and exclusions. Do not broaden scan roots without a concrete need. | `test_object_handlers.py`, then `hydra.py ref check`. |
 | Add a validation check | Implement the check in the appropriate checks module and add one named `Validator` at its deliberate order in `VALIDATORS`. Do not move the existing order. | `test_validator_registry.py` and the validation command contract tests. |
 | Add a CLI command family | Implement `register(subparsers)` in its command module and add that module once to `COMMAND_MODULES`. Update side-effect metadata when the command changes state. | `test_command_metadata.py` and the command's contract tests. |
 | Reduce a recognized command output | Implement a `CommandOutputReducer`, expose it from its reducer group, and add it once to `REDUCERS`. Leave unmatched commands on the unknown reduction path. | `test_registry.py` and the relevant command-output contract tests. |
-| Add a provider surface | Change the canonical capability or provider registry, then generate the provider wrappers. Do not hand-edit generated adapters. | `test_capabilities.py` and `hydra.py export-adapters --check`. |
+| Add a provider surface | Change the canonical capability or `PROVIDERS` registry, then generate the provider wrappers. Do not hand-edit generated adapters. | `test_capabilities.py` and `hydra.py export-adapters --check`. |
 
 The test paths above are under `.hydra-framework/engine/tests/unit/` unless a
 row says otherwise. Run them through the repository's supported test command

@@ -10,10 +10,12 @@ source, the version-controlled source that owns the rule.
 
 You are about to add a reusable capability, register an engine extension,
 update a provider surface, change repository knowledge, review outside
-material, clear a defined source area, or copy Hydra into another repository.
-Choose the first matching route below before editing a file. This keeps
-framework meaning with its owner instead of turning a runtime-facing file or
-wiki page into a second source of truth.
+material, clear a defined source area, copy Hydra into another repository,
+compare an adopted copy with its base seed, integrate another Hydra copy, or
+repair state whose tier or owner is unclear. Choose the first matching route
+below before editing a file. This keeps framework meaning with its owner
+instead of turning a runtime-facing file or wiki page into a second source of
+truth.
 
 ## Choose a route
 
@@ -27,6 +29,19 @@ wiki page into a second source of truth.
 | Review one outside source | [Process One Source Through Intake](/project-wiki/hydra-framework/extending-hydra/intake.md) |
 | Clear a bounded source area or legacy setup | [Migrate A Bounded Source Area](/project-wiki/hydra-framework/extending-hydra/migration.md) |
 | Copy Hydra into a new repository | [Seed And Adopt Hydra](/project-wiki/hydra-framework/start-here/adopt-a-repository.md) |
+| Detect and scope an existing non-Hydra agentic setup | [Migrate A Bounded Source Area](/project-wiki/hydra-framework/extending-hydra/migration.md#take-over-legacy-agentic-material) |
+| Integrate a staged copy of another Hydra repository | [Intake, Migration, And Adoption](/project-wiki/hydra-framework/extending-hydra/intake-and-migration.md#hydra-to-hydra-integration) |
+| Compare an adopted copy with its base seed | [Evolution](/project-wiki/hydra-framework/evolution/evolution.md#seed-copies-and-reconciliation) |
+| Repair misplaced state or find the owner of a path | [Intake, Migration, And Adoption](/project-wiki/hydra-framework/extending-hydra/intake-and-migration.md#repair-misplaced-state) |
+
+These routes are deliberately distinct. Adoption is a non-destructive copy and
+lineage operation. `takeover scan` inventories a foreign setup but does not
+authorize a move; an explicitly scoped takeover then uses the approval-gated
+migration route. `integrate` prepares object and capability decisions for
+another Hydra copy without changing that source. `diff-base` and `evolution
+record` explain deliberate differences in the current copy. When a path is in
+the wrong state tier, diagnose it with `explain-path` before using the
+mechanical `migrate-state` repair route.
 
 ## Keep ownership clear
 
@@ -57,3 +72,5 @@ before creating a new extension path.
 - [Knowledge v3 Architecture](/.hydra-framework/core/knowledge-architecture.md)
 - [Transferred Material Migration](/.hydra-framework/capabilities/workflows/material-migration.md)
 - [Hydra Adoption Skill](/.hydra-framework/capabilities/skills/adoption/skill.md)
+- [Framework Takeover Skill](/.hydra-framework/capabilities/skills/framework-takeover/skill.md)
+- [Seed Reconciliation](/.hydra-framework/repo/knowledge/seed-reconciliation.md)

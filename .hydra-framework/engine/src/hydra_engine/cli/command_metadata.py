@@ -14,9 +14,6 @@ import argparse
 import dataclasses
 import json
 
-from hydra_engine.cli import parser as cli_parser
-
-
 @dataclasses.dataclass(frozen=True)
 class CommandSafety:
     side_effects: str
@@ -94,6 +91,51 @@ SIDE_EFFECT_COMMANDS: dict[str, CommandSafety] = {
         confirmation="none needed; local aggregate counts only",
         privacy="private (.hydra-framework.local/), no prompt text",
     ),
+    "orchestration start": CommandSafety(
+        side_effects="writes a bounded run record and event to .hydra-framework.local/orchestration/ledger.json",
+        confirmation="none needed; owner-scoped local control-plane state, existing task record required",
+        privacy="private ledger; task-record path reference only, no task copy",
+    ),
+    "orchestration spawn": CommandSafety(
+        side_effects="writes one bounded worker and provider request record to the private orchestration ledger",
+        confirmation="none needed; configured active-worker and depth limits are enforced before the write",
+        privacy="private ledger; bounded structured payload, no raw transcript persistence",
+    ),
+    "orchestration message": CommandSafety(
+        side_effects="writes one bounded message request to the private orchestration ledger",
+        confirmation="none needed; explicit run, worker, request, message, and owner IDs are required",
+        privacy="private ledger; bounded structured payload, no raw transcript persistence",
+    ),
+    "orchestration collect": CommandSafety(
+        side_effects="writes one bounded collect request and supplied result to the private orchestration ledger",
+        confirmation="none needed; a provider receipt is not treated as execution or completion evidence",
+        privacy="private ledger; bounded structured result payload, no raw transcript persistence",
+    ),
+    "orchestration transition": CommandSafety(
+        side_effects="writes an explicit run or worker lifecycle transition and event to the private ledger",
+        confirmation="none needed; invalid transitions and unsafe completion states are refused",
+        privacy="private orchestration ledger",
+    ),
+    "orchestration handoff": CommandSafety(
+        side_effects="changes one explicit run or worker owner and records a handed-off state in the private ledger",
+        confirmation="explicit new owner required; task records are not moved implicitly",
+        privacy="private orchestration ledger",
+    ),
+    "orchestration recover": CommandSafety(
+        side_effects="changes one explicitly named handed-off or recovery-required owner and records recovery in the private ledger",
+        confirmation="explicit current owner, recovery actor, and source owner are required; no stale-owner inference or reaping",
+        privacy="private orchestration ledger",
+    ),
+    "orchestration review": CommandSafety(
+        side_effects="writes review state, reviewer identity, bounded note, and event to the private ledger",
+        confirmation="final decisions require an independent explicit reviewer",
+        privacy="private orchestration ledger",
+    ),
+    "orchestration validate": CommandSafety(
+        side_effects="writes validation state, validator identity, bounded evidence, and event to the private ledger",
+        confirmation="terminal states require an independent explicit validator and evidence",
+        privacy="private orchestration ledger",
+    ),
     "telemetry gate": CommandSafety(
         side_effects="reads private telemetry rows and writes an attestation JSON only when --output is given",
         confirmation="none needed; attestation contains counts, field names, digest, verdict, and date, not private corpus paths",
@@ -103,6 +145,16 @@ SIDE_EFFECT_COMMANDS: dict[str, CommandSafety] = {
         side_effects="reads private telemetry rows and creates a new tracked directory under .hydra-framework/repo/telemetry/packages/",
         confirmation="none needed; refuses outright when the gate verdict is `fail`, and writes only derived aggregates, never a raw row",
         privacy="private corpus input; output is a shared, tracked package (counts, field names, digest, verdict, and date, not private corpus paths)",
+    ),
+    "bindings verify": CommandSafety(
+        side_effects="writes the reviewed assertion fingerprint to the binding fragment only when --accept is given",
+        confirmation="none needed; explicit acceptance flag, tracked binding metadata",
+        privacy="shared (tracked Knowledge v3 binding fragment)",
+    ),
+    "knowledge fingerprint": CommandSafety(
+        side_effects="writes current source digests into the selected Knowledge v3 unit's provenance block",
+        confirmation="none needed; explicit fingerprint command, tracked unit metadata",
+        privacy="shared (tracked Knowledge v3 unit)",
     ),
     "adopt": CommandSafety(
         side_effects="writes lineage into manifest.yaml when --record is given",
@@ -212,6 +264,11 @@ SIDE_EFFECT_COMMANDS: dict[str, CommandSafety] = {
         confirmation="confirm before running unattended with --force; otherwise additive",
         privacy="shared (tracked repository files)",
     ),
+    "wiki fingerprint": CommandSafety(
+        side_effects="writes current canonical-source digests and checked_on into the selected wiki sidecar entry",
+        confirmation="none needed; run only after re-reading every declared source",
+        privacy="shared (tracked wiki sidecar metadata)",
+    ),
     "capability scaffold-skill": CommandSafety(
         side_effects="creates a canonical skill module, overwriting its metadata and body when --force is given, then rebuilds the derived object registry",
         confirmation="confirm before running unattended with --force; otherwise additive",
@@ -255,13 +312,11 @@ SIDE_EFFECT_COMMANDS: dict[str, CommandSafety] = {
     ),
 }
 
-
 def _subparsers_action(parser: argparse.ArgumentParser) -> "argparse._SubParsersAction | None":
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
             return action
     return None
-
 
 def _own_arguments(parser: argparse.ArgumentParser) -> tuple[str, ...]:
     names = []
@@ -270,7 +325,6 @@ def _own_arguments(parser: argparse.ArgumentParser) -> tuple[str, ...]:
             continue
         names.append(action.option_strings[0] if action.option_strings else action.dest)
     return tuple(names)
-
 
 def _direct_subcommands(action: "argparse._SubParsersAction") -> list[tuple[str, list[str], argparse.ArgumentParser]]:
     # Two names mapping to the same parser instance is how argparse represents
@@ -287,7 +341,6 @@ def _direct_subcommands(action: "argparse._SubParsersAction") -> list[tuple[str,
         elif name != primary[key]:
             aliases[key].append(name)
     return [(primary[key], aliases[key], action.choices[primary[key]]) for key in order]
-
 
 def _walk(parser: argparse.ArgumentParser, prefix: tuple[str, ...]) -> list[CommandMetadata]:
     action = _subparsers_action(parser)
@@ -307,10 +360,8 @@ def _walk(parser: argparse.ArgumentParser, prefix: tuple[str, ...]) -> list[Comm
         entries.extend(sub_entries)
     return entries
 
-
 def generate_command_metadata(parser: argparse.ArgumentParser) -> list[CommandMetadata]:
     return sorted(_walk(parser, ()), key=lambda entry: entry.id)
-
 
 def _as_dict(entry: CommandMetadata) -> dict:
     data = {"id": entry.id, "aliases": list(entry.aliases), "arguments": list(entry.arguments)}
@@ -319,7 +370,6 @@ def _as_dict(entry: CommandMetadata) -> dict:
         data["confirmation"] = entry.safety.confirmation
         data["privacy"] = entry.safety.privacy
     return data
-
 
 def render(entries: list[CommandMetadata], as_json: bool = False) -> str:
     if as_json:
@@ -335,8 +385,13 @@ def render(entries: list[CommandMetadata], as_json: bool = False) -> str:
             lines.append(f"  privacy: {entry.safety.privacy}")
     return "\n".join(lines)
 
+def dispatch(args, parser: argparse.ArgumentParser) -> int:
+    """Render metadata from the parser used for the current run.
 
-def dispatch(args, command_modules) -> int:
-    entries = generate_command_metadata(cli_parser.build_parser(command_modules))
+    Direct commands, compatibility hooks, and composed command modules all
+    remain visible because this walks one already-built argparse tree instead
+    of maintaining a second parser definition.
+    """
+    entries = generate_command_metadata(parser)
     print(render(entries, as_json=args.json))
     return 0

@@ -232,7 +232,7 @@ class ReconcileExportTests(unittest.TestCase):
         self.assertIn("orphaned", plan.abort_reason)
         self.assertFalse((paths.root / ".claude/skills/hydra-demo-skill").exists())
 
-    def test_a_drifted_surface_aborts_without_mutation(self):
+    def test_a_drifted_generated_surface_is_reconciled_by_export_plan(self):
         paths = _paths()
         _demo_skill(paths)
         full = reclaim.reconcile_export(paths)
@@ -241,8 +241,9 @@ class ReconcileExportTests(unittest.TestCase):
         edited = paths.root / ".claude/skills/hydra-demo-skill/SKILL.md"
         edited.write_text(edited.read_text(encoding="utf-8") + "\nExtra.\n", encoding="utf-8")
         plan = reclaim.reconcile_export(paths)
-        self.assertIsNotNone(plan.abort_reason)
-        self.assertIn("drifted", plan.abort_reason)
+        self.assertIsNone(plan.abort_reason)
+        self.assertIn(edited, plan.changed)
+        self.assertEqual(plan.contents[edited], full.contents[edited])
 
     def test_a_symlinked_create_target_aborts_without_mutation(self):
         paths = _paths()

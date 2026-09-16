@@ -49,6 +49,11 @@ class GenerateCommandMetadataTests(unittest.TestCase):
         plain = next(entry for entry in entries if entry.id == "plain")
         self.assertIsNone(plain.safety)
 
+    def test_known_conditional_and_fingerprint_writes_have_safety_metadata(self) -> None:
+        self.assertIn("bindings verify", command_metadata.SIDE_EFFECT_COMMANDS)
+        self.assertIn("knowledge fingerprint", command_metadata.SIDE_EFFECT_COMMANDS)
+        self.assertIn("wiki fingerprint", command_metadata.SIDE_EFFECT_COMMANDS)
+
 
 class RenderTests(unittest.TestCase):
     def test_json_round_trips_id_arguments_and_safety_fields(self) -> None:
@@ -80,6 +85,23 @@ class SideEffectOverlayMatchesLiveCommandsTests(unittest.TestCase):
         live_ids = {entry.id for entry in command_metadata.generate_command_metadata(parser)}
         stale = set(command_metadata.SIDE_EFFECT_COMMANDS) - live_ids
         self.assertEqual(stale, set())
+
+    def test_known_mutating_commands_are_not_left_without_overlay_metadata(self) -> None:
+        parser = cli_parser.build_parser(dispatch.COMMAND_MODULES, dispatch._register_direct_commands)
+        live = {entry.id: entry for entry in command_metadata.generate_command_metadata(parser)}
+        for command_id in ("bindings verify", "knowledge fingerprint", "wiki fingerprint"):
+            self.assertIsNotNone(live[command_id].safety)
+
+    def test_orchestration_mutations_have_safety_metadata_and_status_is_read_only(self) -> None:
+        parser = cli_parser.build_parser(dispatch.COMMAND_MODULES, dispatch._register_direct_commands)
+        live = {entry.id: entry for entry in command_metadata.generate_command_metadata(parser)}
+        for command_id in (
+            "orchestration start", "orchestration spawn", "orchestration message",
+            "orchestration collect", "orchestration transition", "orchestration handoff",
+            "orchestration recover", "orchestration review", "orchestration validate",
+        ):
+            self.assertIsNotNone(live[command_id].safety)
+        self.assertIsNone(live["orchestration status"].safety)
 
 
 if __name__ == "__main__":

@@ -57,6 +57,9 @@ feedback boundary. The lifecycle that frames one work cycle is described in
   assumptions, and contract goldens pin stable command output.
 - Provider wrappers are generated adapter output. Their canonical sources and
   supported engine registries are documented in [Extension Points](/project-wiki/hydra-framework/extending-hydra/extension-points.md).
+- `orchestration/` owns explicit run, worker, request, result, review,
+  validation, handoff, and recovery records. Its provider port records
+  request receipts; it does not execute provider workers or run a scheduler.
 - Human-facing wiki pages explain and route to these owners. They are not a
   second source of truth.
 
@@ -74,7 +77,7 @@ layer:
 | `identity/`, `documents/`, `ports/` | Foundational identity, document parsing, and external boundaries. |
 | `objects/` | Object discovery, envelopes, references, registry state, and schema moves. |
 | `knowledge/`, `wiki/` | Package routing, context compilation, knowledge checks, and wiki-link validation. |
-| `work/`, `providers/`, `intake/` | Task state, adapter planning, provider classification, and staged material flows. |
+| `work/`, `orchestration/`, `providers/`, `intake/` | Task state, bounded run/worker coordination, adapter planning, provider classification, and staged material flows. |
 | `seed/`, `installation/`, `agent_hooks/` | Seed comparison, adoption, deterministic hook helpers, and private retry or log state. |
 | `checks/`, `commands/`, `cli/` | Validation composition, command-family coordination, and top-level dispatch. |
 
@@ -92,9 +95,11 @@ claim needs verification. The main routes are:
 1. Start with `cli/dispatch.py` and `cli/parser.py` to see composition and
    registration.
 2. Follow the command family into `commands/`.
-3. Follow reusable behavior into its domain package and its mirrored unit
+3. For coordinated work, follow `commands/orchestration.py` into
+   `orchestration/` and the provider adapter boundary.
+4. Follow reusable behavior into its domain package and its mirrored unit
    tests.
-4. Check repository tests and contract goldens when the claim concerns the live
+5. Check repository tests and contract goldens when the claim concerns the live
    tree or command output.
 
 `validate` is the normal framework-wide structural gate. `validate-wiki` is

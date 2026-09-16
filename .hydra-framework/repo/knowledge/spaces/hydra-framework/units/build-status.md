@@ -19,6 +19,12 @@ provenance:
     - ".hydra-framework/repo/telemetry/README.md"
     - ".hydra-framework/engine/src/hydra_engine/cli/command_metadata.py"
     - ".hydra-framework/engine/src/hydra_engine/knowledge/context_providers.py"
+    - ".hydra-framework/config/delegation-policy.yaml"
+    - ".hydra-framework/engine/src/hydra_engine/orchestration/control.py"
+    - ".hydra-framework/engine/src/hydra_engine/orchestration/adapter.py"
+    - ".hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py"
+    - ".hydra-framework/engine/src/hydra_engine/commands/orchestration.py"
+    - ".hydra-framework/engine/src/hydra_engine/providers/orchestration.py"
   source_digests:
     - source: .hydra-framework/scripts/hydra.py
       digest: sha256:e64104dc58d71b6e34bb9855ed201b1bf4b7d1fe3ab74408662607984954f2e4
@@ -27,9 +33,21 @@ provenance:
     - source: .hydra-framework/repo/telemetry/README.md
       digest: sha256:b7ccc03875de6ebcd7b1dee48e59d804eaee3043b8840085aa6eee5e9a71c97c
     - source: .hydra-framework/engine/src/hydra_engine/cli/command_metadata.py
-      digest: sha256:7045a3aaded2dd70eeb76254cce0b22675674f443cec7395bb5da6ed3016e04d
+      digest: sha256:af82beb4371e3d36f664160cd38e559808e54bafc43cc3e6e32a5b2980bb4e7a
     - source: .hydra-framework/engine/src/hydra_engine/knowledge/context_providers.py
-      digest: sha256:3c720338f9eef6312bb9ddc5e3028d1a251ae44434baa25c4c0153cf011d1fb8
+      digest: sha256:a071f43144e10374f6609587729f5c3ce1ec9e49424facdc027a98dfb71082f4
+    - source: .hydra-framework/config/delegation-policy.yaml
+      digest: sha256:b27eda5db436b5a491ae8be245df97ed445e68ba06f1efddc991bcba73990709
+    - source: .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      digest: sha256:c93459747bc5de8fee3ab056cc6b8932c101ba437a0844e25a0c2a5e5e4c1677
+    - source: .hydra-framework/engine/src/hydra_engine/orchestration/adapter.py
+      digest: sha256:c50acc8cbc155caaa935bb519f81a3158e6ee17b947497efe69f84fc04d13218
+    - source: .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
+      digest: sha256:1cdd949a0143677c173058613f26f2de59ffedd0b512aedc69e4fae98904ae17
+    - source: .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
+      digest: sha256:886091c0c715b553588e8ae6bcba4c9bf40aebdc3007d5665a0c2dd0e5bbb59d
+    - source: .hydra-framework/engine/src/hydra_engine/providers/orchestration.py
+      digest: sha256:4cb06f8d1efe9424c2658d8c215f81e79d1bec5660e597768fb9476bf69f7689
 question: "What is actually built in this framework, per capability?"
 group: "framework-state"
 certainty: "confirmed"
@@ -65,6 +83,7 @@ plan document: the base upgrade plan describes intent, this describes the build.
 | `.migrations/` staging, inventory, ledger | built | `hydra.py migration inventory` |
 | Envelope `schema_version` and upgrade path | built | `hydra.py schema upgrade`, `engine/migrations.py`; three migration steps; all objects at `schema_version: 3` |
 | `diff-base` envelope-version drift detection | built | `hydra.py diff-base` classifies a base ahead on `schema_version` as explained, not unexplained |
+| Provider-neutral bounded orchestration | built | `hydra.py orchestration start\|spawn\|message\|collect\|transition\|handoff\|recover\|review\|validate\|status`; mirrored orchestration tests |
 | Opaque `uid` | built, enforced from `schema_version` 2 | every object carries a UUID4 `uid`; `validate_object_references` fails any object at `schema_version` >= 2 with no `uid` |
 | Mandatory envelope: `kind`, `title`, `status`, `scope`, `owners`, `relations`, `provenance.sources` | built, enforced from `schema_version` 3 | `build_hydra_object` defaults none of them; `validate_object_references` fails any object at `schema_version` >= 3 that lacks one. `relations` and `provenance.sources` must be present and may be `[]`; the other five must carry a value |
 | Operational query store (SQLite) | all four stages built | `hydra.py ref check` collapsed from 3 object scans to 1; `is_relative_to` and the `objects/moves.py` O(n²) rescan fixed; SQLite store (`documents`/`refs`/`objects`/`aliases`/`relations`/`provenance`/`tasks`) built and self-maintaining via `ref store rebuild`/`--verify-digests` and post-checkout/post-merge hooks; `ref rdeps`, `ref impact --depth`, indexed `ref resolve`, and `board --owner/--blocked/--stale` all read through it with scan/absent-store fallback where one exists. Needs no concurrency design of its own — the store's write path is not where single-writer concurrency gets solved |
@@ -107,4 +126,12 @@ one as a side effect of an unrelated edit, because every one changes
 
 Current architectural constraints are documented in their canonical owners:
 the engine boundary in `core/placement-rules.md`, the telemetry contract in
-`repo/telemetry/README.md`, and executable engine modules and tests.
+`repo/telemetry/README.md`, the orchestration policy in
+`config/delegation-policy.yaml`, and executable engine modules and tests.
+
+Orchestration is a local, bounded control plane. It records explicit run,
+worker, owner, parent, request, result, review, validation, handoff, and
+recovery state in the private ledger. Claude and Codex adapters stop at a
+request receipt: they do not claim SDK/runtime execution, scheduling,
+background reaping, inferred stale-owner deletion, or raw transcript
+persistence.

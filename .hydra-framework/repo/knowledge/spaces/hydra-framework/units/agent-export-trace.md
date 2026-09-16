@@ -24,11 +24,11 @@ provenance:
     - source: .hydra-framework/capabilities/agents/orchestrator/metadata.yaml
       digest: sha256:6578086c05679a94319cdd396d0e044cca011e87e8f0dd40999ed7534ef56357
     - source: .hydra-framework/adapters/providers/claude/capability-map.yaml
-      digest: sha256:9b638dadb5c46bf962a95c06f22ea14c98ee43e014045ef41a837957df9c2324
+      digest: sha256:21f9816a665e6025bc84f1cd7a2c2b1ae3be1523389e6f98c6491ded2790001f
     - source: .hydra-framework/engine/src/hydra_engine/providers/capabilities.py
-      digest: sha256:d46438e1dac157efcb00411db6d25b9cff21686532b24dbea0c53b248b14a09f
+      digest: sha256:a2887b785d20626bd7302efb398e670c0955ce04b177fa5f34b63c8c0b8c5ce5
     - source: .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
-      digest: sha256:96cc1f63dda07e239bf711387bfe49baccba71467732e3c1b131f7350598fff1
+      digest: sha256:eeab0f4fc577d4f964ef096944f750c4a980d616d9ef07bb63cef46d8d06a70d
 question: "How does one canonical agent's metadata become one generated Claude subagent, end to end?"
 group: "provider-export"
 certainty: "confirmed"
@@ -93,6 +93,11 @@ generated_file: hydra-orchestrator.md
 This sidecar is the whole basis of surface classification (`reclaim.py`'s
 `classify_surfaces`): without it, the generated file would classify as
 `orphaned`, which is exactly how a hand-authored subagent is detected.
+
+The exported agent may also carry the provider map's orchestration request
+boundary. That text is an explicit limitation: it can describe or queue a
+bounded request, but it is not evidence that a Claude or Codex worker started,
+received a message, or produced a result.
 
 ## Rules
 

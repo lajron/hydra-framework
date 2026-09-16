@@ -267,7 +267,12 @@ def reconcile_export(paths: ProvidersPaths, selection_skills=None) -> ReconcileP
     this module back and creating a cycle.
     """
     for item in classify_surfaces(paths):
-        if item["status"] in {"orphaned", "drifted"}:
+        # A sidecar-backed generated surface is the exporter's disposable
+        # output.  Its bytes may be behind the canonical source because the
+        # source or renderer changed since the last export; the normal export
+        # operation is the reconciliation step that updates it.  An orphaned
+        # surface has no canonical ownership evidence, so it still blocks.
+        if item["status"] == "orphaned":
             reason = (
                 f"a `{item['status']}` provider surface exists at `{item['path']}`: {item['detail']}; "
                 "resolve it (see `hydra.py reclaim`) before export can reconcile"

@@ -17,6 +17,19 @@ copy. Do not use this route to replace another AI framework or to clear
 existing documentation, CI, provider files, or source material. Those changes
 need separate, explicit scope through [Migration](/project-wiki/hydra-framework/extending-hydra/migration.md#take-over-legacy-agentic-material).
 
+If the target is not empty of agentic material, choose the route before running
+the copy:
+
+| Target situation | Next route |
+| --- | --- |
+| No Hydra copy and no foreign agentic setup | Continue with this adoption guide. |
+| Another AI framework or legacy agentic setup is present | Keep it in place. After the owner explicitly scopes a takeover, run the read-only `takeover scan`, then use [Migration](/project-wiki/hydra-framework/extending-hydra/migration.md#take-over-legacy-agentic-material). |
+| The source material is another Hydra copy | Use [Hydra-to-Hydra integration](/project-wiki/hydra-framework/extending-hydra/intake-and-migration.md#hydra-to-hydra-integration), not foreign-material takeover. |
+| Hydra is already present in the target | Use the [post-clone path](/project-wiki/hydra-framework/start-here/new-contributor.md) and inspect lineage with `adopt`. |
+
+`takeover scan` is an inventory only. It does not authorize a move, and
+`init --force` does not turn adoption into migration.
+
 ## 1. Copy From The Checked-Out Source
 
 From the checked-out Hydra source repository, preview the files that would be
@@ -30,6 +43,13 @@ When the preview is correct, apply the copy:
 
 ```bash
 python3 .hydra-framework/scripts/hydra.py init --target /path/to/target-repository
+```
+
+For the current parser arguments and side-effect annotations, see the [Command
+Surface](/project-wiki/hydra-framework/reference/command-surface.md) and run:
+
+```bash
+python3 .hydra-framework/scripts/hydra.py command-metadata --json
 ```
 
 The copy includes the framework definition, entry files, Claude placement rule
@@ -59,6 +79,11 @@ python3 .hydra-framework/scripts/hydra.py adopt --record --repo <repository-slug
 The lineage stamp lets later seed comparison distinguish intentional local
 adaptation from unexplained drift. The command reports an existing lineage
 without rewriting it.
+
+When the target later changes its copied framework, use the [Evolution](/project-wiki/hydra-framework/evolution/evolution.md#seed-copies-and-reconciliation)
+route to compare it with the base using `diff-base` and record deliberate
+divergence with `evolution record`. Reconciliation reports and recommends; it
+does not overwrite the target or the base automatically.
 
 Create a target-local `.github/CODEOWNERS` mapping (or the code host's
 equivalent) for `.hydra-framework/` and `project-wiki/` using reviewers who own

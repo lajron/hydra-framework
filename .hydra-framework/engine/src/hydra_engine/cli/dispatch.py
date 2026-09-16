@@ -18,7 +18,7 @@ from hydra_engine.checks.aggregation import Check
 from hydra_engine.cli import command_metadata
 from hydra_engine.cli import parser as cli_parser
 from hydra_engine.cli import route_prompt
-from hydra_engine.commands import agent_hooks, capability, context, explain_path, hooks, installation, intake, integrate, knowledge, knowledge_bindings, object_moves, private_tier, providers, references, schema, seed, subagents, takeover, telemetry as telemetry_commands, validation, wiki, work
+from hydra_engine.commands import agent_hooks, capability, context, explain_path, hooks, installation, intake, integrate, knowledge, knowledge_bindings, object_moves, orchestration, private_tier, providers, references, schema, seed, subagents, takeover, telemetry as telemetry_commands, validation, wiki, work
 from hydra_engine.config import ConfigError, ConfigPaths, config_advisory_notes, load_effective_config, threshold_default, threshold_value
 from hydra_engine.installation.adopt import REQUIRED_PATHS
 from hydra_engine.installation.paths import InstallationPaths
@@ -38,13 +38,11 @@ from hydra_engine.work import owners, task_records as work_task_records
 from hydra_engine.work.owners import HydraOwnerError
 from hydra_engine.work.paths import WorkPaths
 
-# Every command module's CLI registration, iterated by `cli.parser.build_parser`
-# instead of a per-command switchboard (exempt from check 5's fan-out cap here).
-COMMAND_MODULES = (agent_hooks, capability, context, explain_path, hooks, installation, intake, integrate, knowledge, knowledge_bindings, object_moves, private_tier, providers, references, route_prompt, schema, seed, subagents, takeover, telemetry_commands, wiki, work)
+# Command modules are registered through `cli.parser.build_parser`.
+COMMAND_MODULES = (agent_hooks, capability, context, explain_path, hooks, installation, intake, integrate, knowledge, knowledge_bindings, object_moves, orchestration, private_tier, providers, references, route_prompt, schema, seed, subagents, takeover, telemetry_commands, wiki, work)
 
 # Independent copy, matching `work.paths.WorkPaths`'s own.
 PERSONAL_TASKS_REL = "tasks/personal"
-
 
 @dataclasses.dataclass(frozen=True)
 class RepoContext:
@@ -116,19 +114,16 @@ class RepoContext:
     def intake_paths(self) -> IntakePaths:
         return IntakePaths(root=self.root, hydra=self.hydra)
 
-
 def _yaml_map(value: object) -> dict:
     # `yaml_map`'s one-line semantics, reimplemented locally rather than
     # importing `documents.yaml_documents` for it alone (already at check 4's
     # in-degree cap of 10 -- matches `installation.adopt`'s own `_as_map`).
     return value if isinstance(value, dict) else {}
 
-
 def _validate_checks(ctx: RepoContext) -> list[Check]:
     # Order is `checks.validator_registry.VALIDATORS`'s to own and explain.
     from hydra_engine.checks import validator_registry
     return validator_registry.checks_for(ctx)
-
 
 def _advisory_notes(ctx: RepoContext) -> list[str]:
     today = clock.today()
@@ -144,10 +139,8 @@ def _advisory_notes(ctx: RepoContext) -> list[str]:
     notes += search_index.knowledge_events_growth_notes(ctx.local, ctx.root, t("hydra_engine.telemetry.writer.TELEMETRY_EVENTS_GROWTH_ADVISORY_LINES"))
     return notes + config_advisory_notes(ctx.config_paths())
 
-
 def _dispatch_validate(args, ctx: RepoContext) -> int:
     return validation.command_validate(_validate_checks(ctx), _advisory_notes(ctx)).exit_code
-
 
 def _dispatch_doctor(args, ctx: RepoContext) -> int:
     try:
@@ -174,15 +167,20 @@ def _dispatch_doctor(args, ctx: RepoContext) -> int:
         notes=_advisory_notes(ctx),
     ).exit_code
 
-
-# Not a COMMAND_MODULES member: it introspects that tuple, so it's registered here, like validate/doctor.
+# Direct commands introspect the composed parser and sit beside validate/doctor.
 def _register_direct_commands(subparsers) -> None:
     subparsers.add_parser("validate", help="Validate Hydra task and adapter basics").set_defaults(func=_dispatch_validate)
     subparsers.add_parser("doctor", help="Check required Hydra paths and run validation").set_defaults(func=_dispatch_doctor)
     metadata = subparsers.add_parser("command-metadata", help="List registered commands with generated arguments and hand-authored side-effect metadata")
     metadata.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
-    metadata.set_defaults(func=lambda args, ctx: command_metadata.dispatch(args, COMMAND_MODULES))
+    metadata.set_defaults(func=_dispatch_command_metadata)
 
+def _dispatch_command_metadata(args, _ctx) -> int:
+    parser = getattr(args, "_hydra_command_parser", None)
+    if parser is None:
+        print("Hydra command metadata: composed parser is unavailable", file=sys.stderr)
+        return 1
+    return command_metadata.dispatch(args, parser)
 
 def main(argv: list[str] | None, ctx: RepoContext, legacy_register=None) -> int:
     def _extra(subparsers) -> None:
@@ -191,6 +189,8 @@ def main(argv: list[str] | None, ctx: RepoContext, legacy_register=None) -> int:
             legacy_register(subparsers)
 
     parser = cli_parser.build_parser(COMMAND_MODULES, _extra)
+    # Bind metadata to this exact composed tree.
+    parser.set_defaults(_hydra_command_parser=parser)
     args = parser.parse_args(argv)
     ctx = dataclasses.replace(ctx, command_ids=tuple(entry.id for entry in command_metadata.generate_command_metadata(parser)))
     try:

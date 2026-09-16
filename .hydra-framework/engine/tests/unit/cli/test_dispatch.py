@@ -237,6 +237,33 @@ class ValidateAndDoctorCompositionTests(unittest.TestCase):
         rows = {row["id"]: row for row in json.loads(out.getvalue())}
         self.assertIn("side_effects", rows["task complete"])
         self.assertNotIn("side_effects", rows["board"])
+        self.assertIn("validate", rows)
+        self.assertIn("doctor", rows)
+        self.assertIn("command-metadata", rows)
+
+    def test_command_metadata_uses_the_same_composed_parser_as_legacy_commands(self) -> None:
+        def register_legacy(subparsers):
+            legacy = subparsers.add_parser("legacy")
+            legacy.add_argument("--flag", action="store_true")
+            legacy.set_defaults(func=lambda args, ctx: 0)
+
+        ctx = dispatch.RepoContext.for_root(Path("/tmp/example-repo"))
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            exit_code = dispatch.main(["command-metadata", "--json"], ctx, register_legacy)
+        self.assertEqual(exit_code, 0)
+        rows = {row["id"]: row for row in json.loads(out.getvalue())}
+        self.assertEqual(rows["legacy"]["arguments"], ["--flag"])
+
+        def register_all(subparsers):
+            dispatch._register_direct_commands(subparsers)
+            register_legacy(subparsers)
+
+        expected_parser = dispatch.cli_parser.build_parser(dispatch.COMMAND_MODULES, register_all)
+        expected_ids = {
+            entry.id for entry in dispatch.command_metadata.generate_command_metadata(expected_parser)
+        }
+        self.assertEqual(set(rows), expected_ids)
 
 
 class MainDispatchTests(unittest.TestCase):

@@ -8,62 +8,85 @@ Page type: orientation
 
 ## Answer
 
-Use this page to choose the first page for the work in front of you. For a
-normal fresh clone, start with the [post-clone path](/project-wiki/hydra-framework/start-here/new-contributor.md).
-If Hydra is being added to a different repository, use [Seed And Adopt Hydra](/project-wiki/hydra-framework/start-here/adopt-a-repository.md).
-For other questions, choose a route below.
+This is the front door to the human-facing Hydra documentation. If you have a
+fresh clone, open [Start Here](/project-wiki/hydra-framework/start-here/start-here.md).
+If you are ready to make a change, use the [New Contributor
+route](/project-wiki/hydra-framework/start-here/new-contributor.md). If you are
+bringing Hydra to another repository, use [Seed And Adopt
+Hydra](/project-wiki/hydra-framework/start-here/adopt-a-repository.md).
+
+For every other question, choose the route that matches the decision you need
+to make.
 
 ## A concrete situation
 
-You have just cloned this repository and need to make a change. Start with the
-[post-clone path](/project-wiki/hydra-framework/start-here/new-contributor.md).
-If Hydra is being added to a different repository, use [Seed And Adopt Hydra](/project-wiki/hydra-framework/start-here/adopt-a-repository.md)
-instead.
+You have a task but do not know whether to search for context, inspect a task
+record, change a capability, or run a validation gate. Start with [Start
+Here](/project-wiki/hydra-framework/start-here/start-here.md), then follow one
+specialized route. The wiki gives the explanation; the linked canonical source
+owns the exact rule or current result.
 
 ## What Hydra is
 
-Hydra keeps shared repository rules, documented knowledge, reusable work
-capabilities, task state, and validation in a version-controlled framework. In
-plain language, the repository holds the rules, reusable work patterns, current
-work, and checks a teammate needs to continue. This wiki explains those pieces
-and routes you to the page that fits your question. The [Hydra Framework](/project-wiki/hydra-framework/hydra-framework.md)
-page gives the broader map.
+Hydra keeps repository-owned rules, canonical knowledge, reusable capabilities,
+owner-scoped task state, provider adapters, and validation in one inspectable
+working layer. In plain language, it gives people and agents a shared place to
+find context, continue work, expose repeatable behavior, and check the result.
+
+`.hydra-framework/` is the canonical shared system. `.hydra-framework.local/`
+is private, ignored machine and developer state. `project-wiki/` explains and
+routes the system for people. The [Hydra Framework](/project-wiki/hydra-framework/hydra-framework.md)
+page provides the detailed map, and the [wiki surface
+contract](/.hydra-framework/surfaces/README.md) defines these boundaries.
 
 ## Choose a route
 
-| If you need to... | Start here |
+| If you need to... | Start here | The route answers |
+| --- | --- | --- |
+| Choose a first stop | [Start Here](/project-wiki/hydra-framework/start-here/start-here.md) | Which audience route fits your situation |
+| Prepare a fresh clone | [New Contributor](/project-wiki/hydra-framework/start-here/new-contributor.md) | What to initialize, export, and check |
+| Start or continue repository work | [Working With Hydra](/project-wiki/hydra-framework/working-with-hydra/working-with-hydra.md) | How to find context, track work, and verify a change |
+| Understand the whole framework | [Hydra Framework](/project-wiki/hydra-framework/hydra-framework.md) | How the major areas and boundaries fit together |
+| Find reusable behavior | [Capabilities](/project-wiki/hydra-framework/extending-hydra/capabilities.md) | Skills, agents, workflows, profiles, and provider surfaces |
+| Check orchestration boundaries | [Execution Stack](/project-wiki/hydra-framework/architecture/execution-stack.md) | What the coordination model means and what it does not imply |
+| Retrieve bounded context | [Context Retrieval](/project-wiki/hydra-framework/architecture/context-retrieval.md) | When to use search, route pointers, or a context packet |
+| Trace identity, ownership, or provenance | [Object And Context Model](/project-wiki/hydra-framework/architecture/object-context-model.md) | How IDs, relations, sources, and derived stores fit together |
+| Validate, diagnose, or check source freshness | [Operations](/project-wiki/hydra-framework/operations/operations.md) | Which safe gate or diagnostic to run |
+| Look up a command or term | [Reference](/project-wiki/hydra-framework/reference/reference.md) | Where exact command, source, glossary, and authoring details live |
+| Adopt, migrate, or extend Hydra | [Extending Hydra](/project-wiki/hydra-framework/extending-hydra/extending-hydra.md) | How to change or bring in material safely |
+| Reconcile a changed Hydra copy | [Evolution](/project-wiki/hydra-framework/evolution/evolution.md) | How to compare a copy with its base and record divergence |
+
+## Important boundary
+
+Hydra uses a conceptual execution stack from Coordination Graph to Model. A
+name in that stack is a responsibility map, not by itself evidence of an
+unattended scheduler, a worker service, or a provider SDK. Read [Execution
+Stack](/project-wiki/hydra-framework/architecture/execution-stack.md) for the
+implemented-versus-conceptual boundary and [Provider
+Adapters](/project-wiki/hydra-framework/extending-hydra/provider-adapters.md)
+for the runtime trust boundary.
+
+## Current status owners
+
+The wiki is not the live status store. Follow the canonical owner for the
+current answer:
+
+| Question | Canonical owner |
 | --- | --- |
-| Understand why Hydra exists and see the public quick start | [Root README](/README.md) |
-| Set up a clone that already contains Hydra | [Post-clone path](/project-wiki/hydra-framework/start-here/new-contributor.md) |
-| Add Hydra to another repository | [Seed And Adopt Hydra](/project-wiki/hydra-framework/start-here/adopt-a-repository.md) |
-| Start or continue work in this repository | [Working With Hydra](/project-wiki/hydra-framework/working-with-hydra/working-with-hydra.md) |
-| Decide where shared, personal, or private state belongs | [State Tiers](/project-wiki/hydra-framework/concepts/state-tiers.md) |
-| Understand the framework layout and detailed routes | [Hydra Framework](/project-wiki/hydra-framework/hydra-framework.md) |
-| Check a wiki or framework change | [Validation](/project-wiki/hydra-framework/operations/validation.md) |
-| Get a short answer to a focused question | [Common Questions](/project-wiki/hydra-framework/start-here/common-questions.md) |
-| Trace a durable claim to its owner | [Source Map](/project-wiki/hydra-framework/reference/source-map.md#maintainer-evidence) |
-
-## Where exact detail lives
-
-The wiki is the explanation and navigation layer. The [Hydra Framework README](/.hydra-framework/README.md)
-identifies the tracked framework areas that own rules, task state, knowledge,
-capabilities, adapters, scripts, and validation evidence. A **canonical source**
-is the version-controlled file that owns a rule or behavior; follow that source
-when an exact detail or current result matters. The [wiki surface contract](/.hydra-framework/surfaces/README.md)
-defines this relationship.
-
-The [placement rules](/.hydra-framework/core/placement-rules.md) define where
-shared, personal, and private state belongs. A shared file must not cite private
-material.
+| What is built? | [Build Status](/.hydra-framework/repo/knowledge/spaces/hydra-framework/units/build-status.md) |
+| What is the current framework handoff? | [Framework State](/.hydra-framework/repo/knowledge/spaces/hydra-framework/state.md) |
+| What concerns remain open? | [Framework Problems](/.hydra-framework/repo/knowledge/spaces/hydra-framework/problems.md) |
+| Which high-impact questions are unresolved? | [Unresolved Questions](/.hydra-framework/core/unresolved-questions.md) |
 
 ## Next action
 
-Open the route above that matches your situation. For a normal fresh clone, the
-next step is the [post-clone path](/project-wiki/hydra-framework/start-here/new-contributor.md).
+Open [Start Here](/project-wiki/hydra-framework/start-here/start-here.md) and
+choose the row that matches your role.
 
 ## Sources
 
 - [Root README](/README.md)
 - [Hydra Framework README](/.hydra-framework/README.md)
 - [Knowledge surface contract](/.hydra-framework/surfaces/README.md)
+- [Architecture](/.hydra-framework/core/architecture.md)
 - [Placement rules](/.hydra-framework/core/placement-rules.md)

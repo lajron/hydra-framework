@@ -35,6 +35,12 @@ jobs:
       - name: Selftest
         run: python3 .hydra-framework/scripts/hydra.py selftest
 
+      # Metadata must be rendered from the same composed parser used for
+      # dispatch. The command's unit tests assert the tree/overlay invariants;
+      # this step keeps the assembled command surface visible in CI too.
+      - name: Command metadata parity
+        run: python3 .hydra-framework/scripts/hydra.py command-metadata --json
+
       - name: Doctor
         run: python3 .hydra-framework/scripts/hydra.py doctor
 

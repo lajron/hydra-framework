@@ -225,8 +225,8 @@ def _search_outcome(
 ) -> _SearchOutcome:
     state: index_cache.CacheState = index_cache.SourceOnly("force-source") if force_source else _cache_state(paths, local)
     try:
-        if isinstance(state, index_cache.Stale) and index_cache.command_ids_match(state.db_path, command_ids):
-            if index_collection.delta_is_local(paths, resolver_paths, state.delta):
+        if isinstance(state, index_cache.Stale):
+            if index_cache.command_ids_match(state.db_path, command_ids) and index_collection.delta_is_local(paths, resolver_paths, state.delta):
                 _update_index(paths, resolver_paths, local, command_ids, state)
             else:
                 build_index(paths, resolver_paths, local, command_ids)

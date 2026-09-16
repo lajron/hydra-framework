@@ -6,7 +6,11 @@ Hydra uses this conceptual execution stack:
 
 `Coordination Graph -> Agent Loop -> Execution Harness -> Context Pack -> Prompt -> Model`
 
-- Coordination Graph: coordinates tasks, agents, dependencies, handoffs, and recovery across many loops.
+- Coordination Graph: names the responsibility for coordinating tasks, agents,
+  dependencies, handoffs, and recovery across many loops. The checked-in
+  orchestration control plane records explicit bounded requests and ownership
+  transitions in a private ledger; it is not an unattended scheduler, worker
+  service, message bus, result collector, or provider SDK.
 - Agent Loop: drives one agent through understand, readiness, plan, act, verify, and learn.
 - Execution Harness: supplies instructions, tools, environment, state, and feedback for reliable model work.
 - Context Pack: selects the canonical state, task facts, constraints, and assumptions the model should see.
@@ -25,6 +29,15 @@ Hydra treats the Execution Harness as five cooperating subsystems:
 - State: task records, checkpoints, canonical knowledge, readiness, blockers, assumptions, and continuation notes.
 - Feedback: validation commands, test evidence, review signals, observability, failure records, and self-evolution evidence.
 
+The orchestration control plane is provider-neutral. It requires explicit run,
+task, worker, parent, and owner identities; enforces the configured active-
+worker and depth limits; records structured spawn, message, and collect
+requests; and keeps result review, validation, handoff, recovery, and terminal
+transitions explicit. Claude and Codex adapter maps currently expose a
+request-only boundary. A queued or acknowledged request is not evidence that a
+provider runtime executed it. No stale-owner inference, automatic worker
+reaping, task-record copy, or raw transcript persistence is part of the shared
+architecture.
 
 ## Recommended Structure
 

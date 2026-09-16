@@ -43,6 +43,58 @@ has one clear authority and the move remains reversible. The material
 migration workflow
 owns the request, approval, and staging details.
 
+## Executable approval-gated sequence
+
+The command flow below makes the three mutation gates visible. `inventory` and
+`status` are read-only. `ledger --create` only creates migration workspace
+scaffolding. The staging request records a digest-bound plan but does not move
+anything. A human `decide approve` applies the exact action for the current
+phase.
+
+For material already under tracked `.migrations/`, inspect it first and create
+workspace scaffolding only when needed:
+
+```bash
+python3 .hydra-framework/scripts/hydra.py migration inventory <slug> --json
+python3 .hydra-framework/scripts/hydra.py migration ledger <slug> --create
+```
+
+The normal approval-gated batch is:
+
+```bash
+python3 .hydra-framework/scripts/hydra.py migration request-stage <slug> <batch> \
+  --source <root> --route shared \
+  --worker-instance <instance-id> --capability-class <class>
+python3 .hydra-framework/scripts/hydra.py migration decide <slug> <batch> approve
+
+python3 .hydra-framework/scripts/hydra.py migration propose <slug> <batch> \
+  --manifest <proposal.json>
+python3 .hydra-framework/scripts/hydra.py migration validate-batch <slug> <batch> \
+  --evidence <validation.json>
+python3 .hydra-framework/scripts/hydra.py migration decide <slug> <batch> approve
+
+python3 .hydra-framework/scripts/hydra.py migration request-close <slug> <batch> \
+  --reconciliation <reconciliation.json>
+python3 .hydra-framework/scripts/hydra.py migration decide <slug> <batch> approve
+python3 .hydra-framework/scripts/hydra.py migration status <slug> <batch> --json
+```
+
+Use `--route private` for a private or never-committed source, and repeat the
+`--source` and `--worker-instance` options when one bounded batch contains
+multiple roots or worker plans. The first approval applies only the recorded
+staging move and creates the migration workspace when it does not already
+exist. `propose` writes the batch proposal, while `validate-batch` records fresh
+independent validation and opens publication approval. The second approval
+publishes only the validated canonical writes. `request-close` records the exact
+staged paths for removal; the final approval removes only those paths and keeps
+the ledger, evidence, decision history, and workspace.
+
+Reject or revise decisions keep the originals in place or keep the batch open
+for correction. They never turn an unapproved request into a move, publication,
+or removal. Inspect the current arguments and side-effect annotations with
+[`Command Surface`](/project-wiki/hydra-framework/reference/command-surface.md)
+and `command-metadata --json` before adapting this sequence.
+
 ## Drain The Ledger
 
 Create one migration workspace under
@@ -62,9 +114,19 @@ drained source root where readers may still look.
 Takeover is an explicit migration path for an existing non-Hydra or legacy
 agentic setup. First classify candidate roots such as `.claude/`, `.codex/`,
 `.agents/`, Cursor, Windsurf, Copilot, prompt libraries, or old agent files.
+The read-only takeover scan records the classifications and staging
+recommendations:
+
+```bash
+python3 .hydra-framework/scripts/hydra.py takeover scan --root /path/to/repository --json
+```
+
 Generated Hydra adapters remain adapters, not canonical sources. Confirm the
 roots and scope with the owner, then use the migration workflow to stage,
 triage, promote, redirect, and close them.
+
+If the source already contains a Hydra copy, use [Hydra-to-Hydra integration](/project-wiki/hydra-framework/extending-hydra/intake-and-migration.md#hydra-to-hydra-integration)
+instead of this foreign-material takeover route.
 
 Adoption is separate: [Seed And Adopt Hydra](/project-wiki/hydra-framework/start-here/adopt-a-repository.md)
 leaves existing repository material in place. Do not start takeover as part of
