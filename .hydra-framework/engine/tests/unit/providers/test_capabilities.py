@@ -42,6 +42,10 @@ CLAUDE_MAP = (
     "  effort_class_capping: supported\n"
     "  max_active_workers: advisory\n"
     "  max_depth: advisory\n"
+    "orchestration:\n"
+    "  spawn: request-only\n"
+    "  message: request-only\n"
+    "  collect: request-only\n"
 )
 
 
@@ -61,6 +65,30 @@ class ResolveCapabilityTests(unittest.TestCase):
         self.assertEqual(capabilities.resolve_capability(self.mapping, "capability_classes", "nonexistent"), "")
         self.assertEqual(capabilities.resolve_capability(self.mapping, "capability_classes", ""), "")
         self.assertEqual(capabilities.resolve_capability({}, "effort_budgets", "standard"), "")
+
+
+class OrchestrationMappingTests(unittest.TestCase):
+    def test_missing_orchestration_map_fails_closed(self):
+        self.assertEqual(
+            capabilities.orchestration_modes({}),
+            {operation: "unsupported" for operation in capabilities.ORCHESTRATION_OPERATIONS},
+        )
+
+    def test_request_only_operations_are_resolved(self):
+        mapping = {"orchestration": {"spawn": "request-only", "message": "request-only", "collect": "request-only"}}
+        self.assertEqual(
+            capabilities.orchestration_modes(mapping),
+            {operation: "request-only" for operation in capabilities.ORCHESTRATION_OPERATIONS},
+        )
+        instruction = capabilities.orchestration_request_instruction(mapping)
+        self.assertIn("Request-only operations: spawn, message, collect", instruction)
+        self.assertIn("does not invoke a provider SDK", instruction)
+
+    def test_unknown_operation_state_is_treated_as_unsupported(self):
+        mapping = {"orchestration": {"spawn": "provider-exec"}}
+        modes = capabilities.orchestration_modes(mapping)
+        self.assertEqual(modes["spawn"], "unsupported")
+        self.assertEqual(modes["message"], "unsupported")
 
 
 class FrontmatterBlockTests(unittest.TestCase):
@@ -142,6 +170,21 @@ class ValidateCapabilityMapsTests(unittest.TestCase):
         errors = capabilities.validate_capability_maps(paths)
         self.assertTrue(any("delegation_controls" in error for error in errors))
 
+    def test_declared_orchestration_states_are_validated(self):
+        paths = _paths()
+        _write(
+            paths.root,
+            ".hydra-framework/adapters/providers/claude/capability-map.yaml",
+            CLAUDE_MAP.replace("collect: request-only", "collect: provider-exec"),
+        )
+        _write(
+            paths.root,
+            ".hydra-framework/adapters/providers/codex/capability-map.yaml",
+            CLAUDE_MAP.replace("provider: claude", "provider: codex"),
+        )
+        errors = capabilities.validate_capability_maps(paths)
+        self.assertTrue(any("orchestration `collect` must be request-only or unsupported" in error for error in errors))
+
 
 class WrapperRenderingTests(unittest.TestCase):
     def _skill_dir(self, paths: ProvidersPaths) -> Path:
@@ -185,6 +228,8 @@ class WrapperRenderingTests(unittest.TestCase):
         self.assertIn("`hydra-other-skill`", body)
         self.assertIn("`.hydra-framework/capabilities/skills/other-skill/skill.md`", body)
         self.assertIn("## Delegation Policy", body)
+        self.assertIn("## Orchestration Request Boundary", body)
+        self.assertIn("does not invoke a provider SDK", body)
 
     def test_build_agent_wrapper_applies_role_capability_fallback_and_effort_ceiling(self):
         paths = _paths()

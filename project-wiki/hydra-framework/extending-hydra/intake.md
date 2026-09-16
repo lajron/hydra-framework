@@ -25,6 +25,12 @@ The early stages are private under `.hydra-framework.local/intake/`. A small
 unverified observation can remain a private note instead of opening a full
 intake chain. Do not make an extracted artifact or triage note canonical.
 
+If the problem is where an existing state file belongs, rather than what the
+source means, stop the intake flow. Use the [placement repair route](/project-wiki/hydra-framework/extending-hydra/intake-and-migration.md#repair-misplaced-state):
+`explain-path <path> --json` is read-only, `migrate-state` previews the existing
+plan, and `migrate-state --apply` applies it only after review. Placement repair
+does not promote a claim or create an intake record.
+
 ## Route The Outcome
 
 Promote only durable meaning to the owner that actually owns it:
@@ -52,6 +58,11 @@ python3 .hydra-framework/scripts/hydra.py note "unverified observation to revisi
 For a source that needs descriptors, extraction, privacy review, or provenance,
 follow the intake lifecycle
 and its templates.
+
+Intake does not create or infer orchestration ownership. If a reviewed task
+needs coordinated workers, start the explicit run from the
+[Orchestration Boundary](/project-wiki/hydra-framework/architecture/execution-stack.md#orchestration-boundary)
+after the canonical task record and owner are known.
 
 ## Related Routes
 

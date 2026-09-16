@@ -35,6 +35,27 @@ The [Task Lifecycle](/project-wiki/hydra-framework/working-with-hydra/task-lifec
 page explains record state and handoff. Provider hook boundaries are covered by
 [Provider Adapters](/project-wiki/hydra-framework/extending-hydra/provider-adapters.md).
 
+## Explicit Coordinated Work
+
+When one task needs bounded worker assistance, the caller opts into the local
+control plane. The run remains anchored to the existing task record:
+
+1. Start a run with an explicit run ID and owner.
+2. Spawn a worker with an explicit worker ID, owner, role, reason, parent, and
+   structured task payload. The shared policy limits active workers and depth.
+3. Send bounded messages or collect a structured partial or complete result.
+4. Review the complete result with an independent reviewer and validate it with
+   an independent validator.
+5. Transition the worker and then the run explicitly. Handoff and recovery use
+   named owners; stale dates never trigger deletion or reaping.
+
+The default adapter only records a request receipt in the private ledger. A
+receipt does not mean that a model started, a provider delivered a message, or
+the result is complete. See [Execution Stack](/project-wiki/hydra-framework/architecture/execution-stack.md#orchestration-boundary)
+for the implemented-versus-conceptual boundary and [Task
+Lifecycle](/project-wiki/hydra-framework/working-with-hydra/task-lifecycle.md)
+for the durable task record that the run must reference.
+
 ## Activation Boundaries
 
 | Boundary | What happens | What does not follow from it |

@@ -34,6 +34,14 @@ delegation_controls:
   max_active_workers: advisory
   max_depth: advisory
 
+# These entries expose only the provider boundary used by Hydra's
+# orchestration control plane. They do not mean Hydra can invoke Claude Code's
+# SDK or observe provider execution.
+orchestration:
+  spawn: request-only
+  message: request-only
+  collect: request-only
+
 notes:
   - Aliases track the provider's current generation better than full IDs.
   - inherit means the subagent runs on the main session model.

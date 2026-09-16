@@ -45,6 +45,27 @@ Every capture site converges on one writer, so the classification and
 redaction step below runs identically regardless of where an event
 originated.
 
+## Hook boundary
+
+Provider hooks are callers of the pipeline, not alternate telemetry stores.
+`hook-command-output` and `hook-codex-command-output` reduce large Bash output
+before it is returned to model context and record only structural reducer
+outcomes. Optional full logs stay private. `knowledge-search` and
+`route-prompt` record bounded command or route usage, without prompt text.
+
+`hook-token` is a guardrail around context size and repeated failures. It is
+quiet on success, records retry fingerprints privately when needed, and can
+return `2` at a configured overage or repeated-failure threshold. It does not
+turn a local budget into a repository-wide invariant. The
+`hook-post-edit` command applies a scoped Knowledge package check to an edited
+file; it is immediate feedback, not a replacement for full validation.
+
+The Git hooks have a separate operational role. The optional pre-push hook can
+block on `hydra.py validate`; post-commit, post-merge, post-checkout, and
+post-rewrite hooks refresh derived local state on a best-effort basis. None of
+these hook paths makes raw provider traffic or transcript content part of the
+shared telemetry contract.
+
 ## Classification and redaction
 
 Before a payload is written anywhere, every field name in it is looked up
@@ -99,6 +120,12 @@ This is the one supported way to get numbers out of the private corpus
 without hand-reading the events log, and it is the only shape a telemetry
 evidence package's `metrics.json` is allowed to hold: scalars, per-kind count
 maps, and name lists, never a raw row.
+
+The report is descriptive. It does not establish that a provider was captured,
+that a source declaration is complete, or that a proposed change is correct.
+Use the redaction gate before treating an aggregate as shareable evidence, then
+use the [Evidence and Telemetry](/project-wiki/hydra-framework/operations/evidence-and-telemetry.md)
+route for review and absorption.
 
 ## Evidence-package lifecycle
 

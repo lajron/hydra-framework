@@ -1,5 +1,11 @@
 # New Contributor
 
+Audience: A developer who has just cloned a repository that already contains Hydra
+
+Reader goal: Prepare the checkout and choose the first safe work route
+
+Page type: tutorial
+
 If you have just cloned this repository, prepare the checkout before making a
 change:
 
@@ -31,6 +37,31 @@ route](/project-wiki/hydra-framework/start-here/adopt-a-repository.md) instead.
   tool-specific files are missing when the checkout expects them, run
   `export-adapters` again. See the [validation
   command](/.hydra-framework/engine/src/hydra_engine/commands/validation.py).
+
+## Important boundary
+
+The first two commands prepare ignored or generated surfaces. They do not make
+those surfaces canonical: durable rules belong in `.hydra-framework/`, and
+provider wrappers belong to the export process. `doctor` is a repository health
+check, not a security sandbox. Review provider hook trust before enabling a
+provider session in the [Provider Adapter trust
+boundary](/project-wiki/hydra-framework/extending-hydra/provider-adapters.md).
+
+If the task needs coordinated workers, read the [Orchestration Boundary](/project-wiki/hydra-framework/architecture/execution-stack.md#orchestration-boundary)
+before using its commands. It requires explicit owners, configured bounds,
+independent review, and validation; a provider request receipt is not execution
+evidence.
+
+## After setup
+
+| If you need to... | Continue with |
+| --- | --- |
+| Make or continue a repository change | [Working With Hydra](/project-wiki/hydra-framework/working-with-hydra/working-with-hydra.md) and [First Task Walkthrough](/project-wiki/hydra-framework/working-with-hydra/first-task.md) |
+| Find only the context a task needs | [Context Retrieval](/project-wiki/hydra-framework/architecture/context-retrieval.md) |
+| Find or add reusable behavior | [Capabilities](/project-wiki/hydra-framework/extending-hydra/capabilities.md) |
+| Understand orchestration responsibilities | [Execution Stack](/project-wiki/hydra-framework/architecture/execution-stack.md) |
+| Choose a validation or freshness check | [Operations](/project-wiki/hydra-framework/operations/operations.md) |
+| Trace a claim or path to its owner | [Reference](/project-wiki/hydra-framework/reference/reference.md) and [Source Map](/project-wiki/hydra-framework/reference/source-map.md) |
 
 ## Next action
 
@@ -69,7 +100,7 @@ checks without it. See the [installation command](/.hydra-framework/engine/src/h
 ## Maintainer route
 
 The setup and ownership sources are collected in the
-[Source Map](/project-wiki/hydra-framework/reference/source-map.md#maintainer-evidence).
+[Source Map](/project-wiki/hydra-framework/reference/source-map.md).
 
 ## Sources
 

@@ -24,11 +24,11 @@ provenance:
     - source: .hydra-framework/capabilities/skills/knowledge-unit/metadata.yaml
       digest: sha256:7b8ef22df1d5d2fe6a0451bfc8196efaa1a7331e6ab8621d70f1894f1871b59c
     - source: .hydra-framework/adapters/providers/claude/README.md
-      digest: sha256:1fe35b06c85cd4a1d576dd8cce94b5d649e421628c1924b1e82d5bbd28dd5677
+      digest: sha256:4de81e2d852bb2970d6e3b667a3c497fce56417f45a17b064544f5ecfe6a7471
     - source: .hydra-framework/engine/src/hydra_engine/providers/capabilities.py
-      digest: sha256:56e3df1c20e6b5317dfadc964e614aa0818d1e639dee210b195e98e2789d33a6
+      digest: sha256:a2887b785d20626bd7302efb398e670c0955ce04b177fa5f34b63c8c0b8c5ce5
     - source: .hydra-framework/engine/src/hydra_engine/providers/adapter_plan.py
-      digest: sha256:da961602934435c1c19c1249d23a02e2f4bdb713359ba17ed1f9c19294ca2000
+      digest: sha256:028b4d16bc9138222759938677e332b1a733419993f49fac71092aa748b74710
 question: "What must be true before a new Hydra skill or subagent ships?"
 group: "add-module"
 certainty: "confirmed"
@@ -59,6 +59,11 @@ must have an entry in each provider's `capability-map.yaml`
 emits the provider field; an empty or `unresolved` entry is deliberately omitted
 from the generated wrapper (`hydra://knowledge-unit/hydra-framework/agent-export-trace`
 traces this resolution end to end).
+
+If the new agent will participate in coordinated work, keep its role and
+provider mapping separate from orchestration execution. The orchestration
+control plane records explicit bounded requests and ownership; generated
+provider files do not establish a scheduler or provider SDK runtime.
 
 ## Rules
 

@@ -73,7 +73,7 @@ objects:
   hydra://capability/profile-policy/capability-profiles:
     uid: 6f16f1d9-057d-4199-83aa-75ee5ec7f742
     path: .hydra-framework/capabilities/profiles.yaml
-    digest: sha256:5480794b8ac1dd7a99bd0007a0c71b1a9f85402c0b98cac5a3c91ae9dc41f465
+    digest: sha256:e05672807a40e5cee3cbdadaecbd1279ed97f9d660d4e6c723976fe5020db6be
     family: Capability
     kind: capability-profile-policy
     status: active
@@ -340,7 +340,7 @@ objects:
   hydra://documentation/page/adopt-a-repository:
     uid: 17ba219f-f14c-49e9-8617-b34aa5ce6ac3
     path: project-wiki/hydra-framework/start-here/adopt-a-repository.md
-    digest: sha256:e1f729aa0d8458740bc05a807a85789bc0b6ef365898a88e3cb059672f87a8cd
+    digest: sha256:61691fdc20cf90da218d2283046c6771f7fa5c709beef9f7f0840cb0a8e61aa1
     family: Documentation
     kind: documentation-page
     status: active
@@ -358,7 +358,7 @@ objects:
   hydra://documentation/page/architecture:
     uid: 55371fbf-d8da-4e53-b892-605e27dc3fde
     path: project-wiki/hydra-framework/architecture/architecture.md
-    digest: sha256:59f3cc54ace6bbf5e9db6564479306c632bb26a3ed31f25691e8a2b2410712d9
+    digest: sha256:5df2ce1d080e1940e784786b76e13c1243001df8e59238f8808020cf01b4d535
     family: Documentation
     kind: documentation-page
     status: active
@@ -372,11 +372,15 @@ objects:
     provenance_sources:
       - .hydra-framework/core/architecture.md
       - .hydra-framework/core/lifecycle.md
+      - .hydra-framework/config/delegation-policy.yaml
+      - .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
       - .hydra-framework/repo/knowledge/execution-harness.md
   hydra://documentation/page/capabilities:
     uid: e4b162b0-c683-4b87-b7fd-b26ba9073d84
     path: project-wiki/hydra-framework/extending-hydra/capabilities.md
-    digest: sha256:aae5590ec06a8b33f1cfa0d71fa7329ac4493e2e609eeb1791f1f73dc1abf3be
+    digest: sha256:21516a75df561c0f34fc9fab52c0079033893839c6e917d2a2befd175fb57b6e
     family: Documentation
     kind: documentation-page
     status: active
@@ -394,6 +398,13 @@ objects:
       - .hydra-framework/engine/src/hydra_engine/providers/capabilities.py
       - .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
       - .hydra-framework/engine/src/hydra_engine/providers/selection.py
+      - .hydra-framework/capabilities/tools/capabilities.yaml
+      - .hydra-framework/config/delegation-policy.yaml
+      - .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/adapter.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
+      - .hydra-framework/engine/src/hydra_engine/providers/orchestration.py
   hydra://documentation/page/command-output-reducers:
     uid: fb958187-591b-47bd-9a2d-81a3f71ade4e
     path: project-wiki/hydra-framework/architecture/command-output-reducers.md
@@ -420,7 +431,7 @@ objects:
   hydra://documentation/page/command-surface:
     uid: 48aa32de-e9ca-4d22-ab9a-9eeffec8a310
     path: project-wiki/hydra-framework/reference/command-surface.md
-    digest: sha256:10fc96da50000de52ec326aebfe1a00499a038dc90a88910c59227fb0e715aaa
+    digest: sha256:ad6e8f24e98d8201a82b915c4427d2cd73cd32e2486407e256f71fe023067c91
     family: Documentation
     kind: documentation-page
     status: active
@@ -434,10 +445,13 @@ objects:
     provenance_sources:
       - .hydra-framework/scripts/README.md
       - .hydra-framework/scripts/hydra.py
+      - .hydra-framework/engine/src/hydra_engine/cli/command_metadata.py
+      - .hydra-framework/engine/src/hydra_engine/cli/dispatch.py
+      - .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
   hydra://documentation/page/common-questions:
     uid: 6722e049-2742-425e-80c6-7e21f54cb56c
     path: project-wiki/hydra-framework/start-here/common-questions.md
-    digest: sha256:ba71443f486287f18b920189905d090a4135adb24a2b83fd7d5e2b4c77053887
+    digest: sha256:62ecae0ca2b5f067a848e2cf7886099ded2f72af782705c295a82e68ddbf3635
     family: Documentation
     kind: documentation-page
     status: active
@@ -453,7 +467,7 @@ objects:
   hydra://documentation/page/concepts:
     uid: 36ccfe79-7b63-483f-af15-b35ccfb9e006
     path: project-wiki/hydra-framework/concepts/concepts.md
-    digest: sha256:d9278fc4f84224475e68692ccd3214a8c1ad303eec0748f819a6017bd55f791e
+    digest: sha256:66fb14b9a4dd168cf288ee98329b55dec993962b78c7892ab27d20a6c961e2e0
     family: Documentation
     kind: documentation-page
     status: active
@@ -467,10 +481,13 @@ objects:
     provenance_sources:
       - .hydra-framework/core/placement-rules.md
       - .hydra-framework/core/architecture.md
+      - .hydra-framework/config/delegation-policy.yaml
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
   hydra://documentation/page/context-retrieval:
     uid: fd518239-5061-44bb-9894-02d154b69a80
     path: project-wiki/hydra-framework/architecture/context-retrieval.md
-    digest: sha256:c38493b3b5acc74f8bee55fa7b72fe865ae66fff89cebf004dc45bd1c3bbdecc
+    digest: sha256:6754d7caa301e985b9f172b8ac368c4d474a1ed1c2230a23f94547d3a91621f2
     family: Documentation
     kind: documentation-page
     status: active
@@ -489,7 +506,7 @@ objects:
   hydra://documentation/page/documentation-authoring:
     uid: e2138356-5c44-4648-ae6d-12a6a16f4a1d
     path: project-wiki/hydra-framework/reference/documentation-authoring.md
-    digest: sha256:445de64aa3af15978a1181539333c5c41fbb33180b28f1aab615e0919c42aa80
+    digest: sha256:e0a20ad1a038e2080266a235f7b1a987685e1c2b1d22cea8e0148b3340246175
     family: Documentation
     kind: documentation-page
     status: active
@@ -506,7 +523,7 @@ objects:
   hydra://documentation/page/engine:
     uid: ef18fbcd-0403-4667-99fd-b8ed1dd70234
     path: project-wiki/hydra-framework/architecture/engine.md
-    digest: sha256:5e9caf4425c699086e38010f4129542dd8bc10af29978a3bf6bc80dee2888888
+    digest: sha256:11ed7df30bd54e3df47f8fed576d7b6485a22699f1c25cf03de1e4baab0b99c9
     family: Documentation
     kind: documentation-page
     status: active
@@ -528,13 +545,17 @@ objects:
       - .hydra-framework/engine/src/hydra_engine/cli/dispatch.py
       - .hydra-framework/engine/src/hydra_engine/cli/parser.py
       - .hydra-framework/engine/src/hydra_engine/cli/rendering.py
+      - .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/adapter.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
       - .hydra-framework/engine/src/hydra_engine/commands/__init__.py
       - .hydra-framework/engine/src/hydra_engine/commands/validation.py
       - .hydra-framework/engine/tests/repository/test_architecture_bounds.py
   hydra://documentation/page/evidence-and-telemetry:
     uid: c2d33d99-681f-4ce7-8fc1-5d89ca6fff82
     path: project-wiki/hydra-framework/operations/evidence-and-telemetry.md
-    digest: sha256:dc96e828d4d411971a26c5c8f06916445415abe8a8fc1a461f492bde971fa620
+    digest: sha256:59be459eab19d0485ddd62e9fac4dd109702bc7704b9efbab3f67a35d91ec3fc
     family: Documentation
     kind: documentation-page
     status: active
@@ -551,7 +572,7 @@ objects:
   hydra://documentation/page/evolution:
     uid: ca9cd5da-bf2c-48d3-8d57-e0cd16150f8f
     path: project-wiki/hydra-framework/evolution/evolution.md
-    digest: sha256:eb9e65c86292cbba1affb9f5dd7e3fdc5a44c874b2ac4cfc3841b43e0efe86c0
+    digest: sha256:51d61fa53e7bd60daaeea96440677eba7dbaf8a0afa615493f9fc39b33c8aa8c
     family: Documentation
     kind: documentation-page
     status: active
@@ -572,7 +593,7 @@ objects:
   hydra://documentation/page/execution-flow:
     uid: c53ab665-b51b-47a1-ab01-32f557166bed
     path: project-wiki/hydra-framework/architecture/execution-flow.md
-    digest: sha256:36172c8d4f8c04e7febb1e181141e023fb4de711781ebd0970d038d5a29d61fc
+    digest: sha256:f852c6e2320a1e77cd3afd887a147bca40a9972796f17ed604f08545d1dd4b05
     family: Documentation
     kind: documentation-page
     status: active
@@ -592,10 +613,15 @@ objects:
       - .hydra-framework/engine/src/hydra_engine/commands/context.py
       - .hydra-framework/engine/src/hydra_engine/commands/validation.py
       - .hydra-framework/engine/src/hydra_engine/commands/work.py
+      - .hydra-framework/config/delegation-policy.yaml
+      - .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
+      - .hydra-framework/engine/src/hydra_engine/providers/orchestration.py
   hydra://documentation/page/execution-stack:
     uid: d47ddd43-a0fb-43d7-8cfe-57307078e473
     path: project-wiki/hydra-framework/architecture/execution-stack.md
-    digest: sha256:c297f1b2d33d7612f2cc3282743a79fe642072e80deff7d29f2a639dea51f947
+    digest: sha256:23d431bccd0862294d7b6619a1daf35c8d0a79337b2e1a79564d116223318745
     family: Documentation
     kind: documentation-page
     status: active
@@ -613,10 +639,16 @@ objects:
       - .hydra-framework/engine/src/hydra_engine/cli/route_prompt.py
       - .hydra-framework/engine/src/hydra_engine/knowledge/context_packets.py
       - .hydra-framework/engine/src/hydra_engine/work/board.py
+      - .hydra-framework/config/delegation-policy.yaml
+      - .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/adapter.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
+      - .hydra-framework/engine/src/hydra_engine/providers/orchestration.py
   hydra://documentation/page/extending-hydra:
     uid: a9d146be-c35b-40e1-ae5b-bb3c2cbe60c3
     path: project-wiki/hydra-framework/extending-hydra/extending-hydra.md
-    digest: sha256:80674819f71269371259da4942b5dabee24fb72817a8a35bd0a3d097cd504da4
+    digest: sha256:c72a2c1943baadec44171910d249c97be2765aab307e0abd709c7d7c78458106
     family: Documentation
     kind: documentation-page
     status: active
@@ -635,10 +667,13 @@ objects:
       - .hydra-framework/core/knowledge-architecture.md
       - .hydra-framework/capabilities/workflows/material-migration.md
       - .hydra-framework/capabilities/skills/adoption/skill.md
+      - .hydra-framework/config/delegation-policy.yaml
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
   hydra://documentation/page/extension-points:
     uid: f76b7f31-8605-47e1-8e99-81bbf495b973
     path: project-wiki/hydra-framework/extending-hydra/extension-points.md
-    digest: sha256:e9ab729c105631395d93a22c325884e5b6b1e8e5f75f8764c736e4ed9a4fac5f
+    digest: sha256:408c5dd216297896e68e940a6f53b79a5625e57d48c6ee327b7de15faf15b437
     family: Documentation
     kind: documentation-page
     status: active
@@ -653,10 +688,11 @@ objects:
       - .hydra-framework/engine/src/hydra_engine/architecture.py
       - .hydra-framework/engine/src/hydra_engine/objects/object_handlers.py
       - .hydra-framework/engine/src/hydra_engine/identity/object_families.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/adapter.py
   hydra://documentation/page/extension-recipes:
     uid: 08cdfac6-ce0d-4f6a-a467-190ff6dbcca5
     path: project-wiki/hydra-framework/extending-hydra/extension-recipes.md
-    digest: sha256:5241ab3925fc4fdf1ec8ded112a37433c9f9bc654299a9679336747988a6d56f
+    digest: sha256:cb8e37cc42b4bcfa23d7e5127c5528088eea341c41ec86c58c5e8661501066e8
     family: Documentation
     kind: documentation-page
     status: active
@@ -674,7 +710,7 @@ objects:
   hydra://documentation/page/first-task:
     uid: 782c9418-a361-4ea1-b100-ec30069bce89
     path: project-wiki/hydra-framework/working-with-hydra/first-task.md
-    digest: sha256:7d6f5f634f33002fca778154983976110ebc3adb59f1f5afc88f73aa927b8493
+    digest: sha256:972200a8cdad95ede19d58d788cf1517d56c671a81240da5d4a80f6e28a1ba10
     family: Documentation
     kind: documentation-page
     status: active
@@ -695,7 +731,7 @@ objects:
   hydra://documentation/page/glossary:
     uid: a54b517c-6c0c-49a5-ad40-bd5b60bcd4e1
     path: project-wiki/hydra-framework/reference/glossary.md
-    digest: sha256:11793ad2c22a2d440022d98320ebece64039e4ec32c842783c6765ebf514f34f
+    digest: sha256:9bdc21106bcd9b616eca7ce1ba5a38033b9bb71a1d8e23b408fdef3dac534353
     family: Documentation
     kind: documentation-page
     status: active
@@ -719,10 +755,14 @@ objects:
       - .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
       - .hydra-framework/engine/src/hydra_engine/providers/selection.py
       - .hydra-framework/engine/src/hydra_engine/work/task_records.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/models.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
+      - .hydra-framework/engine/src/hydra_engine/providers/orchestration.py
   hydra://documentation/page/home:
     uid: 0301577f-3e9c-40a9-be38-e2336da05317
     path: project-wiki/home.md
-    digest: sha256:0ad7c16beb9d0a7210a267d9044a7749bc78aa028e76986d7bdfe988a8be02c6
+    digest: sha256:e7efeab3b6f84a6e8abf700f795f29e47d0ab1754a7e70bc7b118bc5fca7c84a
     family: Documentation
     kind: documentation-page
     status: active
@@ -741,7 +781,7 @@ objects:
   hydra://documentation/page/intake:
     uid: 4ad1c2b0-b625-464c-b6fb-3ed71be46f85
     path: project-wiki/hydra-framework/extending-hydra/intake.md
-    digest: sha256:d17b472af1df2204983ba8e2da9a4f46081ef96a1ad556c3d0226a83c24b95b8
+    digest: sha256:fffd2b64f3ccea27d3e4fd2fe0ceeb611bf037578890b8dd1d89754e6362fe99
     family: Documentation
     kind: documentation-page
     status: active
@@ -771,7 +811,7 @@ objects:
   hydra://documentation/page/intake-and-migration:
     uid: f225f4bc-d48e-4208-b758-257e90f6b567
     path: project-wiki/hydra-framework/extending-hydra/intake-and-migration.md
-    digest: sha256:c3808459ecfb7b208cb5e13f10aeb72885cdabd3a81276c1fd1bbe41c0bad86a
+    digest: sha256:b9c88662f0a530e4c446e017bb6bf39d2e5952148d3e88d678686d048f829f13
     family: Documentation
     kind: documentation-page
     status: active
@@ -789,7 +829,7 @@ objects:
   hydra://documentation/page/knowledge-spaces:
     uid: 138d59a5-4be0-4398-8ba3-ea28b74447ed
     path: project-wiki/hydra-framework/extending-hydra/knowledge-spaces.md
-    digest: sha256:3b535a809c4ea87c9f5f962e5150190cf972e63bed7f124942be66549e3e1b13
+    digest: sha256:a5f5ec6c26c62dfec75c109c74052b3febfdc379bdd596f4853170aacb400ff4
     family: Documentation
     kind: documentation-page
     status: active
@@ -807,7 +847,7 @@ objects:
   hydra://documentation/page/migration:
     uid: f2526b34-cc07-4c9a-992e-ef7da68331cc
     path: project-wiki/hydra-framework/extending-hydra/migration.md
-    digest: sha256:7c6d0c6aaa06e7f98c2d00974e57ae857d70013a36b391d6a96328b05ef42fbf
+    digest: sha256:ddb2fd1f05a28d419f815bc4bbd9da82bb8e6e054466542d06630021fcac0ff3
     family: Documentation
     kind: documentation-page
     status: active
@@ -825,7 +865,7 @@ objects:
   hydra://documentation/page/new-contributor:
     uid: 85fd18f2-53bd-4219-b85e-2eeec7df82cf
     path: project-wiki/hydra-framework/start-here/new-contributor.md
-    digest: sha256:6c2e81a0369cf83b3c17d03c28f0ce24f42afb6b15e1655239e2f390f16a9860
+    digest: sha256:6000a062416547bf6ff929351f5468d16c00e8f4e5959ffe55d75995b74c03b4
     family: Documentation
     kind: documentation-page
     status: active
@@ -851,6 +891,10 @@ objects:
       - .hydra-framework/engine/src/hydra_engine/commands/providers.py
       - .hydra-framework/engine/src/hydra_engine/commands/validation.py
       - .hydra-framework/engine/src/hydra_engine/commands/wiki.py
+      - .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
+      - .hydra-framework/config/delegation-policy.yaml
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
       - .hydra-framework/engine/src/hydra_engine/installation/adopt.py
       - .hydra-framework/engine/src/hydra_engine/installation/git_hooks.py
       - .hydra-framework/engine/src/hydra_engine/installation/private_tier.py
@@ -861,7 +905,7 @@ objects:
   hydra://documentation/page/object-context-model:
     uid: 44c268a7-8483-46ed-8efb-2c9a402a96e5
     path: project-wiki/hydra-framework/architecture/object-context-model.md
-    digest: sha256:782c93f5df8fb28af77b97e6b02d8a0e5cfc6384e6d14a67223559b55e50cc68
+    digest: sha256:96274672ddc94802e4038c0479dcb83bcde42fca48199c409a20cba22bc21a24
     family: Documentation
     kind: documentation-page
     status: active
@@ -890,7 +934,7 @@ objects:
   hydra://documentation/page/operations:
     uid: 43a0cfab-e6e2-4e90-8bb9-7dbf93b6e43a
     path: project-wiki/hydra-framework/operations/operations.md
-    digest: sha256:fa682076c8b735f10ae7d4334eedd45fcd7f28d0d6fd822fa7cc949a6079e890
+    digest: sha256:78a5342a7bc0e60e3f9450ab8f80647e4ca082d84c213d54907f4a306475d29e
     family: Documentation
     kind: documentation-page
     status: active
@@ -907,10 +951,12 @@ objects:
       - .hydra-framework/engine/src/hydra_engine/wiki/links.py
       - .hydra-framework/validation/README.md
       - .hydra-framework/surfaces/README.md
+      - .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
   hydra://documentation/page/private-workspace:
     uid: 7ce90a6b-0571-4c68-b6ee-24b7af1d168f
     path: project-wiki/hydra-framework/working-with-hydra/private-workspace.md
-    digest: sha256:b1325b4c54b598d01a714a1599ac0329eddfd4195f0efc67f9b4982d00c43238
+    digest: sha256:456cc6a4fb6a36e02ecf56cdd8f329265723d248ed18c144e93a26626620da7c
     family: Documentation
     kind: documentation-page
     status: active
@@ -930,7 +976,7 @@ objects:
   hydra://documentation/page/provider-adapters:
     uid: c441ea3a-b06d-480e-80a9-c8d4849dc40a
     path: project-wiki/hydra-framework/extending-hydra/provider-adapters.md
-    digest: sha256:1e590ecdba6abf9b8cb24c6b2241b523e8ea19cf07582ed5769eebf88e8b2242
+    digest: sha256:cb84ad26e317bc421c5e85524c5ddd1da45511363294ed11b83c216278d787d8
     family: Documentation
     kind: documentation-page
     status: active
@@ -954,10 +1000,16 @@ objects:
       - .hydra-framework/engine/src/hydra_engine/providers/paths.py
       - .hydra-framework/engine/src/hydra_engine/providers/reclaim.py
       - .hydra-framework/engine/src/hydra_engine/providers/selection.py
+      - .hydra-framework/config/delegation-policy.yaml
+      - .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/adapter.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
+      - .hydra-framework/engine/src/hydra_engine/providers/orchestration.py
   hydra://documentation/page/public-positioning:
     uid: f5d33312-e292-4607-b3c2-7b4371fc9155
     path: project-wiki/hydra-framework/reference/public-positioning.md
-    digest: sha256:6f5de3647f6b26a36b578b588c83aa794bdeec21a4c217ceaa9294ced778e9a4
+    digest: sha256:030ce7bb64861fbb3f1bb859d67937939825feacdbca9e0f48c95393026b541b
     family: Documentation
     kind: documentation-page
     status: active
@@ -971,10 +1023,15 @@ objects:
     provenance_sources:
       - .hydra-framework/repo/knowledge/spaces/hydra-framework/overview.md
       - .hydra-framework/repo/knowledge/spaces/hydra-framework/units/build-status.md
+      - .hydra-framework/core/architecture.md
+      - .hydra-framework/config/delegation-policy.yaml
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
+      - .hydra-framework/engine/src/hydra_engine/providers/orchestration.py
   hydra://documentation/page/reference:
     uid: 2e742c60-1d89-4be8-9b6f-b8ee56a19d07
     path: project-wiki/hydra-framework/reference/reference.md
-    digest: sha256:fc8cb404704783d9b17bbd2df9194e62f41f7ca3e9903df590a5d70a24522b6d
+    digest: sha256:180b155f8ce6dd44eaf6c7b0485f4229d5e1420e3a21b8585bda383711428d9b
     family: Documentation
     kind: documentation-page
     status: active
@@ -985,11 +1042,17 @@ objects:
     aliases: []
     envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
     relations: []
-    provenance_sources: []
+    provenance_sources:
+      - .hydra-framework/surfaces/README.md
+      - .hydra-framework/repo/knowledge/spaces/hydra-framework/overview.md
+      - .hydra-framework/repo/knowledge/spaces/hydra-framework/units/build-status.md
+      - .hydra-framework/scripts/README.md
+      - .hydra-framework/engine/src/hydra_engine/cli/command_metadata.py
+      - .hydra-framework/core/placement-rules.md
   hydra://documentation/page/source-map:
     uid: 833ae832-43f4-462a-b1bd-51b806aac732
     path: project-wiki/hydra-framework/reference/source-map.md
-    digest: sha256:c04d7e2fba2619080126143a0a01112be5213157443a05d4f26c4db1589added
+    digest: sha256:4962be36102d193e3a2650682da2229c941e0c5a1ed448f147ee4a5fb39ff6a6
     family: Documentation
     kind: documentation-page
     status: active
@@ -1008,7 +1071,7 @@ objects:
   hydra://documentation/page/start-here:
     uid: ad142d5f-0964-49b4-bfde-eae7262117fa
     path: project-wiki/hydra-framework/start-here/start-here.md
-    digest: sha256:7fd8fb470f8dab6ff42e2ddcc9175d6edc56f7b94dc0b94c685ec6d4c0be4bd7
+    digest: sha256:d2a4c76d6ae900e5f22fd4ab85cc0d7097a00fe0ad23073a5e879e7228f839d9
     family: Documentation
     kind: documentation-page
     status: active
@@ -1019,7 +1082,13 @@ objects:
     aliases: []
     envelope_path: .hydra-framework/surfaces/wiki/hydra-framework.yaml
     relations: []
-    provenance_sources: []
+    provenance_sources:
+      - AI_SYSTEM.md
+      - .hydra-framework/README.md
+      - .hydra-framework/core/placement-rules.md
+      - .hydra-framework/surfaces/README.md
+      - .hydra-framework/repo/knowledge/spaces/hydra-framework/overview.md
+      - .hydra-framework/scripts/README.md
   hydra://documentation/page/state-tiers:
     uid: e5f6bb6d-7e64-451c-b14d-5ee99bef4752
     path: project-wiki/hydra-framework/concepts/state-tiers.md
@@ -1041,7 +1110,7 @@ objects:
   hydra://documentation/page/task-lifecycle:
     uid: 2f8f0937-ecf7-4408-ab4c-df6b139793c2
     path: project-wiki/hydra-framework/working-with-hydra/task-lifecycle.md
-    digest: sha256:87038f08369cac2339692d13ea4bf05e08e2626129f4a23ecdda383ed4b61972
+    digest: sha256:a0abf70aa9d7501f9085bf1724a1c736bd40549d80c486e5771187b0951ae7da
     family: Documentation
     kind: documentation-page
     status: active
@@ -1062,10 +1131,12 @@ objects:
       - .hydra-framework/engine/src/hydra_engine/work/owners.py
       - .hydra-framework/engine/src/hydra_engine/work/paths.py
       - .hydra-framework/engine/src/hydra_engine/work/task_records.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
   hydra://documentation/page/telemetry:
     uid: 2d2e0df1-bd41-456e-8060-7031d90f622c
     path: project-wiki/hydra-framework/architecture/telemetry.md
-    digest: sha256:0544635498ac2d7422854dbae13b0da7c46680191a9f375eb1aba75391e3554e
+    digest: sha256:76bc75482d233b6a6520e87769b36538199cb77b8ad517e9b06e71c744af7d4a
     family: Documentation
     kind: documentation-page
     status: active
@@ -1088,7 +1159,7 @@ objects:
   hydra://documentation/page/troubleshooting:
     uid: 9f2290d6-6667-4806-81a1-8fda46dd4fc0
     path: project-wiki/hydra-framework/operations/troubleshooting.md
-    digest: sha256:9fb2fde169abd690efa6b000338b53c81fcba546c7c77fc0044e8135bb47f2df
+    digest: sha256:ff41efabec13adeb158a11ad7e08dfed53c8036ec5d0bc61a7627d430d9102cc
     family: Documentation
     kind: documentation-page
     status: active
@@ -1107,7 +1178,7 @@ objects:
   hydra://documentation/page/validation:
     uid: 80dbe078-6d3d-4f48-aaa1-d65191ec49ba
     path: project-wiki/hydra-framework/operations/validation.md
-    digest: sha256:9b77299a87e0617867f0007c9c2e4e86d3957e2fa3247942ca4a1c6635f76044
+    digest: sha256:3aec1f09a4043964fa9c9d42f68de5411bc8c9df189e25e557bec2f2d446e5e3
     family: Documentation
     kind: documentation-page
     status: active
@@ -1121,12 +1192,15 @@ objects:
     provenance_sources:
       - .hydra-framework/validation/README.md
       - .hydra-framework/engine/src/hydra_engine/checks/validator_registry.py
+      - .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
+      - .hydra-framework/engine/tests/unit/orchestration/test_lifecycle.py
       - .hydra-framework/validation/rules/metadata-and-placement.md
       - .hydra-framework/validation/rules/task-readiness-and-state.md
   hydra://documentation/page/working-with-hydra:
     uid: db8d63db-abbc-4243-bc0f-d55280f63c54
     path: project-wiki/hydra-framework/working-with-hydra/working-with-hydra.md
-    digest: sha256:0735b1b9e7185816cf2fa0dd92175312c61bc218a0186ec79a8f6beacf166f24
+    digest: sha256:557ebeb4fa053a851b55f4f55f26645edf852b83f2c8eba91d7c14a7efa17db9
     family: Documentation
     kind: documentation-page
     status: active
@@ -1144,7 +1218,7 @@ objects:
   hydra://documentation/wiki/hydra-framework:
     uid: 45dff86c-a3cb-4777-b268-2c050594289a
     path: project-wiki/hydra-framework/hydra-framework.md
-    digest: sha256:5df9f0265b90c62066aedb6542d74b2d5222d9b44a5b89c9208e8e41c9c5570e
+    digest: sha256:9d40800bea61c72562799a0dbb6d1ea0a57901bc2f49e937c4239f56411fafb7
     family: Documentation
     kind: documentation-wiki
     status: active
@@ -1272,7 +1346,7 @@ objects:
   hydra://knowledge-slice/hydra-framework/overview:
     uid: e86b49f5-8055-4aeb-a001-084148d578bc
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/overview.md
-    digest: sha256:8841b6acf0663f2fc4d914646109b1cb8d781a6208c61308f34650dfb4cdb6c5
+    digest: sha256:6c76a412fd20734a955a5f6fe8486cdadf1e3303f44e5d7ae9524b6a8463d16c
     family: Knowledge
     kind: knowledge-slice
     status: active
@@ -1565,7 +1639,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/add-module:
     uid: 10219e6b-b5d9-43bc-9452-e77822d34184
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/add-module.md
-    digest: sha256:694904bc2fd89bd9d8036d71e711424be33efac7ee6b307ba7829146cd53a0ab
+    digest: sha256:29ce8383218f93f009fdc7de97685d46a7ff46efe5b901ee6b1f63f8122d1067
     family: Knowledge
     kind: knowledge-unit
     status: active
@@ -1606,7 +1680,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/agent-export-trace:
     uid: 6261c72a-da1b-46f9-8474-dddc40b53430
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/agent-export-trace.md
-    digest: sha256:82b17903941d7c81405f4294894b35edb6a6615f3b9fd3512ef17073396a2153
+    digest: sha256:6fcd979ab62c31ca9d6c01036a610ea66e8e482d35a10d045b768dc510ea1cdd
     family: Knowledge
     kind: knowledge-unit
     status: active
@@ -1626,7 +1700,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/build-status:
     uid: b01fff6c-38ac-4bde-92c3-98890aac83bb
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/build-status.md
-    digest: sha256:93523a8b87229524885a8904f0c15a8f590df6c4673917dcc2654b406c103819
+    digest: sha256:35fc710c8eebdbeda666a0297ed6482a213a348a88f0f86bf6b6a36c61aebc44
     family: Knowledge
     kind: knowledge-unit
     status: active
@@ -1643,6 +1717,12 @@ objects:
       - .hydra-framework/repo/telemetry/README.md
       - .hydra-framework/engine/src/hydra_engine/cli/command_metadata.py
       - .hydra-framework/engine/src/hydra_engine/knowledge/context_providers.py
+      - .hydra-framework/config/delegation-policy.yaml
+      - .hydra-framework/engine/src/hydra_engine/orchestration/control.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/adapter.py
+      - .hydra-framework/engine/src/hydra_engine/orchestration/lifecycle.py
+      - .hydra-framework/engine/src/hydra_engine/commands/orchestration.py
+      - .hydra-framework/engine/src/hydra_engine/providers/orchestration.py
   hydra://knowledge-unit/hydra-framework/change-task-contract:
     uid: ef271cd9-2a76-4182-a180-5ee3d9f9d8aa
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/change-task-contract.md
@@ -1665,7 +1745,7 @@ objects:
   hydra://knowledge-unit/hydra-framework/fix-provider-surface:
     uid: dbde7a08-930b-4a00-a468-da79f87d2c9d
     path: .hydra-framework/repo/knowledge/spaces/hydra-framework/units/fix-provider-surface.md
-    digest: sha256:620961677cbb90095c48e6bdb876482e5b3d6249c4cc04296b1b516d0c0721b1
+    digest: sha256:57f07d2bec537ba5bb0f741855ab0b7032e4da3448fdae15494e4ef477fce802
     family: Knowledge
     kind: knowledge-unit
     status: active

@@ -56,7 +56,12 @@ surface.**
 4. **Owner-scoped, Git-recoverable task lifecycle.** The board is computed from
    task records; lifecycle commands start, checkpoint, hand off, and complete
    work while enforcing owner and outcome boundaries. See [Task Lifecycle](/project-wiki/hydra-framework/working-with-hydra/task-lifecycle.md).
-5. **Copy, adoption, and reconciliation are first-class workflows.** The copy
+5. **Bounded, provider-neutral coordination records.** An explicit run can
+   record worker ownership, parentage, bounded requests, results, independent
+   review and validation, handoff, and recovery. Claude and Codex currently
+   stop at request receipts; Hydra does not claim a provider scheduler, SDK
+   execution, automatic reaping, or autonomous outcomes. See [Execution Stack](/project-wiki/hydra-framework/architecture/execution-stack.md#orchestration-boundary).
+6. **Copy, adoption, and reconciliation are first-class workflows.** The copy
    plan excludes source-repository task records, adoption reports integrity and
    lineage, and `diff-base` classifies content differences against recorded
    adaptation. See [Seed And Adopt Hydra](/project-wiki/hydra-framework/start-here/adopt-a-repository.md)

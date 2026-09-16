@@ -119,6 +119,26 @@ full canonical scan when no fresh store is available. `ref rdeps` and
 `ref impact` instead require a fresh store because they have no equivalent
 scan path. Do not repair source files merely because a cache needs rebuilding.
 
+## Reference Or Ownership Question
+
+Use `explain-path <path> --json` before editing a path whose tier or owner is
+unclear. For an object identity, use `ref resolve hydra://...`; for reverse
+citations or bounded relation impact, check the store first and then use
+`ref rdeps` or `ref impact`. These commands expose evidence for a decision,
+not permission to bypass ownership or review.
+
+For an intentional object move, preview with
+`move-object <source> <destination> --dry-run`. Keep the same `hydra_id` and
+`uid`, review any old-path citations, and run `ref check` after the move. A
+duplicate identity, ambiguous path, stale binding, or unresolved relation is
+a stop condition. Do not resolve it by renaming a file or deleting a record
+until the canonical owner makes the decision.
+
+`ref index` and `ref store rebuild` write derived state only. A store that is
+missing, corrupt, or stale is a cache condition. `ref resolve` and
+`explain-path` can fall back to canonical scanning; `ref rdeps` and `ref impact`
+require a fresh store and should be retried after a rebuild.
+
 ## Engine or CLI Behavior Failure
 
 Run:

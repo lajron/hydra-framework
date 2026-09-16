@@ -100,6 +100,25 @@ The active `hydra-framework` space has this file layout:
 keep it readable and maintainable for humans. Validation keeps it from
 becoming a disconnected notes folder.
 
+## Current Route Inventory
+
+The checked-in `hydra-framework` space currently exposes these task-shaped
+routes. The route names are canonical IDs; the descriptions are the reader
+shortcuts for choosing one.
+
+| Route | Use it for | Verification |
+| --- | --- | --- |
+| `add_module` | Adding or changing a Hydra skill, subagent, or slash command | `export-adapters --check` |
+| `adopt_into_repo` | Wiring a copied Hydra framework into a repository | `adopt` |
+| `change_task_contract` | Adding, renaming, or removing a task-record field | `validate` |
+| `fix_provider_surface` | Repairing an orphaned, drifted, or stale provider file | `reclaim` and `export-adapters --check` |
+| `reconcile_with_base` | Comparing a diverged Hydra copy with its base seed | Review the diff-base result and disposition |
+
+If the task does not match one of these routes, use `knowledge-search` for
+ranked evidence or choose an explicit node with `compile-context`. A route
+inventory is a routing aid, not a guarantee that every repository question has
+a dedicated route.
+
 ## Two-Phase Routing
 
 Routing happens in two explicit phases. Provisional prompt routing resolves

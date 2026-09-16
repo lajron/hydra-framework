@@ -13,10 +13,16 @@ provenance:
   sources:
     - .hydra-framework/core/placement-rules.md
 
+# Tags are opaque, lowercase profile labels declared by canonical skills.
+# baseline_tags apply to every named profile; the reserved `full` profile
+# selects every skill. Profile matching is a union, and agents are never
+# filtered by this policy.
 baseline_tags:
   - hydra-core
 default_profile: full
 profiles:
+  # Keep shared presets small and reviewable. Checkout-local profiles can add
+  # or shadow presets without changing this common-seed policy.
   core:
     tags: []
   hydra-maintainer:

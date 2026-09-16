@@ -6,6 +6,8 @@ Hydra's architecture has two useful views of the same runtime:
   coordination through the model.
 - [Execution flow](/project-wiki/hydra-framework/architecture/execution-flow.md) follows one work cycle from
   understanding and readiness through verification and learning.
+- [Explicit orchestration](/project-wiki/hydra-framework/architecture/execution-stack.md#orchestration-boundary)
+  describes the bounded run and worker control plane when a task needs coordinated work.
 - [Object and context model](/project-wiki/hydra-framework/architecture/object-context-model.md) explains durable object
   identity, derived lookups, and task-context selection.
 - [Context retrieval](/project-wiki/hydra-framework/architecture/context-retrieval.md) explains the knowledge-search,
@@ -22,3 +24,5 @@ together for reliable model work. The [Source Map](/project-wiki/hydra-framework
 records the exact owners for this architecture.
 
 For the governing work sequence, read [Execution Flow](/project-wiki/hydra-framework/architecture/execution-flow.md).
+For coordinated work, read the [Orchestration Boundary](/project-wiki/hydra-framework/architecture/execution-stack.md#orchestration-boundary)
+and its [command reference](/project-wiki/hydra-framework/reference/command-surface.md#orchestration).

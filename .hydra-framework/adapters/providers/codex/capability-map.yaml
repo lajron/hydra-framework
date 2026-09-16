@@ -43,6 +43,14 @@ delegation_controls:
   max_active_workers: advisory
   max_depth: advisory
 
+# These entries expose only the provider boundary used by Hydra's
+# orchestration control plane. They do not mean Hydra can invoke Codex CLI's
+# SDK or observe provider execution.
+orchestration:
+  spawn: request-only
+  message: request-only
+  collect: request-only
+
 notes:
   - Reasoning levels low, medium, high, xhigh, max, and ultra were confirmed in the Codex 0.146.0 model catalog on 2026-07-30; `provider_version` records the newer locally observed runtime separately.
   - `verified` is the last compatibility verification date, not the framework build date. A newer `provider_version` makes this evidence due for recheck.

@@ -1,5 +1,11 @@
 # FAQ
 
+Audience: A reader with one focused Hydra question
+
+Reader goal: Get a short, trustworthy answer and reach the page that owns the detail
+
+Page type: reference
+
 Status: FAQ / question index
 
 Start here if you have a specific question rather than time to read in
@@ -89,6 +95,61 @@ independent source of truth. See [Provider Adapters](/project-wiki/hydra-framewo
 Reusable capability definitions, canonical under
 `.hydra-framework/capabilities/`, exported into provider adapters. See
 [Capabilities](/project-wiki/hydra-framework/extending-hydra/capabilities.md).
+
+## Finding context and capabilities
+
+**How do I find the right context without reading the whole repository?**
+Use `knowledge-search "<query>"` for ranked, cited snippets, `route-prompt
+--prompt "<prompt>"` for small route pointers, and `compile-context --task
+"<task>" --budget <tokens>` for a bounded reading packet. Add `--json` to
+`route-prompt` when you need scores, ambiguity, or resolution diagnostics. See
+[Context Retrieval](/project-wiki/hydra-framework/architecture/context-retrieval.md).
+
+**What is in a context packet?**
+It records the selected context, required material, omitted candidates, token
+budget, provenance and freshness information, and validation reminders. The
+packet is a bounded view of canonical files, not a new source of truth. See
+[Object And Context Model](/project-wiki/hydra-framework/architecture/object-context-model.md).
+
+**How do capability profiles affect what I use?**
+Profiles narrow which canonical skills are materialized as provider adapters;
+canonical agents are not filtered by a profile. Inspect with `profile list` or
+`profile show`, preview with `export-adapters --profile <name> --dry-run`, and
+read [Capabilities](/project-wiki/hydra-framework/extending-hydra/capabilities.md)
+before selecting a profile.
+
+## Boundaries and evidence
+
+**Does the Coordination Graph mean Hydra runs a generic multi-agent scheduler?**
+No. The execution stack is a responsibility map. Read [Execution
+Stack](/project-wiki/hydra-framework/architecture/execution-stack.md) for the
+currently implemented controls and the remaining conceptual pieces. Provider
+adapters expose canonical capabilities to a runtime; they are not, by
+themselves, a worker scheduler or a provider SDK. See [Provider
+Adapters](/project-wiki/hydra-framework/extending-hydra/provider-adapters.md).
+
+**How do I trace a claim, object, or path to its owner?**
+Use `ref check` to validate object IDs and references, `ref resolve
+hydra://...` to inspect one object's identity and provenance, and `explain-path
+<path> --json` when the ownership of a file is unclear. `ref rdeps` and `ref
+impact` answer graph questions only when the derived query store is fresh. See
+[Object And Context Model](/project-wiki/hydra-framework/architecture/object-context-model.md),
+[Reference](/project-wiki/hydra-framework/reference/reference.md), and
+[Operations](/project-wiki/hydra-framework/operations/operations.md).
+
+**Does `wiki audit` prove that the documentation is complete?**
+No. It checks the declared page sources, dates, and recorded digests. It does
+not prove that every source was declared or that the prose is semantically
+correct. `wiki fingerprint` records source digests only after the page has been
+re-read against its sources; `validate-wiki` separately checks navigation
+links. See [Operations](/project-wiki/hydra-framework/operations/operations.md).
+
+**How do I evolve a Hydra copy without silently changing the seed?**
+Use [Evolution](/project-wiki/hydra-framework/evolution/evolution.md) to
+compare the copy with its base, record why a difference exists, and decide
+whether it stays local or flows back. Adoption, migration, and seed
+reconciliation are separate routes, so start from the source type you actually
+have.
 
 ## Day To Day
 

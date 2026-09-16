@@ -31,11 +31,17 @@ a hook is per-clone and opt-in, so a check that lives solely there is not a chec
 
 ```bash
 python3 .hydra-framework/scripts/hydra.py export-adapters
-python3 .hydra-framework/scripts/hydra.py export-adapters --check     # CI drift gate
+python3 .hydra-framework/scripts/hydra.py export-adapters --check     # local generated-surface drift check
 python3 .hydra-framework/scripts/hydra.py export-adapters --dry-run
 python3 .hydra-framework/scripts/hydra.py reclaim                     # classify unmanaged files
 python3 .hydra-framework/scripts/hydra.py reclaim --promote           # move them into canonical Hydra
 ```
+
+The plain `export-adapters` command bootstraps generated provider surfaces in a
+fresh clone. Because those files are ignored and are not committed, the
+`--check` form is a local drift check, not a CI gate. CI uses
+`reclaim --fail-on-findings` as the blocking provider-surface ownership check
+after bootstrapping the adapters.
 
 ### Copy, adopt, reconcile
 

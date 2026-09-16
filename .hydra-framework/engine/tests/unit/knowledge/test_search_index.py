@@ -340,7 +340,15 @@ class SearchIndexTests(unittest.TestCase):
         self.assertEqual(source, "sqlite")
         rebuild.assert_called_once()
         self.assertEqual(results[0].document.kind, "command")
-
+    def test_command_ids_change_also_rebuilds_stale_store(self):
+        root = _repo(); local = root / ".hydra-framework.local"
+        search_index.build_index(_paths(root), _resolver(root), local, ("before",))
+        overview = root / ".hydra-framework/repo/knowledge/knowledge-packages/example/overview.md"
+        overview.write_text(overview.read_text(encoding="utf-8") + "command and corpus changed\n", encoding="utf-8")
+        with mock.patch.object(search_index, "build_index", wraps=search_index.build_index) as rebuild:
+            results, _features, source = search_index.search("command and corpus changed", paths=_paths(root), resolver_paths=_resolver(root), local=local, command_ids=("after",))
+        self.assertEqual((source, rebuild.call_count), ("sqlite", 1))
+        self.assertIn("command and corpus changed", results[0].document.body)
     def test_schema_change_forces_full_rebuild(self):
         root = _repo()
         local = root / ".hydra-framework.local"

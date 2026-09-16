@@ -97,6 +97,22 @@ The current tool registry includes capabilities such as repository search, Git
 context, test execution, model routing, subagent spawn/message/collect, hook
 policy, adapter export, token measurement, and memory recall.
 
+## Explicit Orchestration
+
+The subagent tool records describe a capability; the provider-neutral
+orchestration commands provide the bounded control plane when a caller needs
+explicit coordination. A run must reference an existing task record. Workers
+carry explicit owners and parent ownership, and the shared delegation policy
+limits active workers and nesting depth. Spawn, message, and collect payloads
+are structured and size-bounded. Review, independent validation, handoff,
+recovery, and completion are explicit states.
+
+The control plane is local and provider-neutral. Claude and Codex currently
+receive a request-only adapter boundary. Their generated files do not establish
+a scheduler, provider SDK integration, background worker service, message bus,
+or automatic reaping. Keep durable conclusions in the task record or canonical
+owner, not in a raw worker transcript.
+
 ## Capability Profiles And Tags
 
 A checkout can narrow which canonical skills get materialized as provider

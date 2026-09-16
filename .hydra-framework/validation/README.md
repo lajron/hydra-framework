@@ -48,6 +48,17 @@ package documentation gate directly and can optionally render DOT diagrams with
 negative tests for the architecture checker and a repository smoke test that the
 live engine tree satisfies those bounds.
 
+## Gate Semantics
+
+`validate`, `validate-wiki`, `validate-package-docs`, `selftest`, and
+`reclaim --fail-on-findings` are blocking checks when their contract finds an
+error. `wiki audit` is report-only and exits successfully even when it reports
+stale or undeclared wiki sources. `export-adapters --check` is a local drift
+check; CI first runs plain `export-adapters`, then uses
+`reclaim --fail-on-findings` for the provider-surface gate. Optional hooks may
+repeat validation for a local clone, but no invariant is authoritative only
+because a hook is installed.
+
 ## Package Gate Defaults
 
 The default package gate is intentionally cheap and deterministic:

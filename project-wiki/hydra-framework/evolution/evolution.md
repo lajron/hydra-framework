@@ -80,6 +80,20 @@ for the adoption route and [Command Surface](/project-wiki/hydra-framework/refer
 for the seed commands. The [Source Map](/project-wiki/hydra-framework/reference/source-map.md#maintainer-evidence)
 provides the bounded maintainer reading path.
 
+The relationship between the two repositories determines the route. Compare the
+current adopted copy with the base seed using `diff-base`. If the incoming
+source is a separate Hydra copy with its own framework state, use [Hydra-to-Hydra
+integration](/project-wiki/hydra-framework/extending-hydra/intake-and-migration.md#hydra-to-hydra-integration)
+to prepare source-scoped object decisions. If the incoming source is foreign or
+legacy agentic material, use [takeover](/project-wiki/hydra-framework/extending-hydra/migration.md#take-over-legacy-agentic-material)
+and its approval-gated migration flow.
+
+The comparison vocabulary and the ledger vocabulary are related but not
+identical. `diff-base` can describe a difference as promote, repository-local,
+stale, or conflicting. `evolution record` accepts the durable dispositions
+`promote-candidate` and `repo-local`; record the evidence and path with those
+command values rather than copying a diagnostic label into the ledger.
+
 ## Propagating structural changes
 
 Structural changes to a downstream copy need more than copying the changed

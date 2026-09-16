@@ -24,7 +24,11 @@ may name takeover as a follow-up, but it does not start one.
    ```bash
    python3 .hydra-framework/scripts/hydra.py adopt
    python3 .hydra-framework/scripts/hydra.py reclaim
+   python3 .hydra-framework/scripts/hydra.py takeover scan --root <repository> --json
    ```
+
+   `takeover scan` is read-only. It reports recognized markers, classifications,
+   and staging recommendations; it does not move or rewrite any source.
 
    Then check the repository root for common foreign agentic markers:
 
@@ -138,13 +142,16 @@ evidence.
 - Do not delete or rewrite old rule files first. Move first, drain by ledger,
   stub last.
 - Do not use this skill for Hydra-to-Hydra reconciliation by default. When the
-  source is another Hydra copy, use the seed-reconciliation workflow first;
-  capability-level reconciliation may be the right unit instead of file-by-file
-  takeover.
-- Do not promise `takeover scan`, `integrate`, or `explain-path` commands until
-  they exist. Today this skill uses `adopt`, `reclaim`, and `migration`
-  commands plus the material migration workflow when those commands are not
-  available.
+  source is another Hydra copy, stage it and use `integrate scan`, `integrate
+  map`, `integrate identify`, and `integrate status`; use `diff-base` and the
+  seed-reconciliation workflow when comparing the adopted copy with its base
+  seed. Capability-level reconciliation may be the right unit instead of
+  file-by-file takeover.
+- Do not treat `takeover scan`, `integrate`, or `explain-path` as move or
+  publication commands. `takeover scan` and `explain-path` are read-only;
+  `integrate map --create` creates an integration workspace and
+  `integrate identify` rewrites only its object map. Confirm scope and use the
+  material migration approvals before moving or promoting anything.
 
 ## Related
 

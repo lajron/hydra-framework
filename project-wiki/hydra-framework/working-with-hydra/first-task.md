@@ -32,6 +32,14 @@ python3 .hydra-framework/scripts/hydra.py task start fix-wiki-link \
   --goal "Correct the stale wiki link and verify the wiki surface."
 ```
 
+Task creation places the record under the resolved owner. Resolution is
+`--owner`, then `HYDRA_OWNER`, then `git config user.email`; the full candidate
+is slugified, and the command fails if no candidate exists. Do not use a
+guessed owner or create a competing record. The command creates a skeleton, so
+fill readiness, step state, changed files, validation, and continuation notes
+before execution. The [Task Lifecycle Workflow](/.hydra-framework/capabilities/workflows/task-lifecycle.md)
+owns the exact required fields.
+
 Fill in the record's readiness, step state, changed files, validation evidence,
 and continuation notes immediately. The command creates the record but cannot
 know those facts for you.
@@ -42,6 +50,12 @@ Locate the target page and its owner before editing. For a wiki claim, read the
 canonical source it links to; update that source first if the claimed behavior
 is wrong. Change the stale link, preserve unrelated worktree edits, and record
 the changed path in the task record.
+
+If the task argument later uses a bare name, Hydra prefers one matching record
+under the caller's owner and otherwise requires one unique global match. An
+ambiguous name is refused, so use the explicit record path. A task owned by
+someone else is readable but write-protected unless responsibility is
+deliberately overridden.
 
 Use scoped context when the request needs more than a direct page-and-source
 read:
@@ -84,6 +98,13 @@ python3 .hydra-framework/scripts/hydra.py task checkpoint <name-or-path>
 python3 .hydra-framework/scripts/hydra.py task handoff <name-or-path> --to <owner>
 ```
 
+The checkpoint stays beside the task under the same owner and updates the task's
+`Updated:` date. Handoff rewrites `Owner:` and moves the task plus checkpoints;
+it writes the destination before removing the source, can be rerun after an
+interruption, and refuses a different destination record. A stale date does
+not transfer ownership or trigger automatic reaping. If completion is
+interrupted, inspect Git status and the task paths before retrying.
+
 When review is complete, the corrected wiki page is the durable outcome. Name
 it when completing the task:
 
@@ -95,6 +116,12 @@ python3 .hydra-framework/scripts/hydra.py task complete <name-or-path> \
 Completion removes the active task record and its checkpoints because Git is
 their archive. Review the printed Git status before committing: a task is not
 fully landed while its outcome or task-state deletion remains uncommitted.
+
+Completion requires `--outcome <path|none>`. Use `none` only when no durable
+artifact was produced; otherwise name an existing repository-relative file
+outside task scaffolding and private local state. It refuses an untracked or
+unstaged task record or checkpoint so the current continuation state remains
+recoverable. Recover a deleted record with `git log --diff-filter=D -- <path>`.
 
 Continue with [Task Lifecycle](/project-wiki/hydra-framework/working-with-hydra/task-lifecycle.md) for the concise lifecycle
 reference or [Execution Flow](/project-wiki/hydra-framework/architecture/execution-flow.md) for the system

@@ -30,6 +30,15 @@ It deliberately leaves capability classes unresolved, so generated agents omit
 `model` and inherit the host's configured one — consistent with the rule above
 that model selection is user-local, not shared project config.
 
+## Orchestration Request Boundary
+
+The Codex capability map declares `spawn`, `message`, and `collect` as
+`request-only`. Generated custom-agent instructions may carry that declaration,
+but Hydra does not invoke Codex CLI or claim that Codex accepted, started,
+delivered, or completed an orchestration request. A runtime adapter must
+provide any actual submission and status evidence. If an operation is not
+declared, treat it as unsupported.
+
 ## Hook Wiring Pattern
 
 When a Codex runtime supports project hooks, route them through the canonical

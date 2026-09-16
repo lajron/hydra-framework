@@ -53,3 +53,19 @@ budgets. Provider adapters or private local configuration map those to concrete
 models, reasoning-effort settings, thinking modes, local inference profiles, and
 cost limits. Keep those mappings close to the runtime that owns them so core
 Hydra remains usable across providers.
+
+## Orchestration Request Boundary
+
+The provider-neutral orchestration control plane records bounded requests for
+`spawn`, `message`, and `collect`. A provider capability map may declare each
+operation as `request-only` or `unsupported` under its `orchestration` section.
+`request-only` means an adapter may queue or acknowledge an explicit request;
+it does not mean that Hydra invoked a provider SDK, started a worker, delivered a
+message, or collected a result. `unsupported` is the fail-closed value for a
+missing or unusable declaration.
+
+The capability exporter carries a declared boundary into generated agent
+surfaces as an instruction. It does not implement a scheduler, message bus,
+collector, or provider runtime. An adapter integration must report its own
+receipt and execution state rather than treating a request receipt as proof of
+completion.
