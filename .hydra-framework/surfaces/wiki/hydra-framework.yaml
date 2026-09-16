@@ -250,7 +250,7 @@ objects:
     path: project-wiki/hydra-framework/extending-hydra/extension-points.md
     owners:
       team: hydra
-    checked_on: '2026-09-15'
+    checked_on: '2026-09-16'
     provenance:
       sources:
         - .hydra-framework/engine/src/hydra_engine/architecture.py
@@ -264,6 +264,8 @@ objects:
           digest: sha256:949f43eb40cc5d43dace9f3f4c1c2a5e7fe0bad00a06a5ff22c813be501c559d
         - source: .hydra-framework/engine/src/hydra_engine/identity/object_families.py
           digest: sha256:d042e6b2079cb2ba1366d1c5a5fb2f14ff9b2d556955743ad0ff7346d94486dc
+        - source: .hydra-framework/engine/src/hydra_engine/orchestration/adapter.py
+          digest: sha256:c50acc8cbc155caaa935bb519f81a3158e6ee17b947497efe69f84fc04d13218
     relations: []
   page-extension-recipes:
     hydra_id: hydra://documentation/page/extension-recipes
